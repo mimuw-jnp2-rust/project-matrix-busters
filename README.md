@@ -17,19 +17,19 @@ One of its most powerful features is the ability to generate `LaTeX` code for th
 ---
 
 ## Plan
-- 1.1. Implement rational numbers representation.
-- 1.2. Implement matrix module for given any number representation.
-- 1.3. Implement basic operations on matrices.
-- 1.4. Implement `LaTeX` code generation.
-- 2.1. Implement GUI.
-- 2.2. Extend the number representation module to allow for more sophisticated numbers.
-- 2.3. Implement complex operations on matrices.
+- [X] 1.1. Implement rational numbers representation.
+- [ ] 1.2. Implement matrix module for given any number representation.
+- [ ] 1.3. Implement basic operations on matrices.
+- [ ] 1.4. Implement `LaTeX` code generation.
+- [ ] 2.1. Implement GUI.
+- [ ] 2.2. Extend the number representation module to allow for more sophisticated numbers.
+- [ ] 2.3. Implement complex operations on matrices.
 
 ---
 
 ## Libraries
 - [egui](https://crates.io/crates/egui) - (https://github.com/emilk/egui)
-- tbd...
+- [num](https://docs.rs/num/latest/num/)
 
 
 
