@@ -1,4 +1,4 @@
-use crate::latex::LaTeXable;
+use crate::traits::LaTeXable;
 use num_rational::Rational64;
 use num_traits::sign::Signed;
 
@@ -19,6 +19,7 @@ impl LaTeXable for Rational64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::traits::MatrixNumber;
     use num_rational::Rational64;
 
     #[test]
@@ -55,5 +56,13 @@ mod tests {
     fn test_fraction_zero() {
         let r = Rational64::new(0, 1);
         assert_eq!(r.to_latex(), "0");
+    }
+
+    #[test]
+    fn test_matrix_num() {
+        fn test<T: MatrixNumber>(_: T) {}
+
+        let r = Rational64::new(4, 1);
+        test(r);
     }
 }
