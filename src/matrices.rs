@@ -1,6 +1,7 @@
+#![allow(dead_code)]
+
 use crate::traits::LaTeXable;
 use crate::traits::MatrixNumber;
-use anyhow;
 
 struct Matrix<T: MatrixNumber> {
     data: Vec<Vec<T>>,
@@ -24,7 +25,6 @@ impl<T: MatrixNumber> Matrix<T> {
 // TODO: impl CheckedAdd, CheckedSub, CheckedMul
 
 impl<T: MatrixNumber> LaTeXable for Matrix<T> {
-
     fn to_latex(&self) -> String {
         r"\begin{bmatrix}".to_string()
             + &self
