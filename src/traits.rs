@@ -10,6 +10,6 @@ pub trait CheckedOps: CheckedAdd + CheckedSub + CheckedMul + CheckedDiv {}
 
 impl<T> CheckedOps for T where T: CheckedAdd + CheckedSub + CheckedMul + CheckedDiv {}
 
-pub trait MatrixNumber: Num + CheckedOps + LaTeXable {}
+pub trait MatrixNumber: Num + CheckedOps + LaTeXable + Clone {}
 
-impl<T> MatrixNumber for T where T: Num + CheckedOps + LaTeXable {}
+impl<T> MatrixNumber for T where T: Num + CheckedOps + LaTeXable + Clone {}
