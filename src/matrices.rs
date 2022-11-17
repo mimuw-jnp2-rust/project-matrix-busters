@@ -153,7 +153,8 @@ impl<T: MatrixNumber + Neg> Neg for Matrix<T> {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
-        self.checked_operation(|a| Some(-a.clone())).expect("Negation failed!")
+        self.checked_operation(|a| Some(-a))
+            .expect("Negation failed!")
     }
 }
 
