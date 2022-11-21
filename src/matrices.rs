@@ -28,7 +28,7 @@ impl<T: MatrixNumber> Matrix<T> {
             return Err(anyhow::anyhow!("Matrices have different number of rows!"));
         }
 
-        if self.data.len() == 0 {
+        if self.data.is_empty() {
             return Ok(());
         }
 
@@ -36,11 +36,11 @@ impl<T: MatrixNumber> Matrix<T> {
             self.data
                 .iter()
                 .skip(1)
-                .fold((true, &self.data[0]), |(acc, row), next| {
-                    if acc && row.len() == next.len() {
-                        (true, next)
-                    } else {
+                .fold((false, &self.data[0]), |(acc, row), next| {
+                    if !acc && row.len() == next.len() {
                         (false, next)
+                    } else {
+                        (true, next)
                     }
                 });
 
@@ -80,7 +80,7 @@ impl<T: MatrixNumber> Matrix<T> {
                     .collect::<Option<Vec<T>>>()
             })
             .collect::<Option<Vec<Vec<T>>>>()
-            .ok_or(anyhow::anyhow!("Operation failed!"))?;
+            .ok_or_else(|| anyhow::anyhow!("Operation failed!"))?;
         Ok(Self::new(data))
     }
 
@@ -149,11 +149,14 @@ impl<T: MatrixNumber + CheckedNeg> CheckedNeg for Matrix<T> {
     }
 }
 
-impl<T: MatrixNumber + Neg> Neg for Matrix<T> {
+impl<T: MatrixNumber + Neg> Neg for Matrix<T>
+where
+    T: Neg<Output = T>,
+{
     type Output = Self;
 
     fn neg(self) -> Self::Output {
-        self.checked_operation(|a| Some(-a))
+        self.checked_operation(|a| Some(-a.clone()))
             .expect("Negation failed!")
     }
 }
@@ -181,5 +184,11 @@ mod tests {
     fn test_simple_addition() {
         let m = Matrix::<i32>::new(vec![vec![1, 2, 3], vec![4, 5, 6]]);
         let n = Matrix::<i32>::new(vec![vec![1, 2, 3], vec![4, 5, 6]]);
+
+        let result = m + n;
+        assert_eq!(
+            result.to_latex(),
+            r"\begin{bmatrix}2 & 4 & 6\\8 & 10 & 12\end{bmatrix}"
+        );
     }
 }
