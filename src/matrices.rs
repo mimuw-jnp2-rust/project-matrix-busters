@@ -136,13 +136,13 @@ impl<T: MatrixNumber> Matrix<T> {
 
         Ok(Aftermath {
             result: self,
-            steps: steps,
+            steps,
         })
     }
 
     fn check_shape(&self, other: &Self) -> anyhow::Result<()> {
         if self.data.len() != other.data.len() {
-            return Err(anyhow::anyhow!("Matrices have different number of rows!"));
+            anyhow::bail!("Matrices have different number of rows!");
         }
 
         if self.data.is_empty() {
@@ -162,9 +162,7 @@ impl<T: MatrixNumber> Matrix<T> {
                 });
 
         if mismatch {
-            return Err(anyhow::anyhow!(
-                "Matrices have different number of columns!"
-            ));
+            anyhow::bail!("Matrices have different number of columns!");
         }
 
         let shape_mismatch = self
@@ -174,7 +172,7 @@ impl<T: MatrixNumber> Matrix<T> {
             .any(|(row1, row2)| row1.len() != row2.len());
 
         if shape_mismatch {
-            return Err(anyhow::anyhow!("Matrices have different shapes!"));
+            anyhow::bail!("Matrices have different shapes!");
         }
 
         Ok(())
