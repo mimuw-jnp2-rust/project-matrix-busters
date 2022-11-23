@@ -146,8 +146,7 @@ impl<T: MatrixNumber> Matrix<T> {
         }
 
         if self.data.is_empty() {
-            return Ok(())
-            ;
+            return Ok(());
         }
 
         let (mismatch, _) =
