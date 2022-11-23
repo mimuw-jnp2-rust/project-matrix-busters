@@ -14,6 +14,14 @@ impl LaTeXable for Rational64 {
             ),
         }
     }
+
+    fn to_latex_single(&self) -> String {
+        if self.is_positive() {
+            self.to_latex()
+        } else {
+            format!(r"\left({}\right)", self.to_latex())
+        }
+    }
 }
 
 #[cfg(test)]
