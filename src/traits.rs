@@ -23,13 +23,17 @@ macro_rules! to_string_to_latex {
                 fn to_latex(&self) -> String {
                     self.to_string()
                 }
+
+                fn to_latex_single(&self) -> String {
+                    self.to_string()
+                }
             }
         )*
     }
 }
 
 // We add LaTeX support for all the basic types
-to_string_to_latex!(i8, i16, i32, i64, i128, isize, u8, u16, u32, u64, u128, usize);
+to_string_to_latex!(i8, i16, i32, i64, i128, isize);
 
 #[cfg(test)]
 mod tests {
@@ -50,6 +54,6 @@ mod tests {
             }
         }
 
-        test_matrix_number!(i8, i16, i32, i64, i128, isize, u8, u16, u32, u64, u128, usize);
+        test_matrix_number!(i8, i16, i32, i64, i128, isize);
     }
 }

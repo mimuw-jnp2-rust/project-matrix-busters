@@ -22,6 +22,27 @@ impl<T: MatrixNumber> Matrix<T> {
         Self { data }
     }
 
+    fn filled<F>((h, w): (usize, usize), supp: F) -> Self
+    where
+        F: Fn(usize, usize) -> T,
+    {
+        let mut res = Self::zeros((h, w)).data;
+        for i in 0..h {
+            for j in 0..w {
+                res[i][j] = res[i][j].clone() + supp(i, j);
+            }
+        }
+        Self::new(res)
+    }
+
+    fn zeros((h, w): (usize, usize)) -> Self {
+        let mut res = vec![];
+        for _ in 0..h {
+            res.push(vec![T::zero(); w]);
+        }
+        Self::new(res)
+    }
+
     fn echelon(mut self) -> anyhow::Result<Aftermath<T>> {
         const CONTEXT: &str = "Calculations error!";
 
@@ -140,15 +161,7 @@ impl<T: MatrixNumber> Matrix<T> {
         })
     }
 
-    fn check_shape(&self, other: &Self) -> anyhow::Result<()> {
-        if self.data.len() != other.data.len() {
-            anyhow::bail!("Matrices have different number of rows!");
-        }
-
-        if self.data.is_empty() {
-            return Ok(());
-        }
-
+    fn get_shape(&self) -> anyhow::Result<(usize, usize)> {
         let (mismatch, _) =
             self.data
                 .iter()
@@ -162,20 +175,30 @@ impl<T: MatrixNumber> Matrix<T> {
                 });
 
         if mismatch {
-            anyhow::bail!("Matrices have different number of columns!");
+            anyhow::bail!("Invalid matrix! Bad shape!");
         }
 
-        let shape_mismatch = self
-            .data
-            .iter()
-            .zip(other.data.iter())
-            .any(|(row1, row2)| row1.len() != row2.len());
+        Ok((self.data.len(), self.data[0].len()))
+    }
 
-        if shape_mismatch {
-            anyhow::bail!("Matrices have different shapes!");
+    fn check_shape(&self, other: &Self) -> anyhow::Result<()> {
+        let self_shape = self.get_shape()?;
+        let other_shape = other.get_shape()?;
+        if self_shape == other_shape {
+            Ok(())
+        } else {
+            anyhow::bail!("Matrices have different shapes! {self_shape:?} != {other_shape:?}");
         }
+    }
 
-        Ok(())
+    fn check_shape_for_mul(&self, other: &Self) -> anyhow::Result<()> {
+        let self_shape = self.get_shape()?;
+        let other_shape = other.get_shape()?;
+        if self_shape.1 == other_shape.0 {
+            Ok(())
+        } else {
+            anyhow::bail!("Matrices have incompatible shapes! {self_shape:?} != {other_shape:?}");
+        }
     }
 
     fn checked_operation_on_two<F>(&self, other: &Self, operation: F) -> anyhow::Result<Self>
@@ -207,8 +230,6 @@ impl<T: MatrixNumber> Matrix<T> {
         self.checked_operation_on_two(self, |a, _| operation(a))
     }
 }
-
-// TODO: impl CheckedAdd, CheckedSub, CheckedMul
 
 impl<T: MatrixNumber> LaTeXable for Matrix<T> {
     fn to_latex(&self) -> String {
@@ -291,7 +312,19 @@ impl<T: MatrixNumber> Mul<Self> for Matrix<T> {
 
 impl<T: MatrixNumber> CheckedMul for Matrix<T> {
     fn checked_mul(&self, v: &Self) -> Option<Self> {
-        todo!("Matrix multiplication not implemented!")
+        self.check_shape_for_mul(v).ok()?;
+        let (h, e) = self.get_shape().unwrap();
+        let (_, w) = v.get_shape().unwrap();
+
+        let mut res = Matrix::<T>::zeros((h, w)).data;
+        for i in 0..h {
+            for j in 0..w {
+                for k in 0..e {
+                    res[i][j] = res[i][j].clone() + self.data[i][k].clone() * v.data[k][j].clone();
+                }
+            }
+        }
+        Some(Self::new(res))
     }
 }
 
@@ -302,14 +335,6 @@ impl<T: MatrixNumber> Mul<T> for Matrix<T> {
     fn mul(self, rhs: T) -> Self::Output {
         self.checked_operation(|a| Some(a.clone() * rhs.clone()))
             .expect("Scalar multiplication failed!")
-    }
-
-    fn to_latex_single(&self) -> String {
-        if self.is_positive() {
-            self.to_latex()
-        } else {
-            format!(r"\left({}\right)", self.to_latex())
-        }
     }
 }
 
@@ -404,7 +429,7 @@ mod tests {
         assert_eq!(aftermath.result.to_latex(), id.to_latex());
         assert_eq!(
             aftermath.steps,
-            vec![r"\begin{bmatrix}1 & 0\\0 & 1\end{bmatrix}",]
+            vec![r"\begin{bmatrix}1 & 0\\0 & 1\end{bmatrix}"]
         );
     }
 
