@@ -27,9 +27,10 @@ impl<T: MatrixNumber> Matrix<T> {
         F: Fn(usize, usize) -> T,
     {
         let mut res = Self::zeros((h, w)).data;
-        for i in 0..h {
-            for j in 0..w {
-                res[i][j] = res[i][j].clone() + supp(i, j);
+        for (i, item) in res.iter_mut().enumerate() {
+            for (j, item_item) in item.iter_mut().enumerate() {
+                let temp = std::mem::replace(item_item,T::zero());
+                let _ = std::mem::replace(item_item, temp + supp(i, j));
             }
         }
         Self::new(res)
@@ -313,14 +314,14 @@ impl<T: MatrixNumber> Mul<Self> for Matrix<T> {
 impl<T: MatrixNumber> CheckedMul for Matrix<T> {
     fn checked_mul(&self, v: &Self) -> Option<Self> {
         self.check_shape_for_mul(v).ok()?;
-        let (h, e) = self.get_shape().unwrap();
+        let (h, _) = self.get_shape().unwrap();
         let (_, w) = v.get_shape().unwrap();
 
         let mut res = Matrix::<T>::zeros((h, w)).data;
-        for i in 0..h {
+        for (i, item) in self.data.iter().enumerate() {
             for j in 0..w {
-                for k in 0..e {
-                    res[i][j] = res[i][j].clone() + self.data[i][k].clone() * v.data[k][j].clone();
+                for (k, item_item) in item.iter().enumerate() {
+                    res[i][j] = res[i][j].clone() + item_item.clone() * v.data[k][j].clone();
                 }
             }
         }
