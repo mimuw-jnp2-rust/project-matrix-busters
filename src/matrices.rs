@@ -2,8 +2,8 @@
 
 use crate::traits::LaTeXable;
 use crate::traits::MatrixNumber;
-use num_traits::{CheckedAdd, CheckedNeg, CheckedSub};
-use std::ops::{Add, Neg, Sub};
+use num_traits::{CheckedAdd, CheckedMul, CheckedNeg, CheckedSub};
+use std::ops::{Add, Mul, Neg, Sub};
 
 struct Matrix<T: MatrixNumber> {
     data: Vec<Vec<T>>,
@@ -161,9 +161,28 @@ where
     }
 }
 
-impl LaTeXable for i32 {
-    fn to_latex(&self) -> String {
-        self.to_string()
+impl<T: MatrixNumber> Mul<Self> for Matrix<T> {
+    type Output = Self;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        self.checked_mul(&rhs)
+            .expect("Matrix multiplication failed!")
+    }
+}
+
+impl<T: MatrixNumber> CheckedMul for Matrix<T> {
+    fn checked_mul(&self, v: &Self) -> Option<Self> {
+        todo!("Matrix multiplication not implemented!")
+    }
+}
+
+// Scalar multiplication
+impl<T: MatrixNumber> Mul<T> for Matrix<T> {
+    type Output = Self;
+
+    fn mul(self, rhs: T) -> Self::Output {
+        self.checked_operation(|a| Some(a.clone() * rhs.clone()))
+            .expect("Scalar multiplication failed!")
     }
 }
 
@@ -186,6 +205,52 @@ mod tests {
         let n = Matrix::<i32>::new(vec![vec![1, 2, 3], vec![4, 5, 6]]);
 
         let result = m + n;
+        assert_eq!(
+            result.to_latex(),
+            r"\begin{bmatrix}2 & 4 & 6\\8 & 10 & 12\end{bmatrix}"
+        );
+    }
+
+    #[test]
+    fn test_simple_subtraction() {
+        let m = Matrix::<i32>::new(vec![vec![1, 2, 3], vec![4, 5, 6]]);
+        let n = Matrix::<i32>::new(vec![vec![1, 2, 3], vec![4, 5, 6]]);
+
+        let result = m - n;
+        assert_eq!(
+            result.to_latex(),
+            r"\begin{bmatrix}0 & 0 & 0\\0 & 0 & 0\end{bmatrix}"
+        );
+    }
+
+    #[test]
+    fn test_simple_negation() {
+        let m = Matrix::<i32>::new(vec![vec![1, 2, 3], vec![4, 5, 6]]);
+
+        let result = -m;
+        assert_eq!(
+            result.to_latex(),
+            r"\begin{bmatrix}-1 & -2 & -3\\-4 & -5 & -6\end{bmatrix}"
+        );
+    }
+
+    #[test]
+    fn test_simple_multiplication() {
+        let m = Matrix::<i32>::new(vec![vec![1, 2, 3], vec![4, 5, 6]]);
+        let n = Matrix::<i32>::new(vec![vec![1, 2], vec![3, 4], vec![5, 6]]);
+
+        let result = m * n;
+        assert_eq!(
+            result.to_latex(),
+            r"\begin{bmatrix}22 & 28\\49 & 64\end{bmatrix}"
+        );
+    }
+
+    #[test]
+    fn test_simple_multiplication_with_scalar() {
+        let m = Matrix::<i32>::new(vec![vec![1, 2, 3], vec![4, 5, 6]]);
+
+        let result = m * 2;
         assert_eq!(
             result.to_latex(),
             r"\begin{bmatrix}2 & 4 & 6\\8 & 10 & 12\end{bmatrix}"
