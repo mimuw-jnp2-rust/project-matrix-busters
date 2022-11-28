@@ -29,7 +29,7 @@ impl<T: MatrixNumber> Matrix<T> {
         let mut res = Self::zeros((h, w)).data;
         for (i, item) in res.iter_mut().enumerate() {
             for (j, item_item) in item.iter_mut().enumerate() {
-                let temp = std::mem::replace(item_item,T::zero());
+                let temp = std::mem::replace(item_item, T::zero());
                 let _ = std::mem::replace(item_item, temp + supp(i, j));
             }
         }
