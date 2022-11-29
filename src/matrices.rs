@@ -169,23 +169,19 @@ impl<T: MatrixNumber> Matrix<T> {
     }
 
     fn get_shape(&self) -> anyhow::Result<(usize, usize)> {
-        let (mismatch, _) =
-            self.data
-                .iter()
-                .skip(1)
-                .fold((false, &self.data[0]), |(acc, row), next| {
-                    if !acc && row.len() == next.len() {
-                        (false, next)
-                    } else {
-                        (true, next)
-                    }
-                });
+        let (mismatch, row_len) = self
+            .data
+            .iter()
+            .skip(1)
+            .fold((false, self.data[0].len()), |(acc, row_len), next| {
+                (acc || row_len != next.len(), row_len)
+            });
 
         if mismatch {
             anyhow::bail!("Invalid matrix! Bad shape!");
         }
 
-        Ok((self.data.len(), self.data[0].len()))
+        Ok((self.data.len(), row_len))
     }
 
     fn check_shape(&self, other: &Self) -> anyhow::Result<()> {
