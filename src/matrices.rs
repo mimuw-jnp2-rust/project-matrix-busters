@@ -22,6 +22,12 @@ impl<T: MatrixNumber> Matrix<T> {
         Self { data }
     }
 
+    fn new_safe(data: Vec<Vec<T>>) -> Self {
+        let matrix = Self { data };
+        matrix.get_shape().expect("Invalid matrix form");
+        matrix
+    }
+
     fn filled<F>((h, w): (usize, usize), supp: F) -> Self
     where
         F: Fn(usize, usize) -> T,
@@ -351,7 +357,7 @@ macro_rules! rv {
 #[macro_export]
 macro_rules! rm {
     ($($($x:expr),+ $(,)?);+ $(;)?) => (
-        Matrix::<Rational64>::new(vec![
+        Matrix::<Rational64>::new_safe(vec![
             $(rv!($($x),+)),+
         ])
     );
@@ -360,7 +366,7 @@ macro_rules! rm {
 #[macro_export]
 macro_rules! im {
     ($($($x:expr),+ $(,)?);+ $(;)?) => (
-        Matrix::new(vec![
+        Matrix::new_safe(vec![
             $(vec![
                 $($x),+
             ]),+
