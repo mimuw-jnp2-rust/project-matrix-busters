@@ -339,15 +339,45 @@ impl<T: MatrixNumber> Mul<T> for Matrix<T> {
     }
 }
 
+#[macro_export]
+macro_rules! rv {
+    ($($x:expr),+ $(,)?) => (
+        vec![
+            $(ri!($x)),+
+        ]
+    );
+}
+
+#[macro_export]
+macro_rules! rm {
+    ($($($x:expr),+ $(,)?);+ $(;)?) => (
+        Matrix::<Rational64>::new(vec![
+            $(rv!($($x),+)),+
+        ])
+    );
+}
+
+#[macro_export]
+macro_rules! im {
+    ($($($x:expr),+ $(,)?);+ $(;)?) => (
+        Matrix::new(vec![
+            $(vec![
+                $($x),+
+            ]),+
+        ])
+    );
+}
+
 #[cfg(test)]
 mod tests {
+    use crate::ri;
     use num_rational::Rational64;
 
     use super::*;
 
     #[test]
     fn test_matrix() {
-        let matrix = Matrix::<i32>::new(vec![vec![1, 2, 3], vec![4, 5, 6]]);
+        let matrix = im![1, 2, 3; 4, 5, 6];
         assert_eq!(
             matrix.to_latex(),
             r"\begin{bmatrix}1 & 2 & 3\\4 & 5 & 6\end{bmatrix}"
@@ -356,8 +386,8 @@ mod tests {
 
     #[test]
     fn test_simple_addition() {
-        let m = Matrix::<i32>::new(vec![vec![1, 2, 3], vec![4, 5, 6]]);
-        let n = Matrix::<i32>::new(vec![vec![1, 2, 3], vec![4, 5, 6]]);
+        let m = im![1, 2, 3; 4, 5, 6];
+        let n = im![1, 2, 3; 4, 5, 6];
 
         let result = m + n;
         assert_eq!(
@@ -368,14 +398,8 @@ mod tests {
 
     #[test]
     fn test_echelon_rational1() {
-        let m = Matrix::<Rational64>::new(vec![
-            vec![Rational64::from_integer(-2), Rational64::from_integer(1)],
-            vec![Rational64::from_integer(1), Rational64::from_integer(1)],
-        ]);
-        let expected = Matrix::<Rational64>::new(vec![
-            vec![Rational64::from_integer(1), Rational64::from_integer(0)],
-            vec![Rational64::from_integer(0), Rational64::from_integer(1)],
-        ]);
+        let m = rm![-2, 1; 1, 1];
+        let expected = rm![1, 0; 0, 1];
 
         let aftermath = m.echelon().unwrap();
 
@@ -394,14 +418,8 @@ mod tests {
 
     #[test]
     fn test_echelon_rational2() {
-        let m = Matrix::<Rational64>::new(vec![
-            vec![Rational64::from_integer(4), Rational64::from_integer(3)],
-            vec![Rational64::from_integer(2), Rational64::from_integer(1)],
-        ]);
-        let expected = Matrix::<Rational64>::new(vec![
-            vec![Rational64::from_integer(1), Rational64::from_integer(0)],
-            vec![Rational64::from_integer(0), Rational64::from_integer(1)],
-        ]);
+        let m = rm![4, 3; 2, 1];
+        let expected = rm![1, 0; 0, 1];
 
         let aftermath = m.echelon().unwrap();
 
@@ -420,10 +438,7 @@ mod tests {
 
     #[test]
     fn test_echelon_rational3() {
-        let id = Matrix::<Rational64>::new(vec![
-            vec![Rational64::from_integer(1), Rational64::from_integer(0)],
-            vec![Rational64::from_integer(0), Rational64::from_integer(1)],
-        ]);
+        let id = rm![1, 0; 0, 1];
 
         let aftermath = id.clone().echelon().unwrap();
 
@@ -436,40 +451,8 @@ mod tests {
 
     #[test]
     fn test_echelon_rational4() {
-        let m = Matrix::<Rational64>::new(vec![
-            vec![
-                Rational64::from_integer(1),
-                Rational64::from_integer(-1),
-                Rational64::from_integer(1),
-            ],
-            vec![
-                Rational64::from_integer(1),
-                Rational64::from_integer(1),
-                Rational64::from_integer(-1),
-            ],
-            vec![
-                Rational64::from_integer(-1),
-                Rational64::from_integer(1),
-                Rational64::from_integer(-1),
-            ],
-        ]);
-        let expected = Matrix::<Rational64>::new(vec![
-            vec![
-                Rational64::from_integer(1),
-                Rational64::from_integer(0),
-                Rational64::from_integer(0),
-            ],
-            vec![
-                Rational64::from_integer(0),
-                Rational64::from_integer(1),
-                Rational64::from_integer(-1),
-            ],
-            vec![
-                Rational64::from_integer(0),
-                Rational64::from_integer(0),
-                Rational64::from_integer(0),
-            ],
-        ]);
+        let m = rm![1, -1, 1; 1, 1, -1; -1, 1, -1];
+        let expected = rm![1, 0, 0; 0, 1, -1; 0, 0, 0];
 
         let aftermath = m.echelon().unwrap();
 
@@ -487,8 +470,8 @@ mod tests {
 
     #[test]
     fn test_simple_subtraction() {
-        let m = Matrix::<i32>::new(vec![vec![1, 2, 3], vec![4, 5, 6]]);
-        let n = Matrix::<i32>::new(vec![vec![1, 2, 3], vec![4, 5, 6]]);
+        let m = im![1, 2, 3; 4, 5, 6];
+        let n = im![1, 2, 3; 4, 5, 6];
 
         let result = m - n;
         assert_eq!(
@@ -499,7 +482,7 @@ mod tests {
 
     #[test]
     fn test_simple_negation() {
-        let m = Matrix::<i32>::new(vec![vec![1, 2, 3], vec![4, 5, 6]]);
+        let m = im![1, 2, 3; 4, 5, 6];
 
         let result = -m;
         assert_eq!(
@@ -510,8 +493,8 @@ mod tests {
 
     #[test]
     fn test_simple_multiplication() {
-        let m = Matrix::<i32>::new(vec![vec![1, 2, 3], vec![4, 5, 6]]);
-        let n = Matrix::<i32>::new(vec![vec![1, 2], vec![3, 4], vec![5, 6]]);
+        let m = im![1, 2, 3; 4, 5, 6];
+        let n = im![1, 2; 3, 4; 5, 6];
 
         let result = m * n;
         assert_eq!(
@@ -522,9 +505,20 @@ mod tests {
 
     #[test]
     fn test_simple_multiplication_with_scalar() {
-        let m = Matrix::<i32>::new(vec![vec![1, 2, 3], vec![4, 5, 6]]);
+        let m = im![1, 2, 3; 4, 5, 6];
 
         let result = m * 2;
+        assert_eq!(
+            result.to_latex(),
+            r"\begin{bmatrix}2 & 4 & 6\\8 & 10 & 12\end{bmatrix}"
+        );
+    }
+
+    #[test]
+    fn test_simple_multiplication_with_rational() {
+        let m = rm![1, 2, 3; 4, 5, 6];
+
+        let result = m * ri!(2);
         assert_eq!(
             result.to_latex(),
             r"\begin{bmatrix}2 & 4 & 6\\8 & 10 & 12\end{bmatrix}"

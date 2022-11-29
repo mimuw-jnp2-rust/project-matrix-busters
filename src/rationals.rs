@@ -24,6 +24,15 @@ impl LaTeXable for Rational64 {
     }
 }
 
+#[macro_export]
+macro_rules! ri {
+    ($($t:expr),*) => {
+        $(
+            Rational64::from_integer($t)
+        )*
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
