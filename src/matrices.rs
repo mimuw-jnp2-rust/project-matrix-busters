@@ -195,12 +195,12 @@ impl<T: MatrixNumber> Matrix<T> {
     }
 
     fn check_shape_for_mul(&self, other: &Self) -> anyhow::Result<()> {
-        let self_shape = self.get_shape()?;
-        let other_shape = other.get_shape()?;
-        if self_shape.1 == other_shape.0 {
+        let (_,self_w) = self.get_shape()?;
+        let (other_h, _) = other.get_shape()?;
+        if self_w == other_h {
             Ok(())
         } else {
-            anyhow::bail!("Matrices have incompatible shapes! {self_shape:?} != {other_shape:?}");
+            anyhow::bail!("Matrices have incompatible shapes! {self_w:?} != {other_h:?}");
         }
     }
 
