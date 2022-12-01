@@ -195,7 +195,7 @@ impl<T: MatrixNumber> Matrix<T> {
     }
 
     fn check_shape_for_mul(&self, other: &Self) -> anyhow::Result<()> {
-        let (_,self_w) = self.get_shape()?;
+        let (_, self_w) = self.get_shape()?;
         let (other_h, _) = other.get_shape()?;
         if self_w == other_h {
             Ok(())
