@@ -4,7 +4,9 @@ use num_traits::Num;
 
 pub trait LaTeXable {
     fn to_latex(&self) -> String;
-    fn to_latex_single(&self) -> String;
+    fn to_latex_single(&self) -> String {
+        self.to_latex()
+    }
 }
 
 pub trait CheckedOps: CheckedAdd + CheckedSub + CheckedMul + CheckedDiv {}
