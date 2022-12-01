@@ -1,5 +1,3 @@
-extern crate core;
-
 mod matrices;
 mod rationals;
 mod traits;
