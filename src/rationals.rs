@@ -14,6 +14,23 @@ impl LaTeXable for Rational64 {
             ),
         }
     }
+
+    fn to_latex_single(&self) -> String {
+        if self.is_positive() {
+            self.to_latex()
+        } else {
+            format!(r"\left({}\right)", self.to_latex())
+        }
+    }
+}
+
+#[macro_export]
+macro_rules! ri {
+    ($($t:expr),*) => {
+        $(
+            Rational64::from_integer($t)
+        )*
+    }
 }
 
 #[cfg(test)]
@@ -30,13 +47,13 @@ mod tests {
 
     #[test]
     fn test_negative_fraction() {
-        let r = Rational64::new(-1 * 42, 2 * 42);
+        let r = Rational64::new(-42, 2 * 42);
         assert_eq!(r.to_latex(), "-\\frac{1}{2}");
     }
 
     #[test]
     fn test_negative_denominator() {
-        let r = Rational64::new(1 * 151, -2 * 151);
+        let r = Rational64::new(151, -2 * 151);
         assert_eq!(r.to_latex(), "-\\frac{1}{2}");
     }
 
