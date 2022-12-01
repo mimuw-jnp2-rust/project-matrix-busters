@@ -47,13 +47,13 @@ mod tests {
 
     #[test]
     fn test_negative_fraction() {
-        let r = Rational64::new(-1 * 42, 2 * 42);
+        let r = Rational64::new(-42, 2 * 42);
         assert_eq!(r.to_latex(), "-\\frac{1}{2}");
     }
 
     #[test]
     fn test_negative_denominator() {
-        let r = Rational64::new(1 * 151, -2 * 151);
+        let r = Rational64::new(151, -2 * 151);
         assert_eq!(r.to_latex(), "-\\frac{1}{2}");
     }
 

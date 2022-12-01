@@ -25,10 +25,6 @@ macro_rules! to_string_to_latex {
                 fn to_latex(&self) -> String {
                     self.to_string()
                 }
-
-                fn to_latex_single(&self) -> String {
-                    self.to_string()
-                }
             }
         )*
     }
