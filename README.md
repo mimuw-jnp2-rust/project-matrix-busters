@@ -25,6 +25,8 @@ One of its most powerful features is the ability to generate `LaTeX` code for th
 - [ ] 2.2. Extend the number representation module to allow for more sophisticated numbers.
 - [ ] 2.3. Implement complex operations on matrices.
 
+and all other things added as GH Issues.
+
 ---
 
 ## GUI Preview
