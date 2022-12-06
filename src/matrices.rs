@@ -6,7 +6,7 @@ use anyhow::Context;
 use num_traits::{CheckedAdd, CheckedMul, CheckedNeg, CheckedSub};
 use std::ops::{Add, Mul, Neg, Sub};
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Matrix<T: MatrixNumber> {
     data: Vec<Vec<T>>,
 }

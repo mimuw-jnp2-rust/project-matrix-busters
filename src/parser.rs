@@ -29,22 +29,22 @@ impl<'a> Tokenizer<'a> {
 
     fn next_token(&mut self) -> anyhow::Result<Option<Token>> {
         self.raw = self.raw.trim_start();
-        if self.raw.len() == 0 {
+        if self.raw.is_empty() {
             Ok(None)
-        } else if self.raw.starts_with("(") {
+        } else if self.raw.starts_with('(') {
             self.raw = &self.raw[1..];
             Ok(Some(Token::LeftBracket))
-        } else if self.raw.starts_with(")") {
+        } else if self.raw.starts_with(')') {
             self.raw = &self.raw[1..];
             Ok(Some(Token::RightBracket))
         } else if self.raw.starts_with(|c| "+-*/".contains(c)) {
-            let op = self.raw.chars().nth(0).unwrap(); // todo: get rid of unwrap
+            let op = self.raw.chars().next().unwrap(); // todo: get rid of unwrap
             self.raw = &self.raw[1..];
             Ok(Some(Token::BinaryOp(op)))
-        } else if self.raw.starts_with(|c: char| c.is_digit(10)) {
+        } else if self.raw.starts_with(|c: char| c.is_ascii_digit()) {
             let i = self
                 .raw
-                .find(|c: char| !c.is_digit(10))
+                .find(|c: char| !c.is_ascii_digit())
                 .unwrap_or(self.raw.len());
             let num = &self.raw[..i];
             self.raw = &self.raw[i..];

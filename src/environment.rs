@@ -30,7 +30,7 @@ impl Identifier {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Type<T: MatrixNumber> {
     Scalar(T),
     Matrix(Matrix<T>),
