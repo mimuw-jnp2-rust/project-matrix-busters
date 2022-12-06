@@ -3,7 +3,7 @@
 use std::collections::VecDeque;
 
 use anyhow::{bail, Context};
-use num_traits::{CheckedAdd, CheckedMul};
+use num_traits::{CheckedAdd, CheckedMul, CheckedSub};
 
 use crate::environment::{Environment, Identifier, Type};
 use crate::matrices::Matrix;
@@ -86,11 +86,22 @@ fn binary_op<T: MatrixNumber>(left: Type<T>, right: Type<T>, op: char) -> anyhow
             (Type::Scalar(l), Type::Scalar(r)) => wrap_scalar(l.checked_add(&r)),
             _ => bail!("Adding scalar to matrix is not supported!"),
         },
+        '-' => match (left, right) {
+            (Type::Matrix(l), Type::Matrix(r)) => wrap_matrix(l.checked_sub(&r)),
+            (Type::Scalar(l), Type::Scalar(r)) => wrap_scalar(l.checked_sub(&r)),
+            _ => bail!("Substraction of scalar and matrix is not supported!"),
+        },
         '*' => match (left, right) {
             (Type::Matrix(l), Type::Matrix(r)) => wrap_matrix(l.checked_mul(&r)),
             (Type::Scalar(l), Type::Scalar(r)) => wrap_scalar(l.checked_mul(&r)),
             _ => bail!("Tudruj co z checked_mul macierzy i skalara???"),
         },
+        '/' => match (left, right) {
+            (Type::Scalar(l), Type::Scalar(r)) => wrap_scalar(l.checked_div(&r)),
+            (Type::Matrix(_), Type::Matrix(_)) => bail!("WTF dividing by matrix? You should use the `inv` function (not implemented yet, wait for it...)"),
+            (Type::Matrix(_), Type::Scalar(_)) => bail!("Diving matrix by scalar is not supported yet..."),
+            (Type::Scalar(_), Type::Matrix(_)) => bail!("Diving scalar by matrix does not make sense!"),
+        }
         _ => unimplemented!(),
     }
 }
@@ -186,14 +197,84 @@ pub fn parse_expression<T: MatrixNumber>(
 
 #[cfg(test)]
 mod tests {
+    use num_rational::Rational64;
+
+    use crate::im;
+
     use super::*;
 
     #[test]
-    fn test_simple() {
+    fn test_expression_simple() {
         let mut env = Environment::new();
         env.insert(Identifier::new("a").unwrap(), Type::Scalar(2));
         env.insert(Identifier::new("b").unwrap(), Type::Scalar(3));
         assert_eq!(parse_expression("a+b*b", &env).unwrap(), Type::Scalar(11));
         assert_eq!(parse_expression("(a+b)*b", &env).unwrap(), Type::Scalar(15));
+    }
+
+    #[test]
+    fn test_expression_numbers() {
+        let env = Environment::new();
+
+        let test_expr = |raw, a, b| {
+            assert_eq!(
+                parse_expression(raw, &env).unwrap(),
+                Type::Scalar(Rational64::new(a, b))
+            )
+        };
+
+        test_expr("2+2", 4, 1);
+        test_expr("(2-6*9)/5", -52, 5);
+        test_expr("2-6*9/5", -44, 5);
+        test_expr("(2-6)*9/5", -36, 5);
+        test_expr("(2-6*9/5)", -44, 5);
+    }
+
+    #[test]
+    fn test_expression_identifiers() {
+        let mut env = Environment::new();
+        env.insert(
+            Identifier::new("_i_love_rust_69").unwrap(),
+            Type::Scalar(69),
+        );
+        env.insert(
+            Identifier::new("_i_love_rust_42").unwrap(),
+            Type::Scalar(42),
+        );
+        assert_eq!(
+            parse_expression("_i_love_rust_69-_i_love_rust_42", &env).unwrap(),
+            Type::Scalar(27)
+        );
+    }
+
+    #[test]
+    fn test_expression_whitespaces() {
+        let mut env = Environment::new();
+        env.insert(Identifier::new("a").unwrap(), Type::Scalar(2));
+        assert_eq!(
+            parse_expression("a + 1+2\t*a", &env).unwrap(),
+            Type::Scalar(7)
+        );
+    }
+
+    #[test]
+    fn test_expression_matrices() {
+        let mut env = Environment::new();
+        let a = im![1, 2, 3; 4, 5, 6];
+        let b = im![1, 2; 3, 4; 5, 6];
+        let i2 = im![1, 0; 0, 1];
+
+        env.insert(Identifier::new("A").unwrap(), Type::Matrix(a.clone()));
+        env.insert(Identifier::new("B").unwrap(), Type::Matrix(b.clone()));
+        env.insert(Identifier::new("Id_2").unwrap(), Type::Matrix(i2.clone()));
+
+        let test_expr = |raw, expected| {
+            assert_eq!(parse_expression(raw, &env).unwrap(), Type::Matrix(expected))
+        };
+
+        test_expr("A+A", a.clone() + a.clone());
+        test_expr("A*B", a.clone() * b.clone());
+        test_expr("A*B*Id_2", a.clone() * b.clone() * i2.clone());
+        test_expr("Id_2-Id_2", i2.clone() - i2.clone());
     }
 }

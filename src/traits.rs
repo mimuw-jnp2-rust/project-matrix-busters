@@ -1,4 +1,4 @@
-use num_traits::{CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, Signed, FromPrimitive};
+use num_traits::{CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, FromPrimitive, Signed};
 
 use num_traits::Num;
 

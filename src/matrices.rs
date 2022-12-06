@@ -22,7 +22,7 @@ impl<T: MatrixNumber> Matrix<T> {
         Self { data }
     }
 
-    fn new_safe(data: Vec<Vec<T>>) -> Self {
+    pub fn new_safe(data: Vec<Vec<T>>) -> Self {
         let matrix = Self { data };
         matrix.get_shape().expect("Invalid matrix form");
         matrix
