@@ -334,7 +334,8 @@ impl<T: MatrixNumber> Mul<T> for Matrix<T> {
     type Output = Self;
 
     fn mul(self, rhs: T) -> Self::Output {
-        self.checked_mul_scl(&rhs).expect("Matrix multiplication failed!")
+        self.checked_mul_scl(&rhs)
+            .expect("Matrix multiplication failed!")
     }
 }
 
