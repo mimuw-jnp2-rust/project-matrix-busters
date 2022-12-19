@@ -7,28 +7,28 @@ use num_traits::{CheckedAdd, CheckedMul, CheckedNeg, CheckedSub};
 use std::ops::{Add, Mul, Neg, Sub};
 
 #[derive(Debug, Clone)]
-struct Matrix<T: MatrixNumber> {
+pub struct Matrix<T: MatrixNumber> {
     data: Vec<Vec<T>>,
 }
 
 #[derive(Debug, Clone)]
-struct Aftermath<T: MatrixNumber> {
+pub struct Aftermath<T: MatrixNumber> {
     result: Matrix<T>,
     steps: Vec<String>,
 }
 
 impl<T: MatrixNumber> Matrix<T> {
-    fn new(data: Vec<Vec<T>>) -> Self {
+    pub fn new(data: Vec<Vec<T>>) -> Self {
         Self { data }
     }
 
-    fn new_safe(data: Vec<Vec<T>>) -> Self {
+    pub fn new_safe(data: Vec<Vec<T>>) -> Self {
         let matrix = Self { data };
         matrix.get_shape().expect("Invalid matrix form");
         matrix
     }
 
-    fn filled<F>((h, w): (usize, usize), supp: F) -> Self
+    pub fn filled<F>((h, w): (usize, usize), supp: F) -> Self
     where
         F: Fn(usize, usize) -> T,
     {
@@ -42,7 +42,7 @@ impl<T: MatrixNumber> Matrix<T> {
         Self::new(res)
     }
 
-    fn zeros((h, w): (usize, usize)) -> Self {
+    pub fn zeros((h, w): (usize, usize)) -> Self {
         let mut res = vec![];
         for _ in 0..h {
             res.push(vec![T::zero(); w]);
@@ -50,7 +50,7 @@ impl<T: MatrixNumber> Matrix<T> {
         Self::new(res)
     }
 
-    fn echelon(mut self) -> anyhow::Result<Aftermath<T>> {
+    pub fn echelon(mut self) -> anyhow::Result<Aftermath<T>> {
         const CONTEXT: &str = "Calculations error!";
 
         if self.data.is_empty() {
@@ -253,6 +253,21 @@ impl<T: MatrixNumber> LaTeXable for Matrix<T> {
 
     fn to_latex_single(&self) -> String {
         self.to_latex()
+    }
+}
+
+impl<T: MatrixNumber + ToString> ToString for Matrix<T> {
+    fn to_string(&self) -> String {
+        self.data
+            .iter()
+            .map(|row| {
+                row.iter()
+                    .map(|elem| elem.to_string())
+                    .collect::<Vec<_>>()
+                    .join(" ")
+            })
+            .collect::<Vec<_>>()
+            .join("\n")
     }
 }
 

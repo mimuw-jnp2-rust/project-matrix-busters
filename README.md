@@ -38,6 +38,17 @@ and all other things added as GH Issues.
 - [egui](https://crates.io/crates/egui) - (https://github.com/emilk/egui)
 - [num](https://docs.rs/num/latest/num/)
 
+---
+
+## Dependencies
+### Ubuntu
+```bash
+sudo apt-get install libfontconfig libfontconfig1-dev cmake
+```
+### Windows
+```bash
+# not tested
+```
 
 
 [#MieszkoGH]: https://github.com/mgr0dzicki
