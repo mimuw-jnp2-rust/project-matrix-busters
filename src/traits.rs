@@ -1,4 +1,5 @@
 use num_traits::{CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, FromPrimitive, Signed};
+use std::ops::Mul;
 
 use num_traits::Num;
 
@@ -7,6 +8,10 @@ pub trait LaTeXable {
     fn to_latex_single(&self) -> String {
         self.to_latex()
     }
+}
+
+pub trait CheckedMulScl<T: MatrixNumber>: Sized + Mul<Self, Output = Self> {
+    fn checked_mul_scl(&self, other: &T) -> Option<Self>;
 }
 
 pub trait CheckedOps: CheckedAdd + CheckedSub + CheckedMul + CheckedDiv {}

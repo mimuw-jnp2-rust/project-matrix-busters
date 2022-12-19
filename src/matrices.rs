@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
-use crate::traits::LaTeXable;
 use crate::traits::MatrixNumber;
+use crate::traits::{CheckedMulScl, LaTeXable};
 use anyhow::Context;
 use num_traits::{CheckedAdd, CheckedMul, CheckedNeg, CheckedSub};
 use std::ops::{Add, Mul, Neg, Sub};
@@ -308,8 +308,7 @@ impl<T: MatrixNumber> Mul<Self> for Matrix<T> {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self::Output {
-        self.checked_mul(&rhs)
-            .expect("Matrix multiplication failed!")
+        self::CheckedMul::checked_mul(&self, &rhs).expect("Matrix multiplication failed!")
     }
 }
 
@@ -331,13 +330,17 @@ impl<T: MatrixNumber> CheckedMul for Matrix<T> {
     }
 }
 
-// Scalar multiplication
 impl<T: MatrixNumber> Mul<T> for Matrix<T> {
     type Output = Self;
 
     fn mul(self, rhs: T) -> Self::Output {
-        self.checked_operation(|a| Some(a.clone() * rhs.clone()))
-            .expect("Scalar multiplication failed!")
+        self.checked_mul_scl(&rhs).expect("Matrix multiplication failed!")
+    }
+}
+
+impl<T: MatrixNumber> CheckedMulScl<T> for Matrix<T> {
+    fn checked_mul_scl(&self, other: &T) -> Option<Self> {
+        self.checked_operation(|a| a.checked_mul(other)).ok()
     }
 }
 

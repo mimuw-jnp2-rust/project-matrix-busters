@@ -7,7 +7,7 @@ use num_traits::{CheckedAdd, CheckedMul, CheckedSub};
 
 use crate::environment::{Environment, Identifier, Type};
 use crate::matrices::Matrix;
-use crate::traits::MatrixNumber;
+use crate::traits::{CheckedMulScl, MatrixNumber};
 
 #[derive(Debug)]
 enum Token {
@@ -38,7 +38,7 @@ impl<'a> Tokenizer<'a> {
             self.raw = &self.raw[1..];
             Ok(Some(Token::RightBracket))
         } else if self.raw.starts_with(|c| "+-*/".contains(c)) {
-            let op = self.raw.chars().next().unwrap(); // todo: get rid of unwrap
+            let op = self.raw.chars().next().unwrap();
             self.raw = &self.raw[1..];
             Ok(Some(Token::BinaryOp(op)))
         } else if self.raw.starts_with(|c: char| c.is_ascii_digit()) {
@@ -63,7 +63,7 @@ impl<'a> Tokenizer<'a> {
 
 #[derive(Debug)]
 enum WorkingToken<T: MatrixNumber> {
-    Type(Type<T>), // TODO: stop copying stuff...
+    Type(Type<T>),
     BinaryOp(char),
     LeftBracket,
     RightBracket,
@@ -94,7 +94,8 @@ fn binary_op<T: MatrixNumber>(left: Type<T>, right: Type<T>, op: char) -> anyhow
         '*' => match (left, right) {
             (Type::Matrix(l), Type::Matrix(r)) => wrap_matrix(l.checked_mul(&r)),
             (Type::Scalar(l), Type::Scalar(r)) => wrap_scalar(l.checked_mul(&r)),
-            _ => bail!("Tudruj co z checked_mul macierzy i skalara???"),
+            (Type::Matrix(l), Type::Scalar(r)) => wrap_matrix(l.checked_mul_scl(&r)),
+            (Type::Scalar(l), Type::Matrix(r)) => wrap_matrix(r.checked_mul_scl(&l)),
         },
         '/' => match (left, right) {
             (Type::Scalar(l), Type::Scalar(r)) => wrap_scalar(l.checked_div(&r)),
@@ -276,5 +277,45 @@ mod tests {
         test_expr("A*B", a.clone() * b.clone());
         test_expr("A*B*Id_2", a.clone() * b.clone() * i2.clone());
         test_expr("Id_2-Id_2", i2.clone() - i2.clone());
+    }
+
+    #[test]
+    fn test_expression_matrices_scalar() {
+        let mut env = Environment::new();
+        let a = im![1, 2, 3; 4, 5, 6];
+        let b = im![1, 2; 3, 4; 5, 6];
+        let i2 = im![1, 0; 0, 1];
+
+        env.insert(Identifier::new("A").unwrap(), Type::Matrix(a.clone()));
+        env.insert(Identifier::new("B").unwrap(), Type::Matrix(b.clone()));
+        env.insert(Identifier::new("Id_2").unwrap(), Type::Matrix(i2.clone()));
+        env.insert(Identifier::new("a").unwrap(), Type::Scalar(2));
+
+        let test_expr = |raw, expected| {
+            assert_eq!(parse_expression(raw, &env).unwrap(), Type::Matrix(expected))
+        };
+
+        test_expr("A+a*A", a.clone() + a.clone() * 2);
+        test_expr("A*2*B", a.clone() * b.clone() * 2);
+        test_expr("A*B*a*Id_2", a.clone() * b.clone() * i2.clone() * 2);
+        test_expr("2*Id_2-Id_2", i2.clone() * 2 - i2.clone());
+    }
+
+    #[test]
+    fn test_nested_multiplication() {
+        let mut env = Environment::new();
+        let fib = im![0, 1; 1, 1];
+
+        env.insert(Identifier::new("A").unwrap(), Type::Matrix(fib.clone()));
+
+        let test_expr = |raw, expected| {
+            assert_eq!(parse_expression(raw, &env).unwrap(), Type::Matrix(expected))
+        };
+
+        test_expr("A*A*A*A*A*A*A*A*A*A", im![34, 55; 55, 89]);
+        test_expr("A*A*A*A*(A*A*A)*A*A*A", im![34, 55; 55, 89]);
+        test_expr("A*A*A*A*(A*(A*A))*A*A*A", im![34, 55; 55, 89]);
+        test_expr("A*A*(A*A)*(A*(A*A))*A*A*A", im![34, 55; 55, 89]);
+        // test_expr("(A*)A*(A(*A))*(A*(A*A))*A*A**A", im![34, 55; 55, 89]); TODO: This should not pass the test, but it does.
     }
 }
