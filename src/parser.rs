@@ -123,6 +123,7 @@ pub fn parse_expression<T: MatrixNumber>(
     let mut tokenizer = Tokenizer::new(raw);
     let mut operators: VecDeque<WorkingToken<T>> = VecDeque::new();
     let mut outputs: VecDeque<WorkingToken<T>> = VecDeque::new();
+    let mut prev_token = None;
 
     fn precedence(c: &char) -> u8 {
         match c {
@@ -132,13 +133,34 @@ pub fn parse_expression<T: MatrixNumber>(
         }
     }
 
+    fn validate_neighbours(previous: &Option<Token>, current: &Token) -> bool {
+        match current {
+            Token::Integer(_) | Token::Identifier(_) | Token::LeftBracket => matches!(
+                previous,
+                None | Some(Token::LeftBracket) | Some(Token::BinaryOp(_))
+            ),
+            Token::BinaryOp(_) => matches!(
+                previous,
+                Some(Token::RightBracket) | Some(Token::Integer(_)) | Some(Token::Identifier(_))
+            ),
+            Token::RightBracket => matches!(
+                previous,
+                Some(Token::RightBracket) | Some(Token::Integer(_)) | Some(Token::Identifier(_))
+            ),
+        }
+    }
+
     while let Some(token) = tokenizer.next_token()? {
-        match token {
+        if !validate_neighbours(&prev_token, &token) {
+            bail!("Invalid expression!")
+        }
+
+        match &token {
             Token::Integer(num) => outputs.push_back(WorkingToken::Type(Type::Scalar(
-                T::from_u64(num).context("Number conversion failed!")?,
+                T::from_u64(*num).context("Number conversion failed!")?,
             ))),
             Token::Identifier(id) => outputs.push_back(WorkingToken::Type(
-                env.get(&id).context("Undefined identifier!")?.clone(),
+                env.get(id).context("Undefined identifier!")?.clone(),
             )),
             Token::LeftBracket => operators.push_front(WorkingToken::LeftBracket),
             Token::RightBracket => {
@@ -168,9 +190,11 @@ pub fn parse_expression<T: MatrixNumber>(
                         break;
                     }
                 }
-                operators.push_front(WorkingToken::BinaryOp(op));
+                operators.push_front(WorkingToken::BinaryOp(*op));
             }
         }
+
+        prev_token = Some(token);
     }
 
     while let Some(token) = operators.pop_front() {
@@ -316,6 +340,18 @@ mod tests {
         test_expr("A*A*A*A*(A*A*A)*A*A*A", im![34, 55; 55, 89]);
         test_expr("A*A*A*A*(A*(A*A))*A*A*A", im![34, 55; 55, 89]);
         test_expr("A*A*(A*A)*(A*(A*A))*A*A*A", im![34, 55; 55, 89]);
-        // test_expr("(A*)A*(A(*A))*(A*(A*A))*A*A**A", im![34, 55; 55, 89]); TODO: This should not pass the test, but it does.
+    }
+
+    #[test]
+    fn test_invalid_expressions() {
+        let env = Environment::<i64>::new();
+
+        let test_invalid_expr = |raw| assert!(matches!(parse_expression(raw, &env), Err(_)));
+
+        test_invalid_expr("2**3");
+        test_invalid_expr("2*(3*)5");
+        test_invalid_expr("3*()4");
+        test_invalid_expr("(2+(3-)3)");
+        test_invalid_expr("()");
     }
 }
