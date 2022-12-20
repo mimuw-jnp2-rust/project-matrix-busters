@@ -9,7 +9,7 @@ use crate::environment::{Environment, Identifier, Type};
 use crate::matrices::Matrix;
 use crate::traits::{CheckedMulScl, MatrixNumber};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 enum Token {
     Integer(u64),
     Identifier(Identifier),
@@ -37,7 +37,7 @@ impl<'a> Tokenizer<'a> {
         } else if self.raw.starts_with(')') {
             self.raw = &self.raw[1..];
             Ok(Some(Token::RightBracket))
-        } else if self.raw.starts_with(|c| "+-*/".contains(c)) {
+        } else if self.raw.starts_with(|c| "+-*/=".contains(c)) {
             let op = self.raw.chars().next().unwrap();
             self.raw = &self.raw[1..];
             Ok(Some(Token::BinaryOp(op)))
@@ -61,7 +61,7 @@ impl<'a> Tokenizer<'a> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 enum WorkingToken<T: MatrixNumber> {
     Type(Type<T>),
     BinaryOp(char),
@@ -176,7 +176,7 @@ pub fn parse_expression<T: MatrixNumber>(
                     bail!("Mismatched brackets!");
                 }
             }
-            Token::BinaryOp(op) => {
+            Token::BinaryOp(op) if "+-*/".contains(*op) => {
                 while let Some(stack_token) = operators.pop_front() {
                     if let WorkingToken::BinaryOp(stack_op) = stack_token {
                         if precedence(&stack_op) >= precedence(op) {
@@ -192,6 +192,7 @@ pub fn parse_expression<T: MatrixNumber>(
                 }
                 operators.push_front(WorkingToken::BinaryOp(*op));
             }
+            Token::BinaryOp(_) => bail!("Assignment is not allowed in expressions!"),
         }
 
         prev_token = Some(token);
@@ -218,6 +219,26 @@ pub fn parse_expression<T: MatrixNumber>(
     }
 
     val_stack.pop_front().context("Invalid expression!")
+}
+
+/*
+Only assignments so far...
+<inst> ::= <identifier> = <expr>
+ */
+fn parse_instruction<T: MatrixNumber>(raw: &str, env: &mut Environment<T>) -> anyhow::Result<()> {
+    let mut tokenizer = Tokenizer::new(raw);
+    if let Some(Token::Identifier(id)) = tokenizer.next_token()? {
+        if tokenizer.next_token()? == Some(Token::BinaryOp('=')) {
+            let value = parse_expression(tokenizer.raw, env)?;
+            env.insert(id, value);
+        } else {
+            bail!("Unrecognized instruction!");
+        }
+    } else {
+        bail!("Assignment has to begin with an identifier.");
+    }
+
+    Ok(())
 }
 
 #[cfg(test)]
@@ -353,5 +374,25 @@ mod tests {
         test_invalid_expr("3*()4");
         test_invalid_expr("(2+(3-)3)");
         test_invalid_expr("()");
+    }
+
+    #[test]
+    fn test_assignments_fibonacci() {
+        let mut env = Environment::<i64>::new();
+
+        let mut exec = |raw| parse_instruction(raw, &mut env).unwrap();
+
+        exec("a = 0");
+        exec("b = 1");
+        for _ in 0..10 {
+            exec("c = a + b");
+            exec("a = b");
+            exec("b = c");
+        }
+
+        assert_eq!(
+            *env.get(&Identifier::new("b").unwrap()).unwrap(),
+            Type::<i64>::Scalar(89)
+        );
     }
 }
