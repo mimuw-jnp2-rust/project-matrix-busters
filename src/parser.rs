@@ -179,7 +179,7 @@ pub fn parse_expression<T: MatrixNumber>(
             Token::BinaryOp(op) => {
                 while let Some(stack_token) = operators.pop_front() {
                     if let WorkingToken::BinaryOp(stack_op) = stack_token {
-                        if precedence(&stack_op) >= precedence(&op) {
+                        if precedence(&stack_op) >= precedence(op) {
                             outputs.push_back(WorkingToken::BinaryOp(stack_op));
                         } else {
                             operators.push_front(WorkingToken::BinaryOp(stack_op));
