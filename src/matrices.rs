@@ -238,13 +238,13 @@ impl<T: MatrixNumber> Matrix<T> {
     }
 
     pub fn checked_pow(&self, mut exponent: usize) -> anyhow::Result<Self> {
-        let shape = self.get_shape()?;
-        if shape.0 != shape.1 {
+        let (h, w) = self.get_shape()?;
+        if h != w {
             anyhow::bail!("Only square matrices can be used in exponentiation!");
         }
 
         let mut pow2 = self.clone();
-        let mut result = Self::identity(shape.0);
+        let mut result = Self::identity(h);
         while exponent > 0 {
             if exponent % 2 == 1 {
                 result = result
@@ -564,5 +564,17 @@ mod tests {
         assert_eq!(m.checked_pow(2).unwrap(), im![2, 1; 1, 1]);
         assert_eq!(m.checked_pow(9).unwrap(), im![55, 34; 34, 21]);
         assert_eq!(m.checked_pow(10).unwrap(), im![89, 55; 55, 34]);
+
+        let m2 = Matrix::new(vec![
+            vec![Rational64::new(1, 1), Rational64::new(1, 2)],
+            vec![Rational64::new(1, 3), Rational64::new(1, 4)],
+        ]);
+        assert_eq!(m2.checked_pow(0).unwrap(), rm![1, 0; 0, 1]);
+        assert_eq!(m2.checked_pow(1).unwrap(), m2);
+        assert_eq!(m2.checked_pow(2).unwrap(), m2.clone() * m2.clone());
+        assert_eq!(
+            m2.checked_pow(3).unwrap(),
+            m2.clone() * m2.clone() * m2.clone()
+        );
     }
 }
