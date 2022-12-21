@@ -1,4 +1,6 @@
-use num_traits::{CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, FromPrimitive, Signed};
+use num_traits::{
+    CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, FromPrimitive, Signed, ToPrimitive,
+};
 use std::ops::Mul;
 
 use num_traits::Num;
@@ -18,9 +20,15 @@ pub trait CheckedOps: CheckedAdd + CheckedSub + CheckedMul + CheckedDiv {}
 
 impl<T> CheckedOps for T where T: CheckedAdd + CheckedSub + CheckedMul + CheckedDiv {}
 
-pub trait MatrixNumber: Num + CheckedOps + FromPrimitive + Signed + LaTeXable + Clone {}
+pub trait MatrixNumber:
+    Num + CheckedOps + FromPrimitive + ToPrimitive + Signed + LaTeXable + Clone
+{
+}
 
-impl<T> MatrixNumber for T where T: Num + CheckedOps + FromPrimitive + Signed + LaTeXable + Clone {}
+impl<T> MatrixNumber for T where
+    T: Num + CheckedOps + FromPrimitive + ToPrimitive + Signed + LaTeXable + Clone
+{
+}
 
 #[macro_export]
 macro_rules! to_string_to_latex {

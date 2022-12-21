@@ -50,6 +50,10 @@ impl<T: MatrixNumber> Matrix<T> {
         Self::new(res)
     }
 
+    fn identity(n: usize) -> Self {
+        Self::filled((n, n), |i, j| if i == j { T::one() } else { T::zero() })
+    }
+
     fn echelon(mut self) -> anyhow::Result<Aftermath<T>> {
         const CONTEXT: &str = "Calculations error!";
 
@@ -231,6 +235,27 @@ impl<T: MatrixNumber> Matrix<T> {
     {
         // We do a little trick and apply `self` twice, as it is more memory efficient
         self.checked_operation_on_two(self, |a, _| operation(a))
+    }
+
+    pub fn checked_pow(&self, mut exponent: usize) -> anyhow::Result<Self> {
+        let shape = self.get_shape()?;
+        if shape.0 != shape.1 {
+            anyhow::bail!("Only square matrices can be used in exponentiation!");
+        }
+
+        let mut pow2 = self.clone();
+        let mut result = Self::identity(shape.0);
+        while exponent > 0 {
+            if exponent % 2 == 1 {
+                result = result
+                    .checked_mul(&pow2)
+                    .context("Multiplication failed!")?;
+            }
+            pow2 = pow2.checked_mul(&pow2).context("Multiplication failed!")?;
+            exponent /= 2;
+        }
+
+        Ok(result)
     }
 }
 
@@ -529,5 +554,15 @@ mod tests {
             result.to_latex(),
             r"\begin{bmatrix}2 & 4 & 6\\8 & 10 & 12\end{bmatrix}"
         );
+    }
+
+    #[test]
+    fn test_simple_exponentiation() {
+        let m = im![1, 1; 1, 0];
+        assert_eq!(m.checked_pow(0).unwrap(), im![1, 0; 0, 1]);
+        assert_eq!(m.checked_pow(1).unwrap(), im![1, 1; 1, 0]);
+        assert_eq!(m.checked_pow(2).unwrap(), im![2, 1; 1, 1]);
+        assert_eq!(m.checked_pow(9).unwrap(), im![55, 34; 34, 21]);
+        assert_eq!(m.checked_pow(10).unwrap(), im![89, 55; 55, 34]);
     }
 }

@@ -3,7 +3,7 @@
 use std::collections::VecDeque;
 
 use anyhow::{bail, Context};
-use num_traits::{CheckedAdd, CheckedMul, CheckedSub};
+use num_traits::{checked_pow, CheckedAdd, CheckedMul, CheckedSub};
 
 use crate::environment::{Environment, Identifier, Type};
 use crate::matrices::Matrix;
@@ -37,7 +37,7 @@ impl<'a> Tokenizer<'a> {
         } else if self.raw.starts_with(')') {
             self.raw = &self.raw[1..];
             Ok(Some(Token::RightBracket))
-        } else if self.raw.starts_with(|c| "+-*/=".contains(c)) {
+        } else if self.raw.starts_with(|c| "+-*/^=".contains(c)) {
             let op = self.raw.chars().next().unwrap();
             self.raw = &self.raw[1..];
             Ok(Some(Token::BinaryOp(op)))
@@ -102,6 +102,15 @@ fn binary_op<T: MatrixNumber>(left: Type<T>, right: Type<T>, op: char) -> anyhow
             (Type::Matrix(_), Type::Matrix(_)) => bail!("WTF dividing by matrix? You should use the `inv` function (not implemented yet, wait for it...)"),
             (Type::Matrix(_), Type::Scalar(_)) => bail!("Diving matrix by scalar is not supported yet..."),
             (Type::Scalar(_), Type::Matrix(_)) => bail!("Diving scalar by matrix does not make sense!"),
+        },
+        '^' => if let Type::Scalar(exp) = right {
+            let exp = exp.to_usize().context("Exponent should be a nonnegative integer.")?;
+            match left {
+                Type::Scalar(base) => wrap_scalar(checked_pow(base, exp)),
+                Type::Matrix(base) => wrap_matrix(base.checked_pow(exp).ok()),
+            }
+        } else {
+            bail!("Exponent cannot be a matrix!");
         }
         _ => unimplemented!(),
     }
@@ -129,6 +138,7 @@ pub fn parse_expression<T: MatrixNumber>(
         match c {
             '+' | '-' => 0,
             '*' | '/' => 1,
+            '^' => 2,
             _ => unreachable!(),
         }
     }
@@ -176,7 +186,7 @@ pub fn parse_expression<T: MatrixNumber>(
                     bail!("Mismatched brackets!");
                 }
             }
-            Token::BinaryOp(op) if "+-*/".contains(*op) => {
+            Token::BinaryOp(op) if "+-*/^".contains(*op) => {
                 while let Some(stack_token) = operators.pop_front() {
                     if let WorkingToken::BinaryOp(stack_op) = stack_token {
                         if precedence(&stack_op) >= precedence(op) {
@@ -274,6 +284,7 @@ mod tests {
         test_expr("2-6*9/5", -44, 5);
         test_expr("(2-6)*9/5", -36, 5);
         test_expr("(2-6*9/5)", -44, 5);
+        test_expr("1/2^8", 1, 256);
     }
 
     #[test]
@@ -329,10 +340,12 @@ mod tests {
         let mut env = Environment::new();
         let a = im![1, 2, 3; 4, 5, 6];
         let b = im![1, 2; 3, 4; 5, 6];
+        let c = im![2, 3; 0, -1];
         let i2 = im![1, 0; 0, 1];
 
         env.insert(Identifier::new("A").unwrap(), Type::Matrix(a.clone()));
         env.insert(Identifier::new("B").unwrap(), Type::Matrix(b.clone()));
+        env.insert(Identifier::new("C").unwrap(), Type::Matrix(c.clone()));
         env.insert(Identifier::new("Id_2").unwrap(), Type::Matrix(i2.clone()));
         env.insert(Identifier::new("a").unwrap(), Type::Scalar(2));
 
@@ -344,6 +357,9 @@ mod tests {
         test_expr("A*2*B", a.clone() * b.clone() * 2);
         test_expr("A*B*a*Id_2", a.clone() * b.clone() * i2.clone() * 2);
         test_expr("2*Id_2-Id_2", i2.clone() * 2 - i2.clone());
+        test_expr("C^0", i2.clone());
+        test_expr("C^1", c.clone());
+        test_expr("C^2", c.clone() * c.clone());
     }
 
     #[test]
@@ -357,6 +373,7 @@ mod tests {
             assert_eq!(parse_expression(raw, &env).unwrap(), Type::Matrix(expected))
         };
 
+        test_expr("A^10", im![34, 55; 55, 89]);
         test_expr("A*A*A*A*A*A*A*A*A*A", im![34, 55; 55, 89]);
         test_expr("A*A*A*A*(A*A*A)*A*A*A", im![34, 55; 55, 89]);
         test_expr("A*A*A*A*(A*(A*A))*A*A*A", im![34, 55; 55, 89]);
