@@ -15,7 +15,7 @@ pub struct Matrix<T: MatrixNumber> {
 }
 
 #[derive(Debug, Clone)]
-struct Aftermath<T: MatrixNumber> {
+pub struct Aftermath<T: MatrixNumber> {
     result: Matrix<T>,
     steps: Vec<String>,
 }
@@ -120,6 +120,22 @@ impl<T: MatrixNumber> Matrix<T> {
         Self::filled((h, w), |_, _| T::zero())
     }
 
+    /// Creates ones matrix of shape (h, w).
+    /// # Arguments
+    /// * `(h, w)` - The shape of the matrix - height and width.
+    /// # Returns
+    /// A ones matrix of shape (h, w).
+    /// # Examples
+    /// ```
+    /// let m = Matrix::ones(2, 3);
+    /// // m corresponds to the matrix
+    /// // | 1 1 1 |
+    /// // | 1 1 1 |
+    /// ```
+    pub fn ones((h, w): (usize, usize)) -> Self {
+        Self::filled((h, w), |_, _| T::one())
+    }
+
     /// Creates identity (square) matrix of shape (n, n).
     /// # Arguments
     /// * `n` - The length of the side of the matrix.
@@ -133,20 +149,20 @@ impl<T: MatrixNumber> Matrix<T> {
     /// // | 0 1 0 |
     /// // | 0 0 1 |
     /// ```
-    fn identity(n: usize) -> Self {
+    pub fn identity(n: usize) -> Self {
         Self::filled((n, n), |i, j| if i == j { T::one() } else { T::zero() })
     }
 
     /// Creates empty matrix of shape (0, 0).
     /// # Returns
     /// An empty matrix of shape (0, 0).
-    fn empty() -> Self {
+    pub fn empty() -> Self {
         Self::new_unsafe(vec![])
     }
 
     /// TODO: doc
     /// TODO: maybe move to matrix_algorithm.rs
-    fn echelon(mut self) -> anyhow::Result<Aftermath<T>> {
+    pub fn echelon(mut self) -> anyhow::Result<Aftermath<T>> {
         const CONTEXT: &str = "Calculations error!";
 
         if self.data.is_empty() {
@@ -274,7 +290,7 @@ impl<T: MatrixNumber> Matrix<T> {
     /// let m = Matrix::new(vec![vec![1, 2, 3], vec![4, 5, 6]]).unwrap();
     /// assert_eq!(m.get_shape(), (2, 3));
     /// ```
-    fn get_shape(&self) -> (usize, usize) {
+    pub fn get_shape(&self) -> (usize, usize) {
         if self.data.is_empty() {
             (0, 0)
         } else {
@@ -295,7 +311,7 @@ impl<T: MatrixNumber> Matrix<T> {
     /// let m = Matrix::new(vec![]).unwrap();
     /// assert!(m.is_empty());
     /// ```
-    fn is_empty(&self) -> bool {
+    pub fn is_empty(&self) -> bool {
         self.data.is_empty() || self.data[0].is_empty()
     }
 
@@ -308,7 +324,7 @@ impl<T: MatrixNumber> Matrix<T> {
     /// let m = Matrix::new_unsafe(vec![vec![1, 2], vec![3, 4, 5]]);
     /// assert!(!m.is_valid());
     /// ```
-    fn is_valid(&self) -> bool {
+    pub fn is_valid(&self) -> bool {
         return if self.data.is_empty() {
             true
         } else {
@@ -339,7 +355,7 @@ impl<T: MatrixNumber> Matrix<T> {
     /// let m2 = Matrix::new(vec![vec![1, 2, 3], vec![4, 5, 6]]).unwrap();
     /// assert!(!m1.has_same_shape(&m2));
     /// ```
-    fn same_shapes(&self, other: &Self) -> bool {
+    pub fn same_shapes(&self, other: &Self) -> bool {
         let self_shape = self.get_shape();
         let other_shape = other.get_shape();
         self_shape == other_shape
@@ -362,7 +378,7 @@ impl<T: MatrixNumber> Matrix<T> {
     /// let m2 = Matrix::new(vec![vec![1, 2, 3], vec![4, 5, 6]]).unwrap();
     /// assert!(!m1.can_multiply(&m2));
     /// ```
-    fn corresponding_shapes_for_mul(&self, other: &Self) -> bool {
+    pub fn corresponding_shapes_for_mul(&self, other: &Self) -> bool {
         let (_, self_w) = self.get_shape();
         let (other_h, _) = other.get_shape();
         self_w == other_h
@@ -382,7 +398,7 @@ impl<T: MatrixNumber> Matrix<T> {
     /// let m3 = m1.checked_operation_on_two(&m2, |a, b| a + b).unwrap();
     /// assert_eq!(m3, Matrix::new(vec![vec![2, 4], vec![6, 8]]).unwrap());
     /// ```
-    fn checked_operation_on_two<F>(&self, other: &Self, operation: F) -> anyhow::Result<Self>
+    pub fn checked_operation_on_two<F>(&self, other: &Self, operation: F) -> anyhow::Result<Self>
     where
         F: Fn(&T, &T) -> Option<T>,
     {
@@ -416,7 +432,7 @@ impl<T: MatrixNumber> Matrix<T> {
     /// let m2 = m.checked_operation(|a| a + 1).unwrap();
     /// assert_eq!(m2, Matrix::new(vec![vec![2, 3], vec![4, 5]]).unwrap());
     /// ```
-    fn checked_operation<F>(&self, operation: F) -> anyhow::Result<Self>
+    pub fn checked_operation<F>(&self, operation: F) -> anyhow::Result<Self>
     where
         F: Fn(&T) -> Option<T>,
     {
@@ -636,6 +652,95 @@ mod tests {
         assert_eq!(
             matrix.to_latex(),
             r"\begin{bmatrix}1 & 2 & 3\\4 & 5 & 6\end{bmatrix}"
+        );
+    }
+
+    #[test]
+    fn test_new_unsafe() {
+        let matrix = Matrix::new_unsafe(vec![vec![1, 2, 3], vec![4, 5, 6]]);
+        let matrix2 = Matrix::new(vec![vec![1, 2, 3], vec![4, 5, 6]]).unwrap();
+        assert_eq!(matrix, matrix2);
+    }
+
+    #[test]
+    fn test_new() {
+        let matrix = Matrix::new(vec![vec![1, 2, 3], vec![4, 5, 6]]).unwrap();
+        assert_eq!(matrix, im![1, 2, 3; 4, 5, 6]);
+        let invalid = Matrix::new(vec![vec![1, 2, 3], vec![4, 5]]);
+        assert!(invalid.is_err());
+    }
+
+    #[test]
+    fn test_is_valid() {
+        let matrix = Matrix::new_unsafe(vec![vec![1, 2, 3], vec![4, 5, 6]]);
+        assert!(matrix.is_valid());
+        let matrix = Matrix::new_unsafe(vec![vec![1, 2, 3], vec![4, 5]]);
+        assert!(!matrix.is_valid());
+    }
+
+    #[test]
+    fn test_filled() {
+        let matrix = Matrix::filled((4, 5), |x, y| ri!((x * y) as i64));
+        assert_eq!(
+            matrix,
+            rm![
+                0, 0, 0, 0, 0;
+                0, 1, 2, 3, 4;
+                0, 2, 4, 6, 8;
+                0, 3, 6, 9, 12;
+            ]
+        );
+        let matrix = Matrix::filled((4, 5), |x, y| ri!((x + y) as i64));
+        assert_eq!(
+            matrix,
+            rm![
+                0, 1, 2, 3, 4;
+                1, 2, 3, 4, 5;
+                2, 3, 4, 5, 6;
+                3, 4, 5, 6, 7;
+            ]
+        );
+    }
+
+    #[test]
+    fn test_zeros() {
+        let matrix = Matrix::zeros((4, 5));
+        assert_eq!(
+            matrix,
+            rm![
+                0, 0, 0, 0, 0;
+                0, 0, 0, 0, 0;
+                0, 0, 0, 0, 0;
+                0, 0, 0, 0, 0;
+            ]
+        );
+    }
+
+    #[test]
+    fn test_ones() {
+        let matrix = Matrix::ones((4, 5));
+        assert_eq!(
+            matrix,
+            rm![
+                1, 1, 1, 1, 1;
+                1, 1, 1, 1, 1;
+                1, 1, 1, 1, 1;
+                1, 1, 1, 1, 1;
+            ]
+        );
+    }
+
+    #[test]
+    fn test_identity() {
+        let matrix = Matrix::identity(4);
+        assert_eq!(
+            matrix,
+            rm![
+                1, 0, 0, 0;
+                0, 1, 0, 0;
+                0, 0, 1, 0;
+                0, 0, 0, 1;
+            ]
         );
     }
 
