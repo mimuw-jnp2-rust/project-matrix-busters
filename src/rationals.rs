@@ -24,6 +24,9 @@ impl LaTeXable for Rational64 {
     }
 }
 
+// Macro to generate a Rational64 from a integer.
+// `ri!(1)` is equivalent to `Rational64::from_integer(1)`, but shorter.
+// ri stands for Rational from Integer.
 #[macro_export]
 macro_rules! ri {
     ($($t:expr),*) => {
