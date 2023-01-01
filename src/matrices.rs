@@ -18,14 +18,14 @@ struct Aftermath<T: MatrixNumber> {
 }
 
 impl<T: MatrixNumber> Matrix<T> {
-    fn new(data: Vec<Vec<T>>) -> Self {
+    pub fn new_unsafe(data: Vec<Vec<T>>) -> Self {
         Self { data }
     }
 
-    pub fn new_safe(data: Vec<Vec<T>>) -> Self {
+    pub fn new(data: Vec<Vec<T>>) -> anyhow::Result<Self> {
         let matrix = Self { data };
-        matrix.get_shape().expect("Invalid matrix form");
-        matrix
+        matrix.get_shape().context("Invalid matrix.")?;
+        Ok(matrix)
     }
 
     fn filled<F>((h, w): (usize, usize), supp: F) -> Self
@@ -39,7 +39,7 @@ impl<T: MatrixNumber> Matrix<T> {
                 let _ = std::mem::replace(item_item, temp + supp(i, j));
             }
         }
-        Self::new(res)
+        Self::new_unsafe(res)
     }
 
     fn zeros((h, w): (usize, usize)) -> Self {
@@ -47,7 +47,7 @@ impl<T: MatrixNumber> Matrix<T> {
         for _ in 0..h {
             res.push(vec![T::zero(); w]);
         }
-        Self::new(res)
+        Self::new_unsafe(res)
     }
 
     fn identity(n: usize) -> Self {
@@ -226,14 +226,17 @@ impl<T: MatrixNumber> Matrix<T> {
             })
             .collect::<Option<Vec<Vec<T>>>>()
             .ok_or_else(|| anyhow::anyhow!("Operation failed!"))?;
-        Ok(Self::new(data))
+        Self::new(data)
     }
 
     fn checked_operation<F>(&self, operation: F) -> anyhow::Result<Self>
     where
         F: Fn(&T) -> Option<T>,
     {
-        // We do a little trick and apply `self` twice, as it is more memory efficient
+        // In order to avoid code duplication, we use `checked_operation_on_two`
+        //  with `self` as the second argument and ignore it later.
+        //  It is more memory efficient as we don't need to allocate a new matrix.
+        //  First approach was to use some mock matrix, but it was less efficient.
         self.checked_operation_on_two(self, |a, _| operation(a))
     }
 
@@ -351,7 +354,7 @@ impl<T: MatrixNumber> CheckedMul for Matrix<T> {
                 }
             }
         }
-        Some(Self::new(res))
+        Self::new(res).ok()
     }
 }
 
@@ -370,6 +373,14 @@ impl<T: MatrixNumber> CheckedMulScl<T> for Matrix<T> {
     }
 }
 
+/// Create a matrix row (vector) of Rational64 numbers passed as integers.
+/// Uses ri! macro.
+/// Used as helper macro for rm! macro.
+/// rv stands for Rational Vector.
+/// Example:
+/// ```
+/// rv!(1, 2, 3); // Creates a row vector [ri!(1), ri!(2), ri!(3)]
+/// ```
 #[macro_export]
 macro_rules! rv {
     ($($x:expr),+ $(,)?) => (
@@ -379,19 +390,40 @@ macro_rules! rv {
     );
 }
 
+/// Create a matrix of Rational64 numbers passed as integers.
+/// Uses ri! and rv! macros.
+/// rm stands for Rational Matrix.
+/// Example:
+/// ```
+/// // Creates a matrix
+/// // | 1 2 3 |
+/// // | 4 5 6 |
+/// // values of the matrix are Rational64 numbers
+/// m!(1, 2, 3; 4, 5, 6);
+/// ```
 #[macro_export]
 macro_rules! rm {
     ($($($x:expr),+ $(,)?);+ $(;)?) => (
-        Matrix::<Rational64>::new_safe(vec![
+        Matrix::<Rational64>::new_unsafe(vec![
             $(rv!($($x),+)),+
         ])
     );
 }
 
+/// Create a matrix row (vector) of i32 numbers passed as integers.
+/// im stands for Integer Matrix.
+/// Example:
+/// ```
+/// // Creates a matrix
+/// // | 1 2 3 |
+/// // | 4 5 6 |
+/// // values of the matrix are i32 numbers
+/// im!(1, 2, 3; 4, 5, 6);
+/// ```
 #[macro_export]
 macro_rules! im {
     ($($($x:expr),+ $(,)?);+ $(;)?) => (
-        Matrix::new_safe(vec![
+        Matrix::new_unsafe(vec![
             $(vec![
                 $($x),+
             ]),+
@@ -568,7 +600,9 @@ mod tests {
         let m2 = Matrix::new(vec![
             vec![Rational64::new(1, 1), Rational64::new(1, 2)],
             vec![Rational64::new(1, 3), Rational64::new(1, 4)],
-        ]);
+        ])
+        .context("Failed to create matrix - something is wrong with the test")
+        .unwrap();
         assert_eq!(m2.checked_pow(0).unwrap(), rm![1, 0; 0, 1]);
         assert_eq!(m2.checked_pow(1).unwrap(), m2);
         assert_eq!(m2.checked_pow(2).unwrap(), m2.clone() * m2.clone());

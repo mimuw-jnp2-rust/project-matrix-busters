@@ -12,15 +12,15 @@ pub struct Identifier {
 }
 
 impl Identifier {
-    pub fn new(id: &str) -> anyhow::Result<Self> {
-        if Self::is_valid(id) {
-            Ok(Self { id: id.to_string() })
+    pub fn new(id: String) -> anyhow::Result<Self> {
+        if Self::is_valid(&id) {
+            Ok(Self { id })
         } else {
             bail!("Invalid identifier.")
         }
     }
 
-    pub fn is_valid(id: &str) -> bool {
+    fn is_valid(id: &str) -> bool {
         id.chars().all(|c| c.is_alphanumeric() || c == '_')
             && id.starts_with(|c: char| c.is_alphabetic() || c == '_')
     }
@@ -36,7 +36,25 @@ pub enum Type<T: MatrixNumber> {
     Matrix(Matrix<T>),
 }
 
-pub type Environment<T> = HashMap<Identifier, Type<T>>;
+pub struct Environment<T: MatrixNumber> {
+    env: HashMap<Identifier, Type<T>>,
+}
+
+impl<T: MatrixNumber> Environment<T> {
+    pub fn new() -> Self {
+        Self {
+            env: HashMap::new(),
+        }
+    }
+
+    pub fn insert(&mut self, id: Identifier, value: Type<T>) {
+        self.env.insert(id, value);
+    }
+
+    pub fn get(&self, id: &Identifier) -> Option<&Type<T>> {
+        self.env.get(id)
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -53,7 +71,7 @@ mod tests {
 
     #[test]
     fn test_identifier_new() {
-        assert!(matches!(Identifier::new("pociąg"), Ok(_)));
-        assert!(matches!(Identifier::new("32"), Err(_)));
+        assert!(matches!(Identifier::new("pociąg".to_string()), Ok(_)));
+        assert!(matches!(Identifier::new("32".to_string()), Err(_)));
     }
 }
