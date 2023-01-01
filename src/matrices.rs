@@ -2,10 +2,13 @@
 
 use crate::traits::MatrixNumber;
 use crate::traits::{CheckedMulScl, LaTeXable};
-use anyhow::Context;
+use anyhow::{bail, Context};
 use num_traits::{CheckedAdd, CheckedMul, CheckedNeg, CheckedSub};
 use std::ops::{Add, Mul, Neg, Sub};
 
+/// A matrix of type `T`.
+/// Matrices are immutable.
+/// Empty matrices have shape (0, 0), so be careful.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Matrix<T: MatrixNumber> {
     data: Vec<Vec<T>>,
@@ -18,42 +21,131 @@ struct Aftermath<T: MatrixNumber> {
 }
 
 impl<T: MatrixNumber> Matrix<T> {
+    /// Creates a new matrix from a 2D vector.
+    /// The matrix is not checked for validity.
+    /// If you want to check for validity, use `Matrix::new`.
+    /// Calling methods on an invalid matrix will result in undefined behavior.
+    /// # Arguments
+    /// * `data` - The data of the matrix.
+    /// # Returns
+    /// A new matrix.
+    /// # Examples
+    /// ```
+    /// let m = Matrix::new_unsafe(vec![vec![1, 2, 3], vec![4, 5, 6]]);
+    /// // m corresponds to the matrix
+    /// // | 1 2 3 |
+    /// // | 4 5 6 |
+    /// ```
     pub fn new_unsafe(data: Vec<Vec<T>>) -> Self {
         Self { data }
     }
 
+    /// Creates a new matrix from a 2D vector.
+    /// The matrix is checked for validity.
+    /// If you don't want to check for validity, use `Matrix::new_unsafe`.
+    /// # Arguments
+    /// * `data` - The data of the matrix.
+    /// # Returns
+    /// A new matrix.
+    /// # Examples
+    /// ```
+    /// let m = Matrix::new(vec![vec![1, 2, 3], vec![4, 5, 6]]);
+    /// // m corresponds to the matrix
+    /// // | 1 2 3 |
+    /// // | 4 5 6 |
+    /// ```
+    /// # Errors
+    /// If the data is not a valid matrix.
+    /// ```
+    /// let m = Matrix::new(vec![vec![1, 2, 3], vec![4, 5]]);
+    /// // m is an error
+    /// ```
     pub fn new(data: Vec<Vec<T>>) -> anyhow::Result<Self> {
         let matrix = Self { data };
-        matrix.get_shape().context("Invalid matrix.")?;
-        Ok(matrix)
+        if !matrix.is_valid() {
+            bail!("Invalid matrix.")
+        } else if matrix.is_empty() {
+            Ok(Self::empty())
+        } else {
+            Ok(matrix)
+        }
     }
 
-    fn filled<F>((h, w): (usize, usize), supp: F) -> Self
+    /// Creates a new matrix of shape (h, w) with given supplier.
+    /// # Arguments
+    /// * `(h, w)` - The shape of the matrix - height and width.
+    /// * `supplier` - The supplier of the matrix.
+    /// # Returns
+    /// A new matrix of shape (h, w) with given supplier.
+    /// # Examples
+    /// ```
+    /// let m = Matrix::new_with(2, 3, |i, j| i + j);
+    /// // m corresponds to the matrix
+    /// // | 0 1 2 |
+    /// // | 1 2 3 |
+    /// let m = Matrix::new_with(2, 3, |i, j| i * j);
+    /// // m corresponds to the matrix
+    /// // | 0 0 0 |
+    /// // | 0 1 2 |
+    /// ```
+    pub fn filled<F>((h, w): (usize, usize), supp: F) -> Self
     where
         F: Fn(usize, usize) -> T,
     {
-        let mut res = Self::zeros((h, w)).data;
-        for (i, item) in res.iter_mut().enumerate() {
-            for (j, item_item) in item.iter_mut().enumerate() {
-                let temp = std::mem::replace(item_item, T::zero());
-                let _ = std::mem::replace(item_item, temp + supp(i, j));
+        if h == 0 || w == 0 {
+            return Self::empty();
+        }
+        let mut data = vec![vec![T::zero(); w]; h];
+        for (i, row) in data.iter_mut().enumerate().take(h) {
+            for (j, elem) in row.iter_mut().enumerate().take(w) {
+                *elem = supp(i, j);
             }
         }
-        Self::new_unsafe(res)
+        Self { data }
     }
 
-    fn zeros((h, w): (usize, usize)) -> Self {
-        let mut res = vec![];
-        for _ in 0..h {
-            res.push(vec![T::zero(); w]);
-        }
-        Self::new_unsafe(res)
+    /// Creates zero matrix of shape (h, w).
+    /// # Arguments
+    /// * `(h, w)` - The shape of the matrix - height and width.
+    /// # Returns
+    /// A zero matrix of shape (h, w).
+    /// # Examples
+    /// ```
+    /// let m = Matrix::zero(2, 3);
+    /// // m corresponds to the matrix
+    /// // | 0 0 0 |
+    /// // | 0 0 0 |
+    /// ```
+    pub fn zeros((h, w): (usize, usize)) -> Self {
+        Self::filled((h, w), |_, _| T::zero())
     }
 
+    /// Creates identity (square) matrix of shape (n, n).
+    /// # Arguments
+    /// * `n` - The length of the side of the matrix.
+    /// # Returns
+    /// An identity matrix of shape (n, n).
+    /// # Examples
+    /// ```
+    /// let m = Matrix::identity(3);
+    /// // m corresponds to the matrix
+    /// // | 1 0 0 |
+    /// // | 0 1 0 |
+    /// // | 0 0 1 |
+    /// ```
     fn identity(n: usize) -> Self {
         Self::filled((n, n), |i, j| if i == j { T::one() } else { T::zero() })
     }
 
+    /// Creates empty matrix of shape (0, 0).
+    /// # Returns
+    /// An empty matrix of shape (0, 0).
+    fn empty() -> Self {
+        Self::new_unsafe(vec![])
+    }
+
+    /// TODO: doc
+    /// TODO: maybe move to matrix_algorithm.rs
     fn echelon(mut self) -> anyhow::Result<Aftermath<T>> {
         const CONTEXT: &str = "Calculations error!";
 
@@ -172,47 +264,131 @@ impl<T: MatrixNumber> Matrix<T> {
         })
     }
 
-    fn get_shape(&self) -> anyhow::Result<(usize, usize)> {
-        let (mismatch, row_len) = self
-            .data
-            .iter()
-            .skip(1)
-            .fold((false, self.data[0].len()), |(acc, row_len), next| {
-                (acc || row_len != next.len(), row_len)
-            });
-
-        if mismatch {
-            anyhow::bail!("Invalid matrix! Bad shape!");
-        }
-
-        Ok((self.data.len(), row_len))
-    }
-
-    fn check_shape(&self, other: &Self) -> anyhow::Result<()> {
-        let self_shape = self.get_shape()?;
-        let other_shape = other.get_shape()?;
-        if self_shape == other_shape {
-            Ok(())
+    /// Returns the shape of the matrix.
+    /// If the matrix is not valid, the behavior is undefined.
+    /// If the matrix is empty, the shape is (0, 0).
+    /// # Returns
+    /// A tuple of the form `(height, width)`.
+    /// # Examples
+    /// ```
+    /// let m = Matrix::new(vec![vec![1, 2, 3], vec![4, 5, 6]]).unwrap();
+    /// assert_eq!(m.get_shape(), (2, 3));
+    /// ```
+    fn get_shape(&self) -> (usize, usize) {
+        if self.data.is_empty() {
+            (0, 0)
         } else {
-            anyhow::bail!("Matrices have different shapes! {self_shape:?} != {other_shape:?}");
+            (self.data.len(), self.data[0].len())
         }
     }
 
-    fn check_shape_for_mul(&self, other: &Self) -> anyhow::Result<()> {
-        let (_, self_w) = self.get_shape()?;
-        let (other_h, _) = other.get_shape()?;
-        if self_w == other_h {
-            Ok(())
+    /// Checks if matrix is empty.
+    /// Matrix is empty if it has no rows or no columns.
+    /// Matrix has to be valid. Otherwise, the behavior is undefined.
+    /// # Examples
+    /// ```rust
+    /// use matrix::Matrix;
+    /// let m = Matrix::new(vec![vec![1, 2], vec![3, 4]]).unwrap();
+    /// assert!(!m.is_empty());
+    /// let m = Matrix::new(vec![vec![], vec![], vec![]]).unwrap();
+    /// assert!(m.is_empty());
+    /// let m = Matrix::new(vec![]).unwrap();
+    /// assert!(m.is_empty());
+    /// ```
+    fn is_empty(&self) -> bool {
+        self.data.is_empty() || self.data[0].is_empty()
+    }
+
+    /// Checks if matrix is valid.
+    /// Matrix is valid if all rows have the same length.
+    /// # Examples
+    /// ```rust
+    /// let m = Matrix::new_unsafe(vec![vec![1, 2], vec![3, 4]]);
+    /// assert!(m.is_valid());
+    /// let m = Matrix::new_unsafe(vec![vec![1, 2], vec![3, 4, 5]]);
+    /// assert!(!m.is_valid());
+    /// ```
+    fn is_valid(&self) -> bool {
+        return if self.data.is_empty() {
+            true
         } else {
-            anyhow::bail!("Matrices have incompatible shapes! {self_w:?} != {other_h:?}");
-        }
+            !self
+                .data
+                .iter()
+                .skip(1)
+                .fold((false, self.data[0].len()), |(acc, row_len), next| {
+                    (acc || row_len != next.len(), row_len)
+                })
+                .0 // does any row have different length?
+        };
     }
 
+    /// Checks if two matrices have the same shape.
+    /// Shape of a matrix is a tuple of the form `(height, width)`.
+    /// # Arguments
+    /// * `other` - The other matrix.
+    /// # Returns
+    /// `true` if the matrices have the same shape, `false` otherwise.
+    /// # Examples
+    /// ```rust
+    /// use matrix::Matrix;
+    /// let m1 = Matrix::new(vec![vec![1, 2], vec![3, 4]]).unwrap();
+    /// let m2 = Matrix::new(vec![vec![1, 2], vec![3, 4]]).unwrap();
+    /// assert!(m1.has_same_shape(&m2));
+    /// let m1 = Matrix::new(vec![vec![1, 2], vec![3, 4]]).unwrap();
+    /// let m2 = Matrix::new(vec![vec![1, 2, 3], vec![4, 5, 6]]).unwrap();
+    /// assert!(!m1.has_same_shape(&m2));
+    /// ```
+    fn same_shapes(&self, other: &Self) -> bool {
+        let self_shape = self.get_shape();
+        let other_shape = other.get_shape();
+        self_shape == other_shape
+    }
+
+    /// Checks if two matrices can be multiplied.
+    /// Matrices can be multiplied if the number of columns of the first matrix
+    /// is equal to the number of rows of the second matrix.
+    /// # Arguments
+    /// * `other` - The other matrix.
+    /// # Returns
+    /// `true` if the matrices can be multiplied, `false` otherwise.
+    /// # Examples
+    /// ```rust
+    /// use matrix::Matrix;
+    /// let m1 = Matrix::new(vec![vec![1, 2], vec![3, 4], vec![5, 6]]).unwrap();
+    /// let m2 = Matrix::new(vec![vec![1, 2, 3], vec![4, 5, 6]]).unwrap();
+    /// assert!(m1.can_multiply(&m2));
+    /// let m1 = Matrix::new(vec![vec![1, 2], vec![3, 4]]).unwrap();
+    /// let m2 = Matrix::new(vec![vec![1, 2, 3], vec![4, 5, 6]]).unwrap();
+    /// assert!(!m1.can_multiply(&m2));
+    /// ```
+    fn corresponding_shapes_for_mul(&self, other: &Self) -> bool {
+        let (_, self_w) = self.get_shape();
+        let (other_h, _) = other.get_shape();
+        self_w == other_h
+    }
+
+    /// Performs element-wise operation on two matrices.
+    /// # Arguments
+    /// * `other` - The other matrix.
+    /// * `op` - The operation to perform.
+    /// # Returns
+    /// A new matrix with the result of the operation.
+    /// # Examples
+    /// ```rust
+    /// use matrix::Matrix;
+    /// let m1 = Matrix::new(vec![vec![1, 2], vec![3, 4]]).unwrap();
+    /// let m2 = Matrix::new(vec![vec![1, 2], vec![3, 4]]).unwrap();
+    /// let m3 = m1.checked_operation_on_two(&m2, |a, b| a + b).unwrap();
+    /// assert_eq!(m3, Matrix::new(vec![vec![2, 4], vec![6, 8]]).unwrap());
+    /// ```
     fn checked_operation_on_two<F>(&self, other: &Self, operation: F) -> anyhow::Result<Self>
     where
         F: Fn(&T, &T) -> Option<T>,
     {
-        self.check_shape(other)?;
+        self.same_shapes(other)
+            .then_some(())
+            .context("Matrices have different shapes!")?;
         let data = self
             .data
             .iter()
@@ -229,6 +405,17 @@ impl<T: MatrixNumber> Matrix<T> {
         Self::new(data)
     }
 
+    /// Performs matrix operation element-wise.
+    /// # Arguments
+    /// * `op` - The operation to perform.
+    /// # Returns
+    /// A new matrix with the result of the operation.
+    /// # Examples
+    /// ```rust
+    /// let m = Matrix::new(vec![vec![1, 2], vec![3, 4]]).unwrap();
+    /// let m2 = m.checked_operation(|a| a + 1).unwrap();
+    /// assert_eq!(m2, Matrix::new(vec![vec![2, 3], vec![4, 5]]).unwrap());
+    /// ```
     fn checked_operation<F>(&self, operation: F) -> anyhow::Result<Self>
     where
         F: Fn(&T) -> Option<T>,
@@ -240,10 +427,15 @@ impl<T: MatrixNumber> Matrix<T> {
         self.checked_operation_on_two(self, |a, _| operation(a))
     }
 
+    /// Performs matrix to the power.
+    /// # Arguments
+    /// * `exponent` - The power to raise the matrix to.
+    /// # Returns
+    /// $M^{exponent}$ where $M$ is the matrix.
     pub fn checked_pow(&self, mut exponent: usize) -> anyhow::Result<Self> {
-        let (h, w) = self.get_shape()?;
+        let (h, w) = self.get_shape();
         if h != w {
-            anyhow::bail!("Only square matrices can be used in exponentiation!");
+            bail!("Only square matrices can be used in exponentiation!");
         }
 
         let mut pow2 = self.clone();
@@ -342,9 +534,9 @@ impl<T: MatrixNumber> Mul<Self> for Matrix<T> {
 
 impl<T: MatrixNumber> CheckedMul for Matrix<T> {
     fn checked_mul(&self, v: &Self) -> Option<Self> {
-        self.check_shape_for_mul(v).ok()?;
-        let (h, _) = self.get_shape().unwrap();
-        let (_, w) = v.get_shape().unwrap();
+        self.corresponding_shapes_for_mul(v).then_some(())?;
+        let (h, _) = self.get_shape();
+        let (_, w) = v.get_shape();
 
         let mut res = Matrix::<T>::zeros((h, w)).data;
         for (i, item) in self.data.iter().enumerate() {
