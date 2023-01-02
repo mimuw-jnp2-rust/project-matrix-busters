@@ -71,8 +71,6 @@ struct ShellState {
 }
 
 #[derive(Default)]
-#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
-#[cfg_attr(feature = "serde", serde(default))]
 struct State {
     env: Environment<K>,
     windows: HashMap<Identifier, WindowState>,
