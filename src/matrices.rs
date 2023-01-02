@@ -256,27 +256,33 @@ impl<T: MatrixNumber> Matrix<T> {
         self_shape == other_shape
     }
 
-    /// Checks if two matrices can be multiplied.
-    /// Matrices can be multiplied if the number of columns of the first matrix
-    /// is equal to the number of rows of the second matrix.
+    /// Return the shape of a matrix after multiplication.
     /// # Arguments
     /// * `other` - The other matrix.
     /// # Returns
-    /// `true` if the matrices can be multiplied, `false` otherwise.
+    /// A tuple of the form `(height, width)`.
+    /// # Errors
+    /// Returns `Err` if the matrices cannot be multiplied - e.g. if they have incompatible shapes.
     /// # Examples
     /// ```rust
     /// use matrix::Matrix;
-    /// let m1 = Matrix::new(vec![vec![1, 2], vec![3, 4], vec![5, 6]]).unwrap();
-    /// let m2 = Matrix::new(vec![vec![1, 2, 3], vec![4, 5, 6]]).unwrap();
-    /// assert!(m1.can_multiply(&m2));
-    /// let m1 = Matrix::new(vec![vec![1, 2], vec![3, 4]]).unwrap();
-    /// let m2 = Matrix::new(vec![vec![1, 2, 3], vec![4, 5, 6]]).unwrap();
-    /// assert!(!m1.can_multiply(&m2));
+    /// let m1 = Matrix::new(vec![vec![1, 2, 3], vec![4, 5, 6]]).unwrap();
+    /// let m2 = Matrix::new(vec![vec![1, 2], vec![3, 4], vec![5, 6]]).unwrap();
+    /// assert_eq!(m1.get_shape_after_mul(&m2), Ok((2, 2)));
+    /// let m1 = Matrix::new(vec![vec![1, 2, 3], vec![4, 5, 6]]).unwrap();
+    /// let m2 = Matrix::new(vec![vec![1, 2], vec![3, 4]]).unwrap();
+    /// assert!(m1.get_shape_after_mul(&m2).is_err());
     /// ```
-    pub fn corresponding_shapes_for_mul(&self, other: &Self) -> bool {
-        let (_, self_w) = self.get_shape();
-        let (other_h, _) = other.get_shape();
-        self_w == other_h
+    fn result_shape_for_mul(&self, other: &Self) -> anyhow::Result<(usize, usize)> {
+        let (h, self_w) = self.get_shape();
+        let (other_h, w) = other.get_shape();
+        if self_w == other_h {
+            Ok((h, w))
+        } else {
+            Err(anyhow::anyhow!(
+                "Cannot multiply matrices of shapes ({h}, {self_w}) and ({other_h}, {w})"
+            ))
+        }
     }
 
     /// Performs element-wise operation on two matrices.
@@ -445,9 +451,7 @@ impl<T: MatrixNumber> Mul<Self> for Matrix<T> {
 
 impl<T: MatrixNumber> CheckedMul for Matrix<T> {
     fn checked_mul(&self, v: &Self) -> Option<Self> {
-        self.corresponding_shapes_for_mul(v).then_some(())?;
-        let (h, _) = self.get_shape();
-        let (_, w) = v.get_shape();
+        let (h, w) = self.result_shape_for_mul(v).ok()?;
 
         let mut res = Matrix::<T>::zeros((h, w)).data;
         for (i, item) in self.data.iter().enumerate() {
