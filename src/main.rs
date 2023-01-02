@@ -19,6 +19,9 @@ use num_rational::Rational64;
 use std::collections::HashMap;
 use std::default::Default;
 
+/// Field for matrices.
+type K = Rational64;
+
 fn main() {
     let options = eframe::NativeOptions {
         initial_window_size: Some(egui::vec2(DEFAULT_WIDTH, DEFAULT_HEIGHT)),
@@ -71,7 +74,7 @@ struct ShellState {
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 #[cfg_attr(feature = "serde", serde(default))]
 struct State {
-    env: Environment<Rational64>,
+    env: Environment<K>,
     windows: HashMap<Identifier, WindowState>,
     shell: ShellState,
 }
@@ -116,7 +119,7 @@ impl eframe::App for MatrixApp {
             }
         });
 
-        display_shell(ctx, &mut self.state.shell, &mut self.state.env);
+        display_shell::<K>(ctx, &mut self.state);
 
         // Center panel has to be added last, otherwise the side panel will be on top of it.
         egui::CentralPanel::default().show(ctx, |ui| {
@@ -128,7 +131,7 @@ impl eframe::App for MatrixApp {
 fn display_env_element(
     windows: &mut HashMap<Identifier, WindowState>,
     ui: &mut Ui,
-    (identifier, value): (&Identifier, &mut Type<Rational64>),
+    (identifier, value): (&Identifier, &mut Type<K>),
 ) {
     let mut is_open = windows.get(identifier).unwrap().is_open;
     ui.horizontal(|ui| {
@@ -140,7 +143,7 @@ fn display_env_element(
 
 fn display_env_element_window(
     ctx: &Context,
-    (identifier, value): (&Identifier, &Type<Rational64>),
+    (identifier, value): (&Identifier, &Type<K>),
     is_open: &mut bool,
 ) {
     egui::Window::new(identifier.to_string())
@@ -153,8 +156,11 @@ fn display_env_element_window(
 
 fn display_shell<T: MatrixNumber + ToString>(
     ctx: &Context,
-    shell_state: &mut ShellState,
-    env: &mut Environment<T>,
+    State {
+        shell,
+        env,
+        windows,
+    }: &mut State,
 ) {
     egui::TopBottomPanel::bottom("shell")
         .resizable(false)
@@ -162,13 +168,13 @@ fn display_shell<T: MatrixNumber + ToString>(
         .show(ctx, |ui| {
             ui.horizontal(|ui| {
                 ui.add(
-                    egui::TextEdit::multiline(&mut shell_state.text)
+                    egui::TextEdit::multiline(&mut shell.text)
                         .desired_rows(1)
                         .desired_width(f32::INFINITY)
                         .code_editor(),
                 );
             });
-            let button_sense = if shell_state.text.is_empty() {
+            let button_sense = if shell.text.is_empty() {
                 Sense::hover()
             } else {
                 Sense::click()
@@ -177,10 +183,11 @@ fn display_shell<T: MatrixNumber + ToString>(
                 .add(egui::Button::new(get_translated("Run")).sense(button_sense))
                 .clicked()
             {
-                match parse_shell_input(&shell_state.text, env) {
+                match parse_shell_input(&shell.text, env) {
                     Ok((identifier, value)) => {
                         println!("{} = {}", identifier.to_string(), value.to_string());
-                        shell_state.text.clear();
+                        shell.text.clear();
+                        insert_to_env(env, identifier, value, windows);
                     }
                     Err(error) => {
                         println!("{}", error);
@@ -212,10 +219,20 @@ fn parse_shell_input<T: MatrixNumber>(
     input: &str,
     env: &mut Environment<T>,
 ) -> anyhow::Result<(Identifier, Type<T>)> {
-    let (identifier, expression) = input
-        .split_once(":=")
-        .ok_or(anyhow::anyhow!("Invalid input. Expected form `identifier := expression`."))?;
+    let (identifier, expression) = input.split_once(":=").ok_or(anyhow::anyhow!(
+        "Invalid input. Expected form `identifier := expression`."
+    ))?;
     let identifier = Identifier::new(identifier.trim().to_string())?;
     let expression = parse_expression(expression.trim(), env)?;
     Ok((identifier, expression))
+}
+
+fn insert_to_env<T: MatrixNumber>(
+    env: &mut Environment<T>,
+    identifier: Identifier,
+    value: Type<T>,
+    windows: &mut HashMap<Identifier, WindowState>,
+) {
+    env.insert(identifier.clone(), value);
+    windows.insert(identifier, WindowState { is_open: false });
 }

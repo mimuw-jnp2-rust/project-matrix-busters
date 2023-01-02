@@ -1,9 +1,9 @@
-use crate::traits::{GuiDisplayable, MatrixNumber};
+use crate::locale::get_translated;
 use crate::traits::{CheckedMulScl, LaTeXable};
+use crate::traits::{GuiDisplayable, MatrixNumber};
 use anyhow::{bail, Context};
 use num_traits::{CheckedAdd, CheckedMul, CheckedNeg, CheckedSub};
 use std::ops::{Add, Mul, Neg, Sub};
-use crate::locale::get_translated;
 
 /// A matrix of type `T`.
 /// Matrices are immutable.
