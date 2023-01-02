@@ -30,6 +30,10 @@ impl<T> MatrixNumber for T where
 {
 }
 
+pub trait GuiDisplayable {
+    fn display_string(&self) -> String;
+}
+
 #[macro_export]
 macro_rules! to_string_to_latex {
     ($($t:ty),*) => {

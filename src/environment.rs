@@ -1,9 +1,11 @@
 #![allow(dead_code)]
 
+use std::collections::hash_map::{Iter, IterMut};
 use std::collections::HashMap;
 
 use anyhow::bail;
 
+use crate::traits::GuiDisplayable;
 use crate::{matrices::Matrix, traits::MatrixNumber};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -30,10 +32,34 @@ impl Identifier {
     }
 }
 
+impl ToString for Identifier {
+    fn to_string(&self) -> String {
+        self.id.clone()
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Type<T: MatrixNumber> {
     Scalar(T),
     Matrix(Matrix<T>),
+}
+
+impl<T: MatrixNumber + ToString> ToString for Type<T> {
+    fn to_string(&self) -> String {
+        match self {
+            Type::Scalar(s) => s.to_string(),
+            Type::Matrix(m) => m.to_string(),
+        }
+    }
+}
+
+impl<T: MatrixNumber + ToString> GuiDisplayable for Type<T> {
+    fn display_string(&self) -> String {
+        match self {
+            Type::Scalar(s) => s.to_string(),
+            Type::Matrix(m) => m.display_string(),
+        }
+    }
 }
 
 pub struct Environment<T: MatrixNumber> {
@@ -53,6 +79,20 @@ impl<T: MatrixNumber> Environment<T> {
 
     pub fn get(&self, id: &Identifier) -> Option<&Type<T>> {
         self.env.get(id)
+    }
+
+    pub fn iter(&self) -> Iter<'_, Identifier, Type<T>> {
+        self.env.iter()
+    }
+
+    pub fn iter_mut(&mut self) -> IterMut<'_, Identifier, Type<T>> {
+        self.env.iter_mut()
+    }
+}
+
+impl<T: MatrixNumber> Default for Environment<T> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
