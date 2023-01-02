@@ -18,6 +18,8 @@ use egui::{Context, Sense, Ui};
 use num_rational::Rational64;
 use std::collections::HashMap;
 use std::default::Default;
+use anyhow::bail;
+use num_traits::Zero;
 
 /// Field for matrices.
 type K = Rational64;
@@ -58,11 +60,22 @@ fn mock_state() -> State {
         env,
         windows,
         shell: Default::default(),
+        editor: Default::default(),
     }
 }
 
 struct WindowState {
     is_open: bool,
+}
+
+enum EditorType {
+    Matrix(usize, usize, Vec<K>, String),
+    Scalar(K, String),
+}
+
+#[derive(Default)]
+struct EditorState {
+    editor_type: Option<EditorType>,
 }
 
 #[derive(Default)]
@@ -75,6 +88,7 @@ struct State {
     env: Environment<K>,
     windows: HashMap<Identifier, WindowState>,
     shell: ShellState,
+    editor: EditorState,
 }
 
 struct MatrixApp {
@@ -92,6 +106,9 @@ impl Default for MatrixApp {
 
 impl eframe::App for MatrixApp {
     fn update(&mut self, ctx: &Context, _frame: &mut eframe::Frame) {
+        display_menu_bar(ctx, &mut self.state);
+        display_editor(ctx, &mut self.state);
+
         egui::SidePanel::left("objects")
             .resizable(true)
             .default_width(DEFAULT_LEFT_PANEL_WIDTH)
@@ -126,6 +143,189 @@ impl eframe::App for MatrixApp {
     }
 }
 
+fn display_menu_bar(ctx: &Context, state: &mut State) {
+    egui::TopBottomPanel::top("menu_bar").show(ctx, |ui| {
+        egui::menu::bar(ui, |ui| {
+            display_add_matrix_button(ui, state);
+            display_add_scalar_button(ui, state);
+        })
+    });
+}
+
+fn display_add_matrix_button(ui: &mut Ui, state: &mut State) {
+    if ui.button(get_translated("Add Matrix")).clicked() {
+        const DEFAULT_ROWS: usize = 2;
+        const DEFAULT_COLS: usize = 3;
+        state.editor.editor_type = Some(EditorType::Matrix(
+            DEFAULT_ROWS,
+            DEFAULT_COLS,
+            Matrix::zeros((DEFAULT_ROWS, DEFAULT_COLS))
+                .consume()
+                .into_iter()
+                .flatten()
+                .collect(),
+            "".to_string(),
+        ));
+    }
+}
+
+fn display_add_scalar_button(ui: &mut Ui, state: &mut State) {
+    if ui.button(get_translated("Add Scalar")).clicked() {
+        state.editor.editor_type = Some(EditorType::Scalar(K::default(), "".to_string()));
+    }
+}
+
+fn display_editor(ctx: &Context, state: &mut State) {
+    let mut editor_opened = state.editor.editor_type.is_some();
+    let mut handled = false;
+    egui::Window::new(get_translated("Add new Matrix"))
+        .open(&mut editor_opened)
+        .show(ctx, |ui| {
+            if let Some(editor_type) = &mut state.editor.editor_type {
+                handled = match editor_type {
+                    EditorType::Matrix(h, w, m, name) => display_matrix_editor(
+                        ui,
+                        &mut state.env,
+                        &mut state.windows,
+                        (h, w, m, name),
+                    ),
+                    EditorType::Scalar(v, name) => {
+                        display_scalar_editor(ui, &mut state.env, &mut state.windows, (v, name))
+                    }
+                }
+            }
+        });
+    if !editor_opened || handled {
+        state.editor.editor_type = None;
+    }
+}
+
+fn display_matrix_editor(
+    ui: &mut Ui,
+    env: &mut Environment<K>,
+    windows: &mut HashMap<Identifier, WindowState>,
+    (h, w, data, name): (&mut usize, &mut usize, &mut Vec<K>, &mut String),
+) -> bool {
+    ui.label("Identifier:");
+    ui.text_edit_singleline(name);
+    ui.label(get_translated("Enter matrix in the following format:"));
+    ui.label("Height:");
+    ui.add(egui::DragValue::new(h));
+    ui.label("Width:");
+    ui.add(egui::DragValue::new(w));
+    if data.len() != *h * *w {
+        data.resize(*h * *w, K::default());
+    }
+
+    egui::Grid::new("matrix_editor").show(ui, |ui| {
+        for i in 0..*h {
+            for j in 0..*w {
+                ui.label(format!("({}, {})", i, j));
+                display_k_editor((i, j), data, ui, *w);
+            }
+            ui.end_row();
+        }
+    });
+
+    let can_save = !name.is_empty() && Identifier::is_valid(name);
+    let button_sense = if can_save {
+        Sense::click()
+    } else {
+        Sense::hover()
+    };
+    let mut handled = false;
+    ui.horizontal(|ui| {
+        let add_button = ui.add(egui::Button::new(get_translated("Add")).sense(button_sense));
+        if !can_save {
+            ui.label(get_translated("Identifier is invalid!"));
+        }
+
+        if add_button.clicked() {
+            match Identifier::new(name.clone()) {
+                Ok(identifier) => {
+                    let value = Type::Matrix(Matrix::from_vec(data.clone(), (*h, *w)).unwrap());
+                    insert_to_env(env, identifier, value, windows);
+                    handled = true;
+                }
+                Err(_) => handled = false,
+            }
+        }
+    });
+    handled
+}
+
+fn display_k_editor((i, j): (usize, usize), data: &mut Vec<K>, ui: &mut Ui, width: usize) -> bool {
+    let id = i * width + j;
+    let mut value = data[id].to_string();
+    ui.add(egui::TextEdit::singleline(&mut value));
+    match value.parse() {
+        Ok(parsed) => {
+            data[id] = parsed;
+            true
+        }
+        Err(_) => false,
+    }
+}
+
+// TODO: refactor this function with `display_matrix_editor`
+fn display_scalar_editor(
+    ui: &mut Ui,
+    env: &mut Environment<K>,
+    windows: &mut HashMap<Identifier, WindowState>,
+    (v, name): (&mut K, &mut String),
+) -> bool {
+    ui.label("Identifier:");
+    ui.text_edit_singleline(name);
+    ui.label(get_translated("Enter value in the following format:"));
+
+    let mut numerator = v.numer().to_string();
+    let mut denominator = v.denom().to_string();
+    ui.horizontal(|ui| {
+        ui.label("Nominator:");
+        ui.add(egui::TextEdit::singleline(&mut numerator));
+        ui.label("Denominator:");
+        ui.add(egui::TextEdit::singleline(&mut denominator));
+    });
+    let parse = || -> anyhow::Result<K> {
+        let numerator = numerator.parse()?;
+        let denominator = denominator.parse()?;
+        if denominator == 0 {
+            bail!("Denominator cannot be 0!")
+        } else {
+            Ok(K::new(numerator, denominator))
+        }
+    };
+    let new_value = parse();
+    if new_value.is_ok() {
+        *v = new_value.unwrap();
+    }
+    let can_save = !name.is_empty() && Identifier::is_valid(name);
+    let button_sense = if can_save {
+        Sense::click()
+    } else {
+        Sense::hover()
+    };
+    let mut handled = false;
+    ui.horizontal(|ui| {
+        let add_button = ui.add(egui::Button::new(get_translated("Add")).sense(button_sense));
+        if !can_save {
+            ui.label(get_translated("Identifier is invalid!"));
+        }
+
+        if add_button.clicked() {
+            match Identifier::new(name.clone()) {
+                Ok(identifier) => {
+                    let value = Type::Scalar(*v);
+                    insert_to_env(env, identifier, value, windows);
+                    handled = true;
+                }
+                Err(_) => handled = false,
+            }
+        }
+    });
+    handled
+}
+
 fn display_env_element(
     windows: &mut HashMap<Identifier, WindowState>,
     ui: &mut Ui,
@@ -158,6 +358,7 @@ fn display_shell<T: MatrixNumber + ToString>(
         shell,
         env,
         windows,
+        ..
     }: &mut State,
 ) {
     egui::TopBottomPanel::bottom("shell")

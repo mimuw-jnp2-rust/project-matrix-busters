@@ -1,14 +1,14 @@
 #![allow(dead_code)]
 
-use std::collections::hash_map::{Iter, IterMut};
-use std::collections::HashMap;
+use std::collections::btree_map::{Iter, IterMut};
+use std::collections::BTreeMap;
 
 use anyhow::bail;
 
 use crate::traits::GuiDisplayable;
 use crate::{matrices::Matrix, traits::MatrixNumber};
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Ord, PartialOrd)]
 pub struct Identifier {
     id: String,
 }
@@ -22,7 +22,7 @@ impl Identifier {
         }
     }
 
-    fn is_valid(id: &str) -> bool {
+    pub fn is_valid(id: &str) -> bool {
         id.chars().all(|c| c.is_alphanumeric() || c == '_')
             && id.starts_with(|c: char| c.is_alphabetic() || c == '_')
     }
@@ -63,13 +63,13 @@ impl<T: MatrixNumber + ToString> GuiDisplayable for Type<T> {
 }
 
 pub struct Environment<T: MatrixNumber> {
-    env: HashMap<Identifier, Type<T>>,
+    env: BTreeMap<Identifier, Type<T>>,
 }
 
 impl<T: MatrixNumber> Environment<T> {
     pub fn new() -> Self {
         Self {
-            env: HashMap::new(),
+            env: BTreeMap::new(),
         }
     }
 
