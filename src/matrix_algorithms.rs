@@ -105,12 +105,8 @@ impl<T: MatrixNumber> Matrix<T> {
 
     /// Returns a deep copy of matrix data vector.
     fn deep_matrix_data_clone(&self) -> Vec<Vec<T>> {
-        self.get_data()
-            .iter()
-            .map(|row| row.iter().map(|elem| elem.clone()).collect())
-            .collect()
+        self.get_data().iter().map(|row| row.to_vec()).collect()
     }
-
 
     /// Inserts the LaTeX representation of a single echelonization step with
     /// transitions `transitions` and new matrix containing `data` into `steps`.
