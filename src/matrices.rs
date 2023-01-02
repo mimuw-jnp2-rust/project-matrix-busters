@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use crate::traits::MatrixNumber;
 use crate::traits::{CheckedMulScl, LaTeXable};
 use anyhow::{bail, Context};
@@ -126,6 +124,7 @@ impl<T: MatrixNumber> Matrix<T> {
     /// // | 1 1 1 |
     /// // | 1 1 1 |
     /// ```
+    #[allow(dead_code)] // TODO: Remove this when used
     pub fn ones((h, w): (usize, usize)) -> Self {
         Self::filled((h, w), |_, _| T::one())
     }
@@ -503,7 +502,7 @@ macro_rules! rv {
 /// // | 1 2 3 |
 /// // | 4 5 6 |
 /// // values of the matrix are Rational64 numbers
-/// m!(1, 2, 3; 4, 5, 6);
+/// rm!(1, 2, 3; 4, 5, 6);
 /// ```
 #[macro_export]
 macro_rules! rm {
