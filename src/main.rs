@@ -79,7 +79,7 @@ impl Default for MatrixApp {
 }
 
 impl eframe::App for MatrixApp {
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+    fn update(&mut self, ctx: &Context, _frame: &mut eframe::Frame) {
         egui::SidePanel::left("objects")
             .resizable(true)
             .default_width(DEFAULT_LEFT_PANEL_WIDTH)
