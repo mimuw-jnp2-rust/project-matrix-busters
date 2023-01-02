@@ -10,7 +10,10 @@ pub struct Aftermath<T: MatrixNumber> {
 
 #[allow(dead_code)]
 impl<T: MatrixNumber> Matrix<T> {
-    // TODO: Document this function.
+    /// Returns a copy of the matrix which is in the row echelon form along
+    /// with all steps represented in human-friendly LaTeX notation.
+    /// Uses Gaussian elimination combined with some heuristics aiming at
+    /// making the number of steps as small as possible.
     pub fn echelon(&self) -> anyhow::Result<Aftermath<T>> {
         const CONTEXT: &str = "Calculations error!";
 
@@ -26,7 +29,7 @@ impl<T: MatrixNumber> Matrix<T> {
         let mut steps = vec![self.to_latex()];
         let mut c = 0;
         let mut i = 0;
-        let mut data = self.deep_metrix_data_clone();
+        let mut data = self.deep_matrix_data_clone();
 
         while c < cols && i < rows {
             let mut j = i;
@@ -100,40 +103,50 @@ impl<T: MatrixNumber> Matrix<T> {
         })
     }
 
-    fn deep_metrix_data_clone(&self) -> Vec<Vec<T>> {
-        let mut data = Vec::new();
-        for row in self.get_data().iter() {
-            let mut new_row = Vec::new();
-            for elem in row.iter() {
-                new_row.push(elem.clone());
-            }
-            data.push(new_row);
-        }
-        data
+    /// Returns a deep copy of matrix data vector.
+    fn deep_matrix_data_clone(&self) -> Vec<Vec<T>> {
+        self.get_data().iter().map(|row| row.to_vec()).collect()
     }
 
-    fn push_step(steps: &mut Vec<String>, step: &str, data: Vec<Vec<T>>) -> Vec<Vec<T>> {
+    /// Inserts the LaTeX representation of a single echelonization step with
+    /// transitions `transitions` and new matrix containing `data` into `steps`.
+    /// Returns unchanged `data`.
+    fn push_step(steps: &mut Vec<String>, transitions: &str, data: Vec<Vec<T>>) -> Vec<Vec<T>> {
         let temp_matrix = Matrix::new_unsafe(data);
         steps.push(format!(
             r"\xrightarrow{{{}}} {}",
-            step,
+            transitions,
             temp_matrix.to_latex()
         ));
         temp_matrix.consume()
     }
 
+    /// Returns an integer representing how nice a row starting with the given
+    /// coefficient is to be used in a step of Gaussian elimination. The smaller
+    /// value means the better choice.
     fn nice(coefficient: &T) -> Option<i64> {
         if coefficient.is_zero() {
+            // should not be chosen if there is any row with nonzero leading coefficient
             Some(1000)
         } else if coefficient.is_one() {
+            // the easiest one, does not need to be changed
             Some(0)
         } else if (T::zero().checked_sub(coefficient)?).is_one() {
+            // we only have to negate all elements
             Some(1)
         } else {
+            // if there is no better choice...
             Some(2)
         }
     }
 
+    /// How the substraction of an identifier multiplied by the given coefficient
+    /// should be printed in LaTeX.
+    /// For example, `sub_coefficient_to_latex(1)` returns `- `, as it is not
+    /// necessary to write `- 1w`, but `- w` is sufficient and
+    /// `sub_coefficient_to_latex(-5)` returns `+ 5`, because `+ 5w` is easier
+    /// to read than `- (-5)w`.
+    /// Assumes that the coefficient is nonzero.
     fn sub_coefficient_to_latex(coefficient: &T) -> Option<String> {
         if coefficient.is_one() {
             Some("- ".to_string())
