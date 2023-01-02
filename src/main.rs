@@ -11,9 +11,10 @@ use crate::constants::{APP_NAME, DEFAULT_HEIGHT, DEFAULT_LEFT_PANEL_WIDTH, DEFAU
 use crate::environment::{Environment, Identifier, Type};
 use crate::locale::get_translated;
 use crate::matrices::Matrix;
-use crate::traits::GuiDisplayable;
+use crate::parser::parse_expression;
+use crate::traits::{GuiDisplayable, MatrixNumber};
 use eframe::egui;
-use egui::{Context, Ui};
+use egui::{Context, Sense, Ui};
 use num_rational::Rational64;
 use std::collections::HashMap;
 use std::default::Default;
@@ -50,11 +51,20 @@ fn mock_state() -> State {
         Identifier::new("M".to_string()).unwrap(),
         WindowState { is_open: false },
     );
-    State { env, windows }
+    State {
+        env,
+        windows,
+        shell: Default::default(),
+    }
 }
 
 struct WindowState {
     is_open: bool,
+}
+
+#[derive(Default)]
+struct ShellState {
+    text: String,
 }
 
 #[derive(Default)]
@@ -63,6 +73,7 @@ struct WindowState {
 struct State {
     env: Environment<Rational64>,
     windows: HashMap<Identifier, WindowState>,
+    shell: ShellState,
 }
 
 struct MatrixApp {
@@ -105,6 +116,8 @@ impl eframe::App for MatrixApp {
             }
         });
 
+        display_shell(ctx, &mut self.state.shell, &mut self.state.env);
+
         // Center panel has to be added last, otherwise the side panel will be on top of it.
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading(get_translated(APP_NAME));
@@ -136,4 +149,73 @@ fn display_env_element_window(
         .show(ctx, |ui| {
             ui.label(value.to_string());
         });
+}
+
+fn display_shell<T: MatrixNumber + ToString>(
+    ctx: &Context,
+    shell_state: &mut ShellState,
+    env: &mut Environment<T>,
+) {
+    egui::TopBottomPanel::bottom("shell")
+        .resizable(false)
+        .default_height(128.0)
+        .show(ctx, |ui| {
+            ui.horizontal(|ui| {
+                ui.add(
+                    egui::TextEdit::multiline(&mut shell_state.text)
+                        .desired_rows(1)
+                        .desired_width(f32::INFINITY)
+                        .code_editor(),
+                );
+            });
+            let button_sense = if shell_state.text.is_empty() {
+                Sense::hover()
+            } else {
+                Sense::click()
+            };
+            if ui
+                .add(egui::Button::new(get_translated("Run")).sense(button_sense))
+                .clicked()
+            {
+                match parse_shell_input(&shell_state.text, env) {
+                    Ok((identifier, value)) => {
+                        println!("{} = {}", identifier.to_string(), value.to_string());
+                        shell_state.text.clear();
+                    }
+                    Err(error) => {
+                        println!("{}", error);
+                        ui.label(error.to_string());
+                    }
+                }
+            }
+        });
+}
+
+/// Parse the input of the shell.
+/// The input is expected to be of the form `identifier := expression`.
+/// The expression is parsed and evaluated, and the result is stored in the environment.
+/// The identifier is returned together with the result.
+/// # Errors
+/// If the input is not of the expected form, an error is returned.
+/// # Arguments
+/// * `input` - The input of the shell.
+/// * `env` - The environment in which the expression is evaluated.
+/// # Examples
+/// ```
+/// let mut env = Environment::new();
+/// let input = "a := 1/2";
+/// let (identifier, value) = parse_shell_input(input, &mut env).unwrap();
+/// assert_eq!(identifier.to_string(), "a");
+/// assert_eq!(value, Type::Rational(Rational64::new(1, 2)));
+/// ```
+fn parse_shell_input<T: MatrixNumber>(
+    input: &str,
+    env: &mut Environment<T>,
+) -> anyhow::Result<(Identifier, Type<T>)> {
+    let (identifier, expression) = input
+        .split_once(":=")
+        .ok_or(anyhow::anyhow!("Invalid input. Expected form `identifier := expression`."))?;
+    let identifier = Identifier::new(identifier.trim().to_string())?;
+    let expression = parse_expression(expression.trim(), env)?;
+    Ok((identifier, expression))
 }
