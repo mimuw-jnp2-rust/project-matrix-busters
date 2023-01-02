@@ -1,0 +1,28 @@
+name: Rust Code Quality and Tests
+
+on:
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build
+        run: cargo build --verbose
+
+  checks:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Tests
+        run: cargo test --verbose
+      - name: Code Format
+        run: cargo fmt --check
+      - name: Code Lint
+        run: cargo clippy -- -D warnings

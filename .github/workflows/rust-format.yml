@@ -1,0 +1,26 @@
+name: Format Rust Code
+
+on:
+  workflow_dispatch:
+  push:
+      branches: [ "main" ]
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Format code
+        run: cargo fmt
+      - name: Setup committer
+        run: |
+          git config --local user.name "Matrix Busters Automatic Agent"
+          git config --local user.email "matrix-busters@jnp3.mimuw.edu.pl"
+      - name: Commit changes
+        run: |
+          if [[ `git status --porcelain` ]]; then
+            git diff
+            git commit -am "Rust code reformatted automatically"
+          fi
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v4
