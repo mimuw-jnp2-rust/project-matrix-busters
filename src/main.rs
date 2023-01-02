@@ -219,9 +219,9 @@ fn parse_shell_input<T: MatrixNumber>(
     input: &str,
     env: &mut Environment<T>,
 ) -> anyhow::Result<(Identifier, Type<T>)> {
-    let (identifier, expression) = input.split_once(":=").ok_or(anyhow::anyhow!(
-        "Invalid input. Expected form `identifier := expression`."
-    ))?;
+    let (identifier, expression) = input.split_once(":=").ok_or_else(|| {
+        anyhow::anyhow!("Invalid input. Expected form `identifier := expression`.")
+    })?;
     let identifier = Identifier::new(identifier.trim().to_string())?;
     let expression = parse_expression(expression.trim(), env)?;
     Ok((identifier, expression))
