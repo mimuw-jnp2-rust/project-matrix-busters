@@ -1,5 +1,6 @@
 mod environment;
 mod matrices;
+mod matrix_algorithms;
 mod parser;
 mod rationals;
 mod traits;

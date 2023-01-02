@@ -54,7 +54,7 @@ impl<'a> Tokenizer<'a> {
                 .raw
                 .find(|c: char| !c.is_alphanumeric() && c != '_')
                 .unwrap_or(self.raw.len());
-            let id = Identifier::new(&self.raw[..i])?;
+            let id = Identifier::new(self.raw[..i].to_string())?;
             self.raw = &self.raw[i..];
             Ok(Some(Token::Identifier(id)))
         }
@@ -262,8 +262,8 @@ mod tests {
     #[test]
     fn test_expression_simple() {
         let mut env = Environment::new();
-        env.insert(Identifier::new("a").unwrap(), Type::Scalar(2));
-        env.insert(Identifier::new("b").unwrap(), Type::Scalar(3));
+        env.insert(Identifier::new("a".to_string()).unwrap(), Type::Scalar(2));
+        env.insert(Identifier::new("b".to_string()).unwrap(), Type::Scalar(3));
         assert_eq!(parse_expression("a+b*b", &env).unwrap(), Type::Scalar(11));
         assert_eq!(parse_expression("(a+b)*b", &env).unwrap(), Type::Scalar(15));
     }
@@ -291,11 +291,11 @@ mod tests {
     fn test_expression_identifiers() {
         let mut env = Environment::new();
         env.insert(
-            Identifier::new("_i_love_rust_69").unwrap(),
+            Identifier::new("_i_love_rust_69".to_string()).unwrap(),
             Type::Scalar(69),
         );
         env.insert(
-            Identifier::new("_i_love_rust_42").unwrap(),
+            Identifier::new("_i_love_rust_42".to_string()).unwrap(),
             Type::Scalar(42),
         );
         assert_eq!(
@@ -307,7 +307,7 @@ mod tests {
     #[test]
     fn test_expression_whitespaces() {
         let mut env = Environment::new();
-        env.insert(Identifier::new("a").unwrap(), Type::Scalar(2));
+        env.insert(Identifier::new("a".to_string()).unwrap(), Type::Scalar(2));
         assert_eq!(
             parse_expression("a + 1+2\t*a", &env).unwrap(),
             Type::Scalar(7)
@@ -321,9 +321,18 @@ mod tests {
         let b = im![1, 2; 3, 4; 5, 6];
         let i2 = im![1, 0; 0, 1];
 
-        env.insert(Identifier::new("A").unwrap(), Type::Matrix(a.clone()));
-        env.insert(Identifier::new("B").unwrap(), Type::Matrix(b.clone()));
-        env.insert(Identifier::new("Id_2").unwrap(), Type::Matrix(i2.clone()));
+        env.insert(
+            Identifier::new("A".to_string()).unwrap(),
+            Type::Matrix(a.clone()),
+        );
+        env.insert(
+            Identifier::new("B".to_string()).unwrap(),
+            Type::Matrix(b.clone()),
+        );
+        env.insert(
+            Identifier::new("Id_2".to_string()).unwrap(),
+            Type::Matrix(i2.clone()),
+        );
 
         let test_expr = |raw, expected| {
             assert_eq!(parse_expression(raw, &env).unwrap(), Type::Matrix(expected))
@@ -343,11 +352,23 @@ mod tests {
         let c = im![2, 3; 0, -1];
         let i2 = im![1, 0; 0, 1];
 
-        env.insert(Identifier::new("A").unwrap(), Type::Matrix(a.clone()));
-        env.insert(Identifier::new("B").unwrap(), Type::Matrix(b.clone()));
-        env.insert(Identifier::new("C").unwrap(), Type::Matrix(c.clone()));
-        env.insert(Identifier::new("Id_2").unwrap(), Type::Matrix(i2.clone()));
-        env.insert(Identifier::new("a").unwrap(), Type::Scalar(2));
+        env.insert(
+            Identifier::new("A".to_string()).unwrap(),
+            Type::Matrix(a.clone()),
+        );
+        env.insert(
+            Identifier::new("B".to_string()).unwrap(),
+            Type::Matrix(b.clone()),
+        );
+        env.insert(
+            Identifier::new("C".to_string()).unwrap(),
+            Type::Matrix(c.clone()),
+        );
+        env.insert(
+            Identifier::new("Id_2".to_string()).unwrap(),
+            Type::Matrix(i2.clone()),
+        );
+        env.insert(Identifier::new("a".to_string()).unwrap(), Type::Scalar(2));
 
         let test_expr = |raw, expected| {
             assert_eq!(parse_expression(raw, &env).unwrap(), Type::Matrix(expected))
@@ -367,7 +388,10 @@ mod tests {
         let mut env = Environment::new();
         let fib = im![0, 1; 1, 1];
 
-        env.insert(Identifier::new("A").unwrap(), Type::Matrix(fib.clone()));
+        env.insert(
+            Identifier::new("A".to_string()).unwrap(),
+            Type::Matrix(fib.clone()),
+        );
 
         let test_expr = |raw, expected| {
             assert_eq!(parse_expression(raw, &env).unwrap(), Type::Matrix(expected))
@@ -408,7 +432,7 @@ mod tests {
         }
 
         assert_eq!(
-            *env.get(&Identifier::new("b").unwrap()).unwrap(),
+            *env.get(&Identifier::new("b".to_string()).unwrap()).unwrap(),
             Type::<i64>::Scalar(89)
         );
     }
