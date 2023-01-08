@@ -4,6 +4,7 @@ use num_traits::{
 use std::ops::Mul;
 
 use num_traits::Num;
+use crate::locale::Locale;
 
 pub trait LaTeXable {
     fn to_latex(&self) -> String;
@@ -28,6 +29,10 @@ pub trait MatrixNumber:
 impl<T> MatrixNumber for T where
     T: Num + CheckedOps + FromPrimitive + ToPrimitive + Signed + LaTeXable + Clone
 {
+}
+
+pub trait GuiDisplayable {
+    fn display_string(&self, locale: &Locale) -> String;
 }
 
 #[macro_export]

@@ -1,13 +1,14 @@
-use crate::traits::MatrixNumber;
 use crate::traits::{CheckedMulScl, LaTeXable};
+use crate::traits::{GuiDisplayable, MatrixNumber};
 use anyhow::{bail, Context};
 use num_traits::{CheckedAdd, CheckedMul, CheckedNeg, CheckedSub};
 use std::ops::{Add, Mul, Neg, Sub};
+use crate::locale::Locale;
 
 /// A matrix of type `T`.
 /// Matrices are immutable.
 /// Empty matrices have shape (0, 0), so be careful.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Matrix<T: MatrixNumber> {
     data: Vec<Vec<T>>,
 }
@@ -60,6 +61,61 @@ impl<T: MatrixNumber> Matrix<T> {
             Ok(Self::empty())
         } else {
             Ok(matrix)
+        }
+    }
+
+    /// Creates a new matrix from a 2D vector.
+    /// The matrix is checked for validity.
+    /// The initial data is passed as a vector of flattened rows.
+    /// The shape of the matrix is passed as a tuple.
+    /// # Arguments
+    /// * `data` - The data of the matrix.
+    /// * `(rows, cols)` - The shape of the matrix.
+    /// # Returns
+    /// A new matrix.
+    /// # Examples
+    /// ```
+    /// let m = Matrix::from_vec(vec![1, 2, 3, 4, 5, 6], (2, 3));
+    /// // m corresponds to the matrix
+    /// // | 1 2 3 |
+    /// // | 4 5 6 |
+    /// ```
+    /// # Errors
+    /// If the data is not a valid matrix.
+    pub fn from_vec(data: Vec<T>, (rows, cols): (usize, usize)) -> anyhow::Result<Self> {
+        if data.len() != rows * cols {
+            bail!("Invalid size.")
+        } else {
+            Self::new(data.chunks(cols).map(|c| c.to_vec()).collect())
+        }
+    }
+
+    /// Creates a new matrix by reshaping an existing matrix.
+    /// If new shape is not compatible with the old shape, an error is returned.
+    /// # Arguments
+    /// * `matrix` - The matrix to reshape.
+    /// * `(rows, cols)` - The new shape of the matrix.
+    /// # Returns
+    /// A new matrix.
+    /// # Examples
+    /// ```
+    /// let m = Matrix::new(vec![vec![1, 2, 3], vec![4, 5, 6]]);
+    /// // m corresponds to the matrix
+    /// // | 1 2 3 |
+    /// // | 4 5 6 |
+    /// let m = Matrix::reshape(m, (3, 2));
+    /// // m corresponds to the matrix
+    /// // | 1 2 |
+    /// // | 3 4 |
+    /// // | 5 6 |
+    /// ```
+    #[allow(dead_code)]
+    pub fn reshape(&self, (rows, cols): (usize, usize)) -> anyhow::Result<Self> {
+        let (h, w) = self.get_shape();
+        if h * w != rows * cols {
+            bail!("Invalid size.")
+        } else {
+            Self::from_vec(self.data.iter().flatten().cloned().collect(), (rows, cols))
         }
     }
 
@@ -164,7 +220,7 @@ impl<T: MatrixNumber> Matrix<T> {
     /// assert_eq!(m.get_shape(), (2, 3));
     /// ```
     pub fn get_shape(&self) -> (usize, usize) {
-        if self.data.is_empty() {
+        if self.is_empty() {
             (0, 0)
         } else {
             (self.data.len(), self.data[0].len())
@@ -393,6 +449,14 @@ impl<T: MatrixNumber> LaTeXable for Matrix<T> {
     }
 }
 
+impl<T: MatrixNumber + ToString> GuiDisplayable for Matrix<T> {
+    fn display_string(&self, locale: &Locale) -> String {
+        let (h, w) = self.get_shape();
+        let name = locale.get_translated("matrix");
+        format!("{name}::<{h}, {w}>")
+    }
+}
+
 impl<T: MatrixNumber> Add for Matrix<T> {
     type Output = Self;
 
@@ -477,6 +541,21 @@ impl<T: MatrixNumber> Mul<T> for Matrix<T> {
 impl<T: MatrixNumber> CheckedMulScl<T> for Matrix<T> {
     fn checked_mul_scl(&self, other: &T) -> Option<Self> {
         self.checked_operation(|a| a.checked_mul(other)).ok()
+    }
+}
+
+impl<T: MatrixNumber + ToString> ToString for Matrix<T> {
+    fn to_string(&self) -> String {
+        self.data
+            .iter()
+            .map(|row| {
+                row.iter()
+                    .map(|elem| elem.to_string())
+                    .collect::<Vec<_>>()
+                    .join(" ")
+            })
+            .collect::<Vec<_>>()
+            .join("\n")
     }
 }
 
@@ -734,5 +813,36 @@ mod tests {
             m2.checked_pow(3).unwrap(),
             m2.clone() * m2.clone() * m2.clone()
         );
+    }
+
+    #[test]
+    fn test_from_vec() {
+        let m = Matrix::from_vec(rv![1, 2, 3, 4, 5, 6], (2, 3)).expect("Failed to create matrix");
+        assert_eq!(
+            m,
+            rm![
+                1, 2, 3;
+                4, 5, 6;
+            ]
+        );
+
+        let m = Matrix::from_vec(vec![1, 2, 3, 4, 5, 6], (2, 3)).expect("Failed to create matrix");
+        assert_eq!(
+            m,
+            im![
+                1, 2, 3;
+                4, 5, 6;
+            ]
+        );
+    }
+
+    #[test]
+    fn test_reshape() {
+        let m = im![1, 2, 3, 4, 5, 6];
+        let reshape = |m: &Matrix<i64>, shape| m.reshape(shape).expect("Failed to reshape matrix");
+        assert_eq!(reshape(&m, (2, 3)), im![1, 2, 3; 4, 5, 6]);
+        assert_eq!(reshape(&m, (3, 2)), im![1, 2; 3, 4; 5, 6]);
+        assert_eq!(reshape(&m, (6, 1)), im![1; 2; 3; 4; 5; 6]);
+        assert_eq!(reshape(&m, (1, 6)), im![1, 2, 3, 4, 5, 6]);
     }
 }
