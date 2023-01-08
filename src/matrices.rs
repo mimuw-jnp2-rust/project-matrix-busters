@@ -220,7 +220,7 @@ impl<T: MatrixNumber> Matrix<T> {
     /// assert_eq!(m.get_shape(), (2, 3));
     /// ```
     pub fn get_shape(&self) -> (usize, usize) {
-        if self.data.is_empty() {
+        if self.is_empty() {
             (0, 0)
         } else {
             (self.data.len(), self.data[0].len())
