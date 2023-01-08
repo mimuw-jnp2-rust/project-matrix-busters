@@ -7,6 +7,7 @@ use anyhow::bail;
 
 use crate::traits::GuiDisplayable;
 use crate::{matrices::Matrix, traits::MatrixNumber};
+use crate::locale::Locale;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Ord, PartialOrd)]
 pub struct Identifier {
@@ -54,10 +55,10 @@ impl<T: MatrixNumber + ToString> ToString for Type<T> {
 }
 
 impl<T: MatrixNumber + ToString> GuiDisplayable for Type<T> {
-    fn display_string(&self) -> String {
+    fn display_string(&self, locale: &Locale) -> String {
         match self {
             Type::Scalar(s) => s.to_string(),
-            Type::Matrix(m) => m.display_string(),
+            Type::Matrix(m) => m.display_string(locale),
         }
     }
 }
