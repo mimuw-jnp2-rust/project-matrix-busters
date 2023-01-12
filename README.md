@@ -26,6 +26,11 @@ One of its most powerful features is the ability to generate `LaTeX` code for th
 - [ ] 2.3. Implement complex operations on matrices.
 
 and all other things added as GH Issues.
+Issue marked [NITD] (Not Intended To be Developed) 
+are ideas taken into consideration when 
+developing more critical features. They are not 
+intended to be developed during the JNP3 project - 
+maybe in the future if time allows.
 
 ---
 
