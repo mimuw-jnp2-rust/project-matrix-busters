@@ -14,10 +14,11 @@ use crate::parser::parse_expression;
 use crate::traits::{GuiDisplayable, MatrixNumber};
 use anyhow::bail;
 use eframe::egui;
-use egui::{Context, Sense, Ui};
+use egui::{Context, Sense, Ui, Direction};
 use num_rational::Rational64;
 use std::collections::HashMap;
 use std::default::Default;
+use std::time::Duration;
 use crate::locale::Language::*;
 use crate::locale::Locale;
 
@@ -62,6 +63,7 @@ fn mock_state() -> State {
         windows,
         shell: Default::default(),
         editor: Default::default(),
+        toasts: egui_toast::Toasts::default(),
     }
 }
 
@@ -90,6 +92,7 @@ struct State {
     windows: HashMap<Identifier, WindowState>,
     shell: ShellState,
     editor: EditorState,
+    toasts: egui_toast::Toasts,
 }
 
 struct MatrixApp {
@@ -118,7 +121,13 @@ impl MatrixApp {
 }
 
 impl eframe::App for MatrixApp {
-    fn update(&mut self, ctx: &Context, _frame: &mut eframe::Frame) {
+    fn update(&mut self, ctx: &Context, frame: &mut eframe::Frame) {
+        let window_size = frame.info().window_info.size;
+        self.state.toasts = egui_toast::Toasts::default()
+            .anchor((window_size.x - 10., window_size.y - 40.))
+            .direction(egui::Direction::BottomUp)
+            .align_to_end(true);
+
         display_menu_bar(ctx, &mut self.state, &self.locale);
         display_editor(ctx, &mut self.state, &self.locale);
 
@@ -153,6 +162,8 @@ impl eframe::App for MatrixApp {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading(self.gt(APP_NAME));
         });
+
+        self.state.toasts.show(ctx);
     }
 }
 
@@ -375,43 +386,56 @@ fn display_shell<T: MatrixNumber + ToString>(
         shell,
         env,
         windows,
+        toasts,
         ..
     }: &mut State,
     locale: &Locale,
 ) {
+    let mut run_shell_command = |shell_text: &mut String| {
+        match parse_shell_input(shell_text, env) {
+            Ok((identifier, value)) => {
+                println!("{} = {}", identifier.to_string(), value.to_string());
+                shell_text.clear();
+                insert_to_env(env, identifier, value, windows);
+            }
+            Err(error) => {
+                println!("{}", error);
+                toasts.error(error.to_string(), Duration::from_secs(5));
+            }
+        }
+    };
+
     egui::TopBottomPanel::bottom("shell")
         .resizable(false)
         .default_height(128.0)
         .show(ctx, |ui| {
-            ui.horizontal(|ui| {
-                ui.add(
-                    egui::TextEdit::multiline(&mut shell.text)
-                        .desired_rows(1)
-                        .desired_width(f32::INFINITY)
-                        .code_editor(),
-                );
-            });
             let button_sense = if shell.text.is_empty() {
                 Sense::hover()
             } else {
                 Sense::click()
             };
-            if ui
-                .add(egui::Button::new(locale.get_translated("Run")).sense(button_sense))
-                .clicked()
-            {
-                match parse_shell_input(&shell.text, env) {
-                    Ok((identifier, value)) => {
-                        println!("{} = {}", identifier.to_string(), value.to_string());
-                        shell.text.clear();
-                        insert_to_env(env, identifier, value, windows);
+
+            ui.horizontal(|ui| {
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::BOTTOM), |ui| {
+                    if ui
+                    .add(egui::Button::new(locale.get_translated("Run")).sense(button_sense))
+                    .clicked()
+                    {
+                        run_shell_command(&mut shell.text);
                     }
-                    Err(error) => {
-                        println!("{}", error);
-                        ui.label(error.to_string());
+
+                    let response = ui.add(
+                        egui::TextEdit::singleline(&mut shell.text)
+                            .desired_rows(1)
+                            .desired_width(ui.available_width())
+                            .code_editor(),
+                    );
+                    if response.lost_focus() && ui.input().key_pressed(egui::Key::Enter) {
+                        run_shell_command(&mut shell.text);
+                        response.request_focus();
                     }
-                }
-            }
+                });
+            });
         });
 }
 
