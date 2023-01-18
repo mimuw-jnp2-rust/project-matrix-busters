@@ -141,19 +141,19 @@ where
 
 fn parse_matrix_data<K>(
     (h, w): (&mut usize, &mut usize),
-    data: &mut Vec<String>,
+    data: &mut [String],
 ) -> anyhow::Result<Type<K>>
 where
     K: MatrixNumber,
 {
     let mut result: Vec<K> = vec![];
     for e in data.iter() {
-        result.push(K::from_str(&*e).ok().context("xd")?)
+        result.push(K::from_str(e).ok().context("xd")?)
     }
     Ok(Type::Matrix(Matrix::from_vec(result, (*h, *w))?))
 }
 
-fn parse_scalar_data<K>(data: &mut String) -> anyhow::Result<Type<K>>
+fn parse_scalar_data<K>(data: &mut str) -> anyhow::Result<Type<K>>
 where
     K: MatrixNumber,
 {
@@ -193,7 +193,7 @@ fn display_matrix_editor(
     });
 }
 
-fn display_k_editor((i, j): (usize, usize), data: &mut Vec<String>, ui: &mut Ui, width: usize) {
+fn display_k_editor((i, j): (usize, usize), data: &mut [String], ui: &mut Ui, width: usize) {
     let id = i * width + j;
     ui.add(egui::TextEdit::singleline(&mut data[id]));
 }
