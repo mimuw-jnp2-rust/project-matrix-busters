@@ -29,7 +29,7 @@ fn main() {
         initial_window_size: Some(egui::vec2(DEFAULT_WIDTH, DEFAULT_HEIGHT)),
         ..Default::default()
     };
-    let locale = Locale::new(Polish);
+    let locale = Locale::new(English);
     eframe::run_native(
         &locale.get_translated(APP_NAME),
         options,
