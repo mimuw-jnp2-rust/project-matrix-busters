@@ -15,8 +15,10 @@ use crate::environment::{Environment, Identifier, Type};
 use crate::locale::Language::*;
 use crate::locale::Locale;
 use crate::matrices::Matrix;
+use crate::matrix_algorithms::Aftermath;
 use crate::parser::parse_instruction;
-use crate::traits::{GuiDisplayable, MatrixNumber};
+use crate::traits::{GuiDisplayable, LaTeXable, MatrixNumber};
+use clipboard::{ClipboardContext, ClipboardProvider};
 use eframe::egui;
 use egui::{Context, Sense, Ui};
 use num_rational::Rational64;
@@ -66,6 +68,7 @@ fn mock_state() -> State<K> {
         shell: Default::default(),
         editor: Default::default(),
         toasts: egui_toast::Toasts::default(),
+        clipboard: ClipboardProvider::new().expect("Failed to create Clipboard context!"),
     }
 }
 
@@ -78,7 +81,6 @@ struct ShellState {
     text: String,
 }
 
-#[derive(Default)]
 pub struct State<K>
 where
     K: MatrixNumber,
@@ -88,6 +90,23 @@ where
     shell: ShellState,
     editor: EditorState,
     toasts: egui_toast::Toasts,
+    clipboard: ClipboardContext,
+}
+
+impl<K> Default for State<K>
+where
+    K: MatrixNumber,
+{
+    fn default() -> Self {
+        Self {
+            env: Default::default(),
+            windows: Default::default(),
+            shell: Default::default(),
+            editor: Default::default(),
+            toasts: Default::default(),
+            clipboard: ClipboardContext::new().expect("Failed to create Clipboard context!"),
+        }
+    }
 }
 
 struct MatrixApp {
@@ -142,7 +161,12 @@ impl eframe::App for MatrixApp {
         self.state.windows.iter_mut().for_each(|(id, window)| {
             if window.is_open {
                 let element = self.state.env.get(id).unwrap();
-                display_env_element_window(ctx, (id, element), &mut window.is_open);
+                display_env_element_window(
+                    ctx,
+                    (id, element),
+                    &mut self.state.clipboard,
+                    &mut window.is_open,
+                );
             }
         });
 
@@ -195,6 +219,7 @@ fn display_env_element(
 fn display_env_element_window(
     ctx: &Context,
     (identifier, value): (&Identifier, &Type<K>),
+    clipboard: &mut ClipboardContext,
     is_open: &mut bool,
 ) {
     egui::Window::new(identifier.to_string())
@@ -202,6 +227,24 @@ fn display_env_element_window(
         .open(is_open)
         .show(ctx, |ui| {
             ui.label(value.to_string());
+            if ui.button("LaTeX").clicked() {
+                let latex = value.to_latex();
+                clipboard
+                    .set_contents(latex)
+                    .expect("Failed to copy LaTeX to clipboard!");
+            }
+            if ui.button("Echelon").clicked() {
+                let echelon = match value {
+                    Type::Scalar(_) => "1".to_string(),
+                    Type::Matrix(m) => match m.echelon() {
+                        Ok(Aftermath { result: _, steps }) => steps.join("\n"),
+                        Err(err) => err.to_string(),
+                    },
+                };
+                clipboard
+                    .set_contents(echelon)
+                    .expect("Failed to copy LaTeX to clipboard!");
+            }
         });
 }
 
@@ -219,7 +262,7 @@ fn display_shell<T: MatrixNumber + ToString>(
     let mut run_shell_command = |shell_text: &mut String| match parse_instruction(shell_text, env) {
         Ok(identifier) => {
             shell_text.clear();
-            windows.insert(identifier, WindowState { is_open: false });
+            windows.insert(identifier, WindowState { is_open: true });
         }
         Err(error) => {
             println!("{}", error);

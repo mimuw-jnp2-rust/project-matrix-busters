@@ -6,7 +6,7 @@ use std::collections::BTreeMap;
 use anyhow::bail;
 
 use crate::locale::Locale;
-use crate::traits::GuiDisplayable;
+use crate::traits::{GuiDisplayable, LaTeXable};
 use crate::{matrices::Matrix, traits::MatrixNumber};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Ord, PartialOrd)]
@@ -60,6 +60,16 @@ impl<T: MatrixNumber + ToString> GuiDisplayable for Type<T> {
             Type::Scalar(s) => s.to_string(),
             Type::Matrix(m) => m.display_string(locale),
         }
+    }
+}
+
+impl<T: MatrixNumber> LaTeXable for Type<T> {
+    fn to_latex(&self) -> String {
+        match self {
+            Type::Scalar(s) => s as &dyn LaTeXable,
+            Type::Matrix(m) => m,
+        }
+        .to_latex()
     }
 }
 

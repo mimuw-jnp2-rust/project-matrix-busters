@@ -10,5 +10,5 @@ pub fn insert_to_env<T: MatrixNumber>(
     windows: &mut HashMap<Identifier, WindowState>,
 ) {
     env.insert(identifier.clone(), value);
-    windows.insert(identifier, WindowState { is_open: false });
+    windows.insert(identifier, WindowState { is_open: true });
 }
