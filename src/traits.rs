@@ -2,6 +2,7 @@ use num_traits::{
     CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, FromPrimitive, Signed, ToPrimitive,
 };
 use std::ops::Mul;
+use std::str::FromStr;
 
 use num_traits::Num;
 use crate::locale::Locale;
@@ -22,12 +23,12 @@ pub trait CheckedOps: CheckedAdd + CheckedSub + CheckedMul + CheckedDiv {}
 impl<T> CheckedOps for T where T: CheckedAdd + CheckedSub + CheckedMul + CheckedDiv {}
 
 pub trait MatrixNumber:
-    Num + CheckedOps + FromPrimitive + ToPrimitive + Signed + LaTeXable + Clone
+    Num + CheckedOps + FromPrimitive + ToPrimitive + Signed + LaTeXable + Clone + FromStr
 {
 }
 
 impl<T> MatrixNumber for T where
-    T: Num + CheckedOps + FromPrimitive + ToPrimitive + Signed + LaTeXable + Clone
+    T: Num + CheckedOps + FromPrimitive + ToPrimitive + Signed + LaTeXable + Clone + FromStr
 {
 }
 

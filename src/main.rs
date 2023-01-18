@@ -6,18 +6,21 @@ mod matrix_algorithms;
 mod parser;
 mod rationals;
 mod traits;
+mod editor_gui;
+mod env_gui;
 
 use crate::constants::{APP_NAME, DEFAULT_HEIGHT, DEFAULT_LEFT_PANEL_WIDTH, DEFAULT_WIDTH};
 use crate::environment::{Environment, Identifier, Type};
 use crate::matrices::Matrix;
 use crate::parser::parse_expression;
 use crate::traits::{GuiDisplayable, MatrixNumber};
-use anyhow::bail;
 use eframe::egui;
 use egui::{Context, Sense, Ui};
 use num_rational::Rational64;
 use std::collections::HashMap;
 use std::default::Default;
+use crate::editor_gui::{display_editor, EditorState, set_editor_to_matrix, set_editor_to_scalar};
+use crate::env_gui::insert_to_env;
 use crate::locale::Language::*;
 use crate::locale::Locale;
 
@@ -65,18 +68,8 @@ fn mock_state() -> State {
     }
 }
 
-struct WindowState {
+pub struct WindowState {
     is_open: bool,
-}
-
-enum EditorType {
-    Matrix(usize, usize, Vec<K>, String),
-    Scalar(K, String),
-}
-
-#[derive(Default)]
-struct EditorState {
-    editor_type: Option<EditorType>,
 }
 
 #[derive(Default)]
@@ -85,11 +78,11 @@ struct ShellState {
 }
 
 #[derive(Default)]
-struct State {
+pub struct State {
     env: Environment<K>,
     windows: HashMap<Identifier, WindowState>,
     shell: ShellState,
-    editor: EditorState,
+    editor: EditorState<K>,
 }
 
 struct MatrixApp {
@@ -120,7 +113,7 @@ impl MatrixApp {
 impl eframe::App for MatrixApp {
     fn update(&mut self, ctx: &Context, _frame: &mut eframe::Frame) {
         display_menu_bar(ctx, &mut self.state, &self.locale);
-        display_editor(ctx, &mut self.state, &self.locale);
+        display_editor::<K>(ctx, &mut self.state, &self.locale);
 
         egui::SidePanel::left("objects")
             .resizable(true)
@@ -167,179 +160,14 @@ fn display_menu_bar(ctx: &Context, state: &mut State, locale: &Locale) {
 
 fn display_add_matrix_button(ui: &mut Ui, state: &mut State, locale: &Locale) {
     if ui.button(locale.get_translated("Add Matrix")).clicked() {
-        const DEFAULT_ROWS: usize = 2;
-        const DEFAULT_COLS: usize = 3;
-        state.editor.editor_type = Some(EditorType::Matrix(
-            DEFAULT_ROWS,
-            DEFAULT_COLS,
-            Matrix::zeros((DEFAULT_ROWS, DEFAULT_COLS))
-                .consume()
-                .into_iter()
-                .flatten()
-                .collect(),
-            "".to_string(),
-        ));
+        set_editor_to_matrix(&mut state.editor);
     }
 }
 
 fn display_add_scalar_button(ui: &mut Ui, state: &mut State, locale: &Locale) {
     if ui.button(locale.get_translated("Add Scalar")).clicked() {
-        state.editor.editor_type = Some(EditorType::Scalar(K::default(), "".to_string()));
+        set_editor_to_scalar(&mut state.editor);
     }
-}
-
-fn display_editor(ctx: &Context, state: &mut State, locale: &Locale) {
-    let mut editor_opened = state.editor.editor_type.is_some();
-    let mut handled = false;
-    egui::Window::new(locale.get_translated("Add new Matrix"))
-        .open(&mut editor_opened)
-        .show(ctx, |ui| {
-            if let Some(editor_type) = &mut state.editor.editor_type {
-                handled = match editor_type {
-                    EditorType::Matrix(h, w, m, name) => display_matrix_editor(
-                        ui,
-                        &mut state.env,
-                        &mut state.windows,
-                        (h, w, m, name),
-                        locale
-                    ),
-                    EditorType::Scalar(v, name) => {
-                        display_scalar_editor(ui, &mut state.env, &mut state.windows, (v, name), locale)
-                    }
-                }
-            }
-        });
-    if !editor_opened || handled {
-        state.editor.editor_type = None;
-    }
-}
-
-fn display_matrix_editor(
-    ui: &mut Ui,
-    env: &mut Environment<K>,
-    windows: &mut HashMap<Identifier, WindowState>,
-    (h, w, data, name): (&mut usize, &mut usize, &mut Vec<K>, &mut String),
-    locale: &Locale,
-) -> bool {
-    ui.label("Identifier:");
-    ui.text_edit_singleline(name);
-    ui.label(locale.get_translated("Enter matrix in the following format:"));
-    ui.label("Height:");
-    ui.add(egui::DragValue::new(h));
-    ui.label("Width:");
-    ui.add(egui::DragValue::new(w));
-    if data.len() != *h * *w {
-        data.resize(*h * *w, K::default());
-    }
-
-    egui::Grid::new("matrix_editor").show(ui, |ui| {
-        for i in 0..*h {
-            for j in 0..*w {
-                ui.label(format!("({}, {})", i, j));
-                display_k_editor((i, j), data, ui, *w);
-            }
-            ui.end_row();
-        }
-    });
-
-    let can_save = !name.is_empty() && Identifier::is_valid(name);
-    let button_sense = if can_save {
-        Sense::click()
-    } else {
-        Sense::hover()
-    };
-    let mut handled = false;
-    ui.horizontal(|ui| {
-        let add_button = ui.add(egui::Button::new(locale.get_translated("Add")).sense(button_sense));
-        if !can_save {
-            ui.label(locale.get_translated("Identifier is invalid!"));
-        }
-
-        if add_button.clicked() {
-            match Identifier::new(name.clone()) {
-                Ok(identifier) => {
-                    let value = Type::Matrix(Matrix::from_vec(data.clone(), (*h, *w)).unwrap());
-                    insert_to_env(env, identifier, value, windows);
-                    handled = true;
-                }
-                Err(_) => handled = false,
-            }
-        }
-    });
-    handled
-}
-
-fn display_k_editor((i, j): (usize, usize), data: &mut Vec<K>, ui: &mut Ui, width: usize) -> bool {
-    let id = i * width + j;
-    let mut value = data[id].to_string();
-    ui.add(egui::TextEdit::singleline(&mut value));
-    match value.parse() {
-        Ok(parsed) => {
-            data[id] = parsed;
-            true
-        }
-        Err(_) => false,
-    }
-}
-
-// TODO: refactor this function with `display_matrix_editor`
-fn display_scalar_editor(
-    ui: &mut Ui,
-    env: &mut Environment<K>,
-    windows: &mut HashMap<Identifier, WindowState>,
-    (v, name): (&mut K, &mut String),
-    locale: &Locale,
-) -> bool {
-    ui.label("Identifier:");
-    ui.text_edit_singleline(name);
-    ui.label(locale.get_translated("Enter value in the following format:"));
-
-    let mut numerator = v.numer().to_string();
-    let mut denominator = v.denom().to_string();
-    ui.horizontal(|ui| {
-        ui.label("Nominator:");
-        ui.add(egui::TextEdit::singleline(&mut numerator));
-        ui.label("Denominator:");
-        ui.add(egui::TextEdit::singleline(&mut denominator));
-    });
-    let parse = || -> anyhow::Result<K> {
-        let numerator = numerator.parse()?;
-        let denominator = denominator.parse()?;
-        if denominator == 0 {
-            bail!("Denominator cannot be 0!")
-        } else {
-            Ok(K::new(numerator, denominator))
-        }
-    };
-    let new_value = parse();
-    if new_value.is_ok() {
-        *v = new_value.unwrap();
-    }
-    let can_save = !name.is_empty() && Identifier::is_valid(name);
-    let button_sense = if can_save {
-        Sense::click()
-    } else {
-        Sense::hover()
-    };
-    let mut handled = false;
-    ui.horizontal(|ui| {
-        let add_button = ui.add(egui::Button::new(locale.get_translated("Add")).sense(button_sense));
-        if !can_save {
-            ui.label(locale.get_translated("Identifier is invalid!"));
-        }
-
-        if add_button.clicked() {
-            match Identifier::new(name.clone()) {
-                Ok(identifier) => {
-                    let value = Type::Scalar(*v);
-                    insert_to_env(env, identifier, value, windows);
-                    handled = true;
-                }
-                Err(_) => handled = false,
-            }
-        }
-    });
-    handled
 }
 
 fn display_env_element(
@@ -442,14 +270,4 @@ fn parse_shell_input<T: MatrixNumber>(
     let identifier = Identifier::new(identifier.trim().to_string())?;
     let expression = parse_expression(expression.trim(), env)?;
     Ok((identifier, expression))
-}
-
-fn insert_to_env<T: MatrixNumber>(
-    env: &mut Environment<T>,
-    identifier: Identifier,
-    value: Type<T>,
-    windows: &mut HashMap<Identifier, WindowState>,
-) {
-    env.insert(identifier.clone(), value);
-    windows.insert(identifier, WindowState { is_open: false });
 }
