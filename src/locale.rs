@@ -19,8 +19,8 @@ impl Locale {
             language,
             translation_map: gen_map(match language {
                 Language::English => &TRANS_EN_RAW,
-                Language::Spanish => &TRANS_PL_RAW,
-                Language::Polish => &TRANS_ES_RAW,
+                Language::Polish => &TRANS_PL_RAW,
+                Language::Spanish => &TRANS_ES_RAW,
             }),
         }
     }
@@ -40,11 +40,11 @@ impl Locale {
 
 lazy_static! {
     pub static ref TRANS_EN_RAW: Vec<(&'static str, &'static str)> =
-        vec![("objects", "Objects"), ("matrix", "Matrix"),];
+        vec![("objects", "Objects"), ("matrix", "Matrix"), ("Add Matrix", "Add Matrix")];
     pub static ref TRANS_PL_RAW: Vec<(&'static str, &'static str)> =
-        vec![("objects", "Obiekty"), ("matrix", "Macierz"),];
+        vec![("objects", "Obiekty"), ("matrix", "Macierz"), ("Add Matrix", "Dodaj Macierz")];
     pub static ref TRANS_ES_RAW: Vec<(&'static str, &'static str)> =
-        vec![("objects", "Objetos"), ("matrix", "Matriz"),];
+        vec![("objects", "Objetos"), ("matrix", "Matriz"), ("Add Matrix", "Añadir Matriz")];
 }
 
 fn gen_map(vec: &[(&'static str, &'static str)]) -> HashMap<String, String> {
