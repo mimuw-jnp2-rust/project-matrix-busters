@@ -86,7 +86,11 @@ impl<T: MatrixNumber> Matrix<T> {
         if data.len() != rows * cols {
             bail!("Invalid size.")
         } else {
-            Self::new(data.chunks(cols).map(|c| c.to_vec()).collect())
+            if rows == 0 || cols == 0 {
+                Ok(Self::empty())
+            } else {
+                Self::new(data.chunks(cols).map(|c| c.to_vec()).collect())
+            }
         }
     }
 

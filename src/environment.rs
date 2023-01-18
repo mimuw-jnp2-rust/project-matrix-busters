@@ -114,5 +114,6 @@ mod tests {
     fn test_identifier_new() {
         assert!(matches!(Identifier::new("pociąg".to_string()), Ok(_)));
         assert!(matches!(Identifier::new("32".to_string()), Err(_)));
+        assert!(matches!(Identifier::new("".to_string()), Err(_)));
     }
 }

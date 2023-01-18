@@ -40,7 +40,7 @@ fn main() {
     )
 }
 
-fn mock_state() -> State {
+fn mock_state() -> State<K> {
     let mut env = Environment::new();
     env.insert(
         Identifier::new("a".to_string()).unwrap(),
@@ -78,7 +78,7 @@ struct ShellState {
 }
 
 #[derive(Default)]
-pub struct State {
+pub struct State<K> where K: MatrixNumber {
     env: Environment<K>,
     windows: HashMap<Identifier, WindowState>,
     shell: ShellState,
@@ -86,7 +86,7 @@ pub struct State {
 }
 
 struct MatrixApp {
-    state: State,
+    state: State<K>,
     locale: Locale,
 }
 
@@ -149,7 +149,7 @@ impl eframe::App for MatrixApp {
     }
 }
 
-fn display_menu_bar(ctx: &Context, state: &mut State, locale: &Locale) {
+fn display_menu_bar(ctx: &Context, state: &mut State<K>, locale: &Locale) {
     egui::TopBottomPanel::top("menu_bar").show(ctx, |ui| {
         egui::menu::bar(ui, |ui| {
             display_add_matrix_button(ui, state, locale);
@@ -158,15 +158,15 @@ fn display_menu_bar(ctx: &Context, state: &mut State, locale: &Locale) {
     });
 }
 
-fn display_add_matrix_button(ui: &mut Ui, state: &mut State, locale: &Locale) {
+fn display_add_matrix_button(ui: &mut Ui, state: &mut State<K>, locale: &Locale) {
     if ui.button(locale.get_translated("Add Matrix")).clicked() {
-        set_editor_to_matrix::<K>(&mut state.editor);
+        set_editor_to_matrix(&mut state.editor, &K::default().to_string());
     }
 }
 
-fn display_add_scalar_button(ui: &mut Ui, state: &mut State, locale: &Locale) {
+fn display_add_scalar_button(ui: &mut Ui, state: &mut State<K>, locale: &Locale) {
     if ui.button(locale.get_translated("Add Scalar")).clicked() {
-        set_editor_to_scalar::<K>(&mut state.editor);
+        set_editor_to_scalar(&mut state.editor, &K::default().to_string());
     }
 }
 
@@ -204,7 +204,7 @@ fn display_shell<T: MatrixNumber + ToString>(
         env,
         windows,
         ..
-    }: &mut State,
+    }: &mut State<K>,
     locale: &Locale,
 ) {
     egui::TopBottomPanel::bottom("shell")
