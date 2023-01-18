@@ -82,7 +82,7 @@ pub struct State {
     env: Environment<K>,
     windows: HashMap<Identifier, WindowState>,
     shell: ShellState,
-    editor: EditorState<K>,
+    editor: EditorState,
 }
 
 struct MatrixApp {
@@ -160,13 +160,13 @@ fn display_menu_bar(ctx: &Context, state: &mut State, locale: &Locale) {
 
 fn display_add_matrix_button(ui: &mut Ui, state: &mut State, locale: &Locale) {
     if ui.button(locale.get_translated("Add Matrix")).clicked() {
-        set_editor_to_matrix(&mut state.editor);
+        set_editor_to_matrix::<K>(&mut state.editor);
     }
 }
 
 fn display_add_scalar_button(ui: &mut Ui, state: &mut State, locale: &Locale) {
     if ui.button(locale.get_translated("Add Scalar")).clicked() {
-        set_editor_to_scalar(&mut state.editor);
+        set_editor_to_scalar::<K>(&mut state.editor);
     }
 }
 

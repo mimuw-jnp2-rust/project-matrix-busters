@@ -8,14 +8,16 @@ use crate::env_gui::insert_to_env;
 use crate::matrices::Matrix;
 use crate::traits::MatrixNumber;
 
-pub enum EditorType<K> {
-    Matrix(usize, usize, Vec<K>, String),
-    Scalar(K, String),
+type DisplayType = String;
+
+pub enum EditorType {
+    Matrix(usize, usize, Vec<DisplayType>, String),
+    Scalar(DisplayType, String),
 }
 
 #[derive(Default)]
-pub struct EditorState<K> {
-    editor_type: Option<EditorType<K>>,
+pub struct EditorState {
+    editor_type: Option<EditorType>,
 }
 
 pub fn display_editor<K>(ctx: &Context, state: &mut State, locale: &Locale) where K: MatrixNumber + ToString {
@@ -44,30 +46,26 @@ pub fn display_editor<K>(ctx: &Context, state: &mut State, locale: &Locale) wher
     }
 }
 
-pub fn set_editor_to_matrix<K>(state: &mut EditorState<K>) where K: MatrixNumber {
+pub fn set_editor_to_matrix<K>(state: &mut EditorState) where K: MatrixNumber {
     const DEFAULT_ROWS: usize = 2;
     const DEFAULT_COLS: usize = 3;
     state.editor_type = Some(EditorType::Matrix(
         DEFAULT_ROWS,
         DEFAULT_COLS,
-        Matrix::zeros((DEFAULT_ROWS, DEFAULT_COLS))
-            .consume()
-            .into_iter()
-            .flatten()
-            .collect(),
+        vec![String::new(); DEFAULT_ROWS * DEFAULT_COLS],
         "".to_string(),
     ));
 }
 
-pub fn set_editor_to_scalar<K>(state: &mut EditorState<K>) where K: MatrixNumber {
-    state.editor_type = Some(EditorType::Scalar(K::zero(), "".to_string()));
+pub fn set_editor_to_scalar<K>(state: &mut EditorState) where K: MatrixNumber {
+    state.editor_type = Some(EditorType::Scalar(String::new(), "".to_string()));
 }
 
 fn display_matrix_editor<K>(
     ui: &mut Ui,
     env: &mut Environment<K>,
     windows: &mut HashMap<Identifier, WindowState>,
-    (h, w, data, name): (&mut usize, &mut usize, &mut Vec<K>, &mut String),
+    (h, w, data, name): (&mut usize, &mut usize, &mut Vec<DisplayType>, &mut String),
     locale: &Locale,
 ) -> bool where K: MatrixNumber + ToString {
     ui.label("Identifier:");
@@ -78,20 +76,22 @@ fn display_matrix_editor<K>(
     ui.label("Width:");
     ui.add(egui::DragValue::new(w));
     if data.len() != *h * *w {
-        data.resize(*h * *w, K::zero());
+        data.resize(*h * *w, String::new());
     }
 
     egui::Grid::new("matrix_editor").show(ui, |ui| {
         for i in 0..*h {
             for j in 0..*w {
                 ui.label(format!("({}, {})", i, j));
-                display_k_editor((i, j), data, ui, *w);
+                display_k_editor::<K>((i, j), data, ui, *w);
             }
             ui.end_row();
         }
     });
 
-    let can_save = !name.is_empty() && Identifier::is_valid(name);
+    let parsed_result = parse_all_data(&data);
+    let is_identifier_valid = !name.is_empty() && Identifier::is_valid(name);
+    let can_save = is_identifier_valid && parsed_result.is_some();
     let button_sense = if can_save {
         Sense::click()
     } else {
@@ -100,35 +100,42 @@ fn display_matrix_editor<K>(
     let mut handled = false;
     ui.horizontal(|ui| {
         let add_button = ui.add(egui::Button::new(locale.get_translated("Add")).sense(button_sense));
-        if !can_save {
+        if !can_save && !is_identifier_valid {
             ui.label(locale.get_translated("Identifier is invalid!"));
+        } else if !can_save && parsed_result.is_none() {
+            ui.label(locale.get_translated("Matrix is invalid!"));
         }
 
         if add_button.clicked() {
-            match Identifier::new(name.clone()) {
-                Ok(identifier) => {
-                    let value = Type::Matrix(Matrix::from_vec(data.clone(), (*h, *w)).unwrap());
-                    insert_to_env(env, identifier, value, windows);
-                    handled = true;
+            if let Some(parsed) = parsed_result {
+                match Identifier::new(name.clone()) {
+                    Ok(identifier) => {
+                        let value = Type::Matrix(Matrix::from_vec(parsed, (*h, *w)).unwrap());
+                        insert_to_env(env, identifier, value, windows);
+                        handled = true;
+                    }
+                    Err(_) => handled = false,
                 }
-                Err(_) => handled = false,
+            } else {
+                handled = false;
             }
         }
     });
     handled
 }
 
-fn display_k_editor<K>((i, j): (usize, usize), data: &mut Vec<K>, ui: &mut Ui, width: usize) -> bool where K: MatrixNumber + ToString {
-    let id = i * width + j;
-    let mut value = data[id].to_string();
-    ui.add(egui::TextEdit::singleline(&mut value));
-    match K::from_str(value.as_str()) {
-        Ok(parsed) => {
-            data[id] = parsed;
-            true
-        }
-        Err(_) => false,
+fn parse_all_data<K>(data: &Vec<DisplayType>) -> Option<Vec<K>> where K: MatrixNumber {
+    let mut result: Vec<K> = vec![];
+    for e in data.iter() {
+        result.push(K::from_str(&*e).ok()?)
     }
+    Some(result)
+}
+
+fn display_k_editor<K>((i, j): (usize, usize), data: &mut Vec<DisplayType>, ui: &mut Ui, width: usize) -> bool where K: MatrixNumber + ToString {
+    let id = i * width + j;
+    ui.add(egui::TextEdit::singleline(&mut data[id]));
+    true
 }
 
 // TODO: refactor this function with `display_matrix_editor`
@@ -136,25 +143,17 @@ fn display_scalar_editor<K>(
     ui: &mut Ui,
     env: &mut Environment<K>,
     windows: &mut HashMap<Identifier, WindowState>,
-    (v, name): (&mut K, &mut String),
+    (v, name): (&mut DisplayType, &mut String),
     locale: &Locale,
 ) -> bool where K: MatrixNumber + ToString {
     ui.label("Identifier:");
     ui.text_edit_singleline(name);
     ui.label(locale.get_translated("Enter value in the following format:"));
 
-
-    let mut str_value = v.to_string();
     ui.horizontal(|ui| {
         ui.label("Value:");
-        ui.add(egui::TextEdit::singleline(&mut str_value));
+        ui.add(egui::TextEdit::singleline(v));
     });
-
-    let new_value = K::from_str(str_value.as_str());
-
-    if let Ok(new_value) = new_value {
-        *v = new_value;
-    }
 
     let can_save = !name.is_empty() && Identifier::is_valid(name);
     let button_sense = if can_save {
@@ -170,13 +169,18 @@ fn display_scalar_editor<K>(
         }
 
         if add_button.clicked() {
-            match Identifier::new(name.clone()) {
-                Ok(identifier) => {
-                    let value = Type::Scalar(v.clone());
-                    insert_to_env(env, identifier, value, windows);
-                    handled = true;
+            let parsed = K::from_str(v);
+            if let Ok(parsed) = parsed {
+                match Identifier::new(name.clone()) {
+                    Ok(identifier) => {
+                        let value = Type::Scalar(parsed);
+                        insert_to_env(env, identifier, value, windows);
+                        handled = true;
+                    }
+                    Err(_) => handled = false,
                 }
-                Err(_) => handled = false,
+            } else {
+                handled = false
             }
         }
     });
