@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::str::FromStr;
+pub use std::str::{FromStr};
 use egui::{Context, Sense, Ui};
 use crate::environment::{Environment, Identifier, Type};
 use crate::locale::Locale;
