@@ -4,8 +4,8 @@ use num_traits::{
 use std::ops::Mul;
 use std::str::FromStr;
 
-use num_traits::Num;
 use crate::locale::Locale;
+use num_traits::Num;
 
 pub trait LaTeXable {
     fn to_latex(&self) -> String;

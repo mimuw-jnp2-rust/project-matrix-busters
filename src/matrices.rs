@@ -1,9 +1,9 @@
+use crate::locale::Locale;
 use crate::traits::{CheckedMulScl, LaTeXable};
 use crate::traits::{GuiDisplayable, MatrixNumber};
 use anyhow::{bail, Context};
 use num_traits::{CheckedAdd, CheckedMul, CheckedNeg, CheckedSub};
 use std::ops::{Add, Mul, Neg, Sub};
-use crate::locale::Locale;
 
 /// A matrix of type `T`.
 /// Matrices are immutable.
@@ -85,12 +85,10 @@ impl<T: MatrixNumber> Matrix<T> {
     pub fn from_vec(data: Vec<T>, (rows, cols): (usize, usize)) -> anyhow::Result<Self> {
         if data.len() != rows * cols {
             bail!("Invalid size.")
+        } else if rows == 0 || cols == 0 {
+            Ok(Self::empty())
         } else {
-            if rows == 0 || cols == 0 {
-                Ok(Self::empty())
-            } else {
-                Self::new(data.chunks(cols).map(|c| c.to_vec()).collect())
-            }
+            Self::new(data.chunks(cols).map(|c| c.to_vec()).collect())
         }
     }
 

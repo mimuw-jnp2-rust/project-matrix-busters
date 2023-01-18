@@ -1,4 +1,6 @@
 mod constants;
+mod editor_gui;
+mod env_gui;
 mod environment;
 mod locale;
 mod matrices;
@@ -6,24 +8,22 @@ mod matrix_algorithms;
 mod parser;
 mod rationals;
 mod traits;
-mod editor_gui;
-mod env_gui;
 
 use crate::constants::{APP_NAME, DEFAULT_HEIGHT, DEFAULT_LEFT_PANEL_WIDTH, DEFAULT_WIDTH};
+use crate::editor_gui::{display_editor, set_editor_to_matrix, set_editor_to_scalar, EditorState};
+use crate::env_gui::insert_to_env;
 use crate::environment::{Environment, Identifier, Type};
+use crate::locale::Language::*;
+use crate::locale::Locale;
 use crate::matrices::Matrix;
 use crate::parser::parse_expression;
 use crate::traits::{GuiDisplayable, MatrixNumber};
 use eframe::egui;
-use egui::{Context, Sense, Ui, Direction};
+use egui::{Context, Sense, Ui};
 use num_rational::Rational64;
 use std::collections::HashMap;
 use std::default::Default;
 use std::time::Duration;
-use crate::editor_gui::{display_editor, EditorState, set_editor_to_matrix, set_editor_to_scalar};
-use crate::env_gui::insert_to_env;
-use crate::locale::Language::*;
-use crate::locale::Locale;
 
 /// Field for matrices.
 type K = Rational64;
@@ -80,7 +80,10 @@ struct ShellState {
 }
 
 #[derive(Default)]
-pub struct State<K> where K: MatrixNumber {
+pub struct State<K>
+where
+    K: MatrixNumber,
+{
     env: Environment<K>,
     windows: HashMap<Identifier, WindowState>,
     shell: ShellState,
@@ -105,11 +108,6 @@ impl MatrixApp {
     // Get Translated
     fn gt(&self, str: &str) -> String {
         self.locale.get_translated(str)
-    }
-
-    // Get Translated String
-    fn gts(&self, str: String) -> String {
-        self.locale.get_translated_from(str)
     }
 }
 
@@ -219,17 +217,15 @@ fn display_shell<T: MatrixNumber + ToString>(
     }: &mut State<K>,
     locale: &Locale,
 ) {
-    let mut run_shell_command = |shell_text: &mut String| {
-        match parse_shell_input(shell_text, env) {
-            Ok((identifier, value)) => {
-                println!("{} = {}", identifier.to_string(), value.to_string());
-                shell_text.clear();
-                insert_to_env(env, identifier, value, windows);
-            }
-            Err(error) => {
-                println!("{}", error);
-                toasts.error(error.to_string(), Duration::from_secs(5));
-            }
+    let mut run_shell_command = |shell_text: &mut String| match parse_shell_input(shell_text, env) {
+        Ok((identifier, value)) => {
+            println!("{} = {}", identifier.to_string(), value.to_string());
+            shell_text.clear();
+            insert_to_env(env, identifier, value, windows);
+        }
+        Err(error) => {
+            println!("{}", error);
+            toasts.error(error.to_string(), Duration::from_secs(5));
         }
     };
 
@@ -246,8 +242,8 @@ fn display_shell<T: MatrixNumber + ToString>(
             ui.horizontal(|ui| {
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::BOTTOM), |ui| {
                     if ui
-                    .add(egui::Button::new(locale.get_translated("Run")).sense(button_sense))
-                    .clicked()
+                        .add(egui::Button::new(locale.get_translated("Run")).sense(button_sense))
+                        .clicked()
                     {
                         run_shell_command(&mut shell.text);
                     }

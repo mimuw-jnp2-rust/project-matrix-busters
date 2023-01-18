@@ -1,7 +1,7 @@
-use std::collections::HashMap;
 use crate::environment::{Environment, Identifier, Type};
 use crate::traits::MatrixNumber;
 use crate::WindowState;
+use std::collections::HashMap;
 
 pub fn insert_to_env<T: MatrixNumber>(
     env: &mut Environment<T>,
@@ -12,4 +12,3 @@ pub fn insert_to_env<T: MatrixNumber>(
     env.insert(identifier.clone(), value);
     windows.insert(identifier, WindowState { is_open: false });
 }
-
