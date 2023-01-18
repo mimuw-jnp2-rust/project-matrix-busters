@@ -11,12 +11,11 @@ mod traits;
 
 use crate::constants::{APP_NAME, DEFAULT_HEIGHT, DEFAULT_LEFT_PANEL_WIDTH, DEFAULT_WIDTH};
 use crate::editor_gui::{display_editor, set_editor_to_matrix, set_editor_to_scalar, EditorState};
-use crate::env_gui::insert_to_env;
 use crate::environment::{Environment, Identifier, Type};
 use crate::locale::Language::*;
 use crate::locale::Locale;
 use crate::matrices::Matrix;
-use crate::parser::parse_expression;
+use crate::parser::parse_instruction;
 use crate::traits::{GuiDisplayable, MatrixNumber};
 use eframe::egui;
 use egui::{Context, Sense, Ui};
@@ -217,11 +216,10 @@ fn display_shell<T: MatrixNumber + ToString>(
     }: &mut State<K>,
     locale: &Locale,
 ) {
-    let mut run_shell_command = |shell_text: &mut String| match parse_shell_input(shell_text, env) {
-        Ok((identifier, value)) => {
-            println!("{} = {}", identifier.to_string(), value.to_string());
+    let mut run_shell_command = |shell_text: &mut String| match parse_instruction(shell_text, env) {
+        Ok(identifier) => {
             shell_text.clear();
-            insert_to_env(env, identifier, value, windows);
+            windows.insert(identifier, WindowState { is_open: false });
         }
         Err(error) => {
             println!("{}", error);
@@ -261,33 +259,4 @@ fn display_shell<T: MatrixNumber + ToString>(
                 });
             });
         });
-}
-
-/// Parse the input of the shell.
-/// The input is expected to be of the form `identifier := expression`.
-/// The expression is parsed and evaluated, and the result is stored in the environment.
-/// The identifier is returned together with the result.
-/// # Errors
-/// If the input is not of the expected form, an error is returned.
-/// # Arguments
-/// * `input` - The input of the shell.
-/// * `env` - The environment in which the expression is evaluated.
-/// # Examples
-/// ```
-/// let mut env = Environment::new();
-/// let input = "a := 1/2";
-/// let (identifier, value) = parse_shell_input(input, &mut env).unwrap();
-/// assert_eq!(identifier.to_string(), "a");
-/// assert_eq!(value, Type::Rational(Rational64::new(1, 2)));
-/// ```
-fn parse_shell_input<T: MatrixNumber>(
-    input: &str,
-    env: &mut Environment<T>,
-) -> anyhow::Result<(Identifier, Type<T>)> {
-    let (identifier, expression) = input.split_once(":=").ok_or_else(|| {
-        anyhow::anyhow!("Invalid input. Expected form `identifier := expression`.")
-    })?;
-    let identifier = Identifier::new(identifier.trim().to_string())?;
-    let expression = parse_expression(expression.trim(), env)?;
-    Ok((identifier, expression))
 }

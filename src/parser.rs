@@ -235,20 +235,22 @@ pub fn parse_expression<T: MatrixNumber>(
 Only assignments so far...
 <inst> ::= <identifier> = <expr>
  */
-fn parse_instruction<T: MatrixNumber>(raw: &str, env: &mut Environment<T>) -> anyhow::Result<()> {
+pub fn parse_instruction<T: MatrixNumber>(
+    raw: &str,
+    env: &mut Environment<T>,
+) -> anyhow::Result<Identifier> {
     let mut tokenizer = Tokenizer::new(raw);
     if let Some(Token::Identifier(id)) = tokenizer.next_token()? {
         if tokenizer.next_token()? == Some(Token::BinaryOp('=')) {
             let value = parse_expression(tokenizer.raw, env)?;
-            env.insert(id, value);
+            env.insert(id.clone(), value);
+            Ok(id)
         } else {
-            bail!("Unrecognized instruction!");
+            bail!("Unrecognized instruction!")
         }
     } else {
-        bail!("Assignment has to begin with an identifier.");
+        bail!("Assignment has to begin with an identifier.")
     }
-
-    Ok(())
 }
 
 #[cfg(test)]
