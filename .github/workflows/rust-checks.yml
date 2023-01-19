@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libfontconfig libfontconfig1-dev cmake xorg-dev
+          packages: xorg-dev
           version: 1.0
       - uses: actions/checkout@v3
       - name: Build
@@ -25,7 +25,7 @@ jobs:
     steps:
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libfontconfig libfontconfig1-dev cmake xorg-dev
+          packages: xorg-dev
           version: 1.0
       - uses: actions/checkout@v3
       - name: Tests
