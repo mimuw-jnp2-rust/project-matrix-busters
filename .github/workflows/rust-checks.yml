@@ -11,6 +11,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libfontconfig libfontconfig1-dev cmake xorg-dev
+          version: 1.0
       - uses: actions/checkout@v3
       - name: Build
         run: cargo build --verbose
@@ -19,6 +23,10 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libfontconfig libfontconfig1-dev cmake xorg-dev
+          version: 1.0
       - uses: actions/checkout@v3
       - name: Tests
         run: cargo test --verbose
