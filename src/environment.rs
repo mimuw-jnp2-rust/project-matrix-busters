@@ -45,7 +45,7 @@ pub enum Type<T: MatrixNumber> {
     Matrix(Matrix<T>),
 }
 
-impl<T: MatrixNumber + ToString> ToString for Type<T> {
+impl<T: MatrixNumber> ToString for Type<T> {
     fn to_string(&self) -> String {
         match self {
             Type::Scalar(s) => s.to_string(),
@@ -54,7 +54,7 @@ impl<T: MatrixNumber + ToString> ToString for Type<T> {
     }
 }
 
-impl<T: MatrixNumber + ToString> GuiDisplayable for Type<T> {
+impl<T: MatrixNumber> GuiDisplayable for Type<T> {
     fn display_string(&self, locale: &Locale) -> String {
         match self {
             Type::Scalar(s) => s.to_string(),

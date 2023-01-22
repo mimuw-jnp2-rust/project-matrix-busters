@@ -453,7 +453,7 @@ impl<T: MatrixNumber> LaTeXable for Matrix<T> {
     }
 }
 
-impl<T: MatrixNumber + ToString> GuiDisplayable for Matrix<T> {
+impl<T: MatrixNumber> GuiDisplayable for Matrix<T> {
     fn display_string(&self, locale: &Locale) -> String {
         let (h, w) = self.get_shape();
         let name = locale.get_translated("matrix");
@@ -598,7 +598,7 @@ impl<T: MatrixNumber> CheckedMulScl<T> for Matrix<T> {
     }
 }
 
-impl<T: MatrixNumber + ToString> ToString for Matrix<T> {
+impl<T: MatrixNumber> ToString for Matrix<T> {
     fn to_string(&self) -> String {
         self.data
             .iter()

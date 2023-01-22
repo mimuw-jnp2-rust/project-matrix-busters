@@ -16,6 +16,26 @@ One of its most powerful features is the ability to generate `LaTeX` code for th
 
 ---
 
+## Usage
+Install dependencies if applicable:
+
+Ubuntu
+```bash
+sudo apt-get install libfontconfig libfontconfig1-dev cmake xorg-dev libxcb-shape0-dev libxcb-xfixes0-dev
+```
+
+Run the program:
+```bash
+$ cargo run
+```
+
+Specify the language by passing it as an argument. Possible values are `en`, `english`, `pl`, `polish`, `es` and `spanish`.
+```bash
+$ cargo run -- pl
+```
+
+---
+
 ## Plan
 - [X] 1.1. Implement rational numbers representation.
 - [X] 1.2. Implement matrix module for given any number representation.
@@ -37,18 +57,6 @@ and all other things added as GH Issues.
 ## Libraries
 - [egui](https://crates.io/crates/egui) - (https://github.com/emilk/egui)
 - [num](https://docs.rs/num/latest/num/)
-
----
-
-## Dependencies
-### Ubuntu
-```bash
-sudo apt-get install libfontconfig libfontconfig1-dev cmake xorg-dev libxcb-shape0-dev libxcb-xfixes0-dev
-```
-### Windows
-```cmd
-# Compiled and tested on Windows 10
-```
 
 
 [#MieszkoGH]: https://github.com/mgr0dzicki

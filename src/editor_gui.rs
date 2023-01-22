@@ -25,7 +25,7 @@ pub struct EditorState {
 
 pub fn display_editor<K>(ctx: &egui::Context, state: &mut State<K>, locale: &Locale)
 where
-    K: MatrixNumber + ToString,
+    K: MatrixNumber,
 {
     if let Some(editor_content) = &mut state.editor.editor_content {
         let result = display_editor_is_some::<K>(
@@ -102,10 +102,11 @@ where
             let mut err_msg = if Identifier::is_valid(identifier_name) {
                 None
             } else {
-                Some(String::from(locale.get_translated("Identifier is invalid!")))
+                Some(locale.get_translated("Identifier is invalid!"))
             };
             if let Err(err) = &result {
-                err_msg = Some(locale.get_translated("Matrix is invalid!") + format!("{err}").as_str());
+                err_msg =
+                    Some(locale.get_translated("Matrix is invalid!") + format!("{err}").as_str());
             };
             ui.horizontal(|ui| {
                 let sense = if err_msg.is_some() {

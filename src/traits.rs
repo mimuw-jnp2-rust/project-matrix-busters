@@ -40,6 +40,7 @@ pub trait MatrixNumber:
     + GuiDisplayable
     + Clone
     + FromStr
+    + ToString
 {
 }
 
@@ -53,6 +54,7 @@ impl<T> MatrixNumber for T where
         + GuiDisplayable
         + Clone
         + FromStr
+        + ToString
 {
 }
 
@@ -104,7 +106,7 @@ mod tests {
 
     #[test]
     fn test_matrix_number() {
-        fn test<T: MatrixNumber + ToString>() {
+        fn test<T: MatrixNumber>() {
             let t = T::one();
             assert_eq!(t.to_latex(), t.to_string());
         }

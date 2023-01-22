@@ -12,9 +12,7 @@ mod traits;
 use crate::constants::{APP_NAME, DEFAULT_HEIGHT, DEFAULT_LEFT_PANEL_WIDTH, DEFAULT_WIDTH};
 use crate::editor_gui::{display_editor, set_editor_to_matrix, set_editor_to_scalar, EditorState};
 use crate::environment::{Environment, Identifier, Type};
-use crate::locale::Language::*;
-use crate::locale::Locale;
-use crate::matrices::Matrix;
+use crate::locale::{Language, Locale};
 use crate::matrix_algorithms::Aftermath;
 use crate::parser::parse_instruction;
 use crate::traits::{GuiDisplayable, LaTeXable, MatrixNumber};
@@ -29,49 +27,19 @@ use std::default::Default;
 use std::time::Duration;
 
 /// Field for matrices.
-type K = Rational64;
+type F = Rational64;
 
 fn main() {
     let options = eframe::NativeOptions {
         initial_window_size: Some(vec2(DEFAULT_WIDTH, DEFAULT_HEIGHT)),
         ..Default::default()
     };
-    let locale = Locale::new(Polish);
+    let locale = Locale::new(Language::of(std::env::args().nth(1)));
     eframe::run_native(
         &locale.get_translated(APP_NAME),
         options,
-        Box::new(|_cc| Box::<MatrixApp>::new(MatrixApp::new(locale))),
+        Box::new(|_cc| Box::<MatrixApp<F>>::new(MatrixApp::new(locale))),
     )
-}
-
-fn mock_state() -> State<K> {
-    let mut env = Environment::new();
-    env.insert(
-        Identifier::new("a".to_string()).unwrap(),
-        Type::Scalar(Rational64::new(1, 2)),
-    );
-    env.insert(
-        Identifier::new("M".to_string()).unwrap(),
-        Type::Matrix(rm![1, 2; 3, 4]),
-    );
-
-    let mut windows = HashMap::new();
-    windows.insert(
-        Identifier::new("a".to_string()).unwrap(),
-        WindowState { is_open: true },
-    );
-    windows.insert(
-        Identifier::new("M".to_string()).unwrap(),
-        WindowState { is_open: false },
-    );
-    State {
-        env,
-        windows,
-        shell: Default::default(),
-        editor: Default::default(),
-        toasts: egui_toast::Toasts::default(),
-        clipboard: ClipboardProvider::new().expect("Failed to create Clipboard context!"),
-    }
 }
 
 pub struct WindowState {
@@ -111,16 +79,21 @@ where
     }
 }
 
-struct MatrixApp {
+struct MatrixApp<K>
+where
+    K: MatrixNumber,
+{
     state: State<K>,
     locale: Locale,
 }
 
-impl MatrixApp {
+impl<K> MatrixApp<K>
+where
+    K: MatrixNumber,
+{
     fn new(locale: Locale) -> Self {
         Self {
-            // state: State::default()
-            state: mock_state(),
+            state: State::default(),
             locale,
         }
     }
@@ -131,7 +104,10 @@ impl MatrixApp {
     }
 }
 
-impl eframe::App for MatrixApp {
+impl<K> eframe::App for MatrixApp<K>
+where
+    K: MatrixNumber,
+{
     fn update(&mut self, ctx: &Context, frame: &mut eframe::Frame) {
         let window_size = frame.info().window_info.size;
         self.state.toasts = egui_toast::Toasts::default()
@@ -184,7 +160,10 @@ impl eframe::App for MatrixApp {
     }
 }
 
-fn display_menu_bar(ctx: &Context, state: &mut State<K>, locale: &Locale) {
+fn display_menu_bar<K>(ctx: &Context, state: &mut State<K>, locale: &Locale)
+where
+    K: MatrixNumber,
+{
     egui::TopBottomPanel::top("menu_bar").show(ctx, |ui| {
         egui::menu::bar(ui, |ui| {
             display_add_matrix_button(ui, state, locale);
@@ -193,24 +172,32 @@ fn display_menu_bar(ctx: &Context, state: &mut State<K>, locale: &Locale) {
     });
 }
 
-fn display_add_matrix_button(ui: &mut Ui, state: &mut State<K>, locale: &Locale) {
+fn display_add_matrix_button<K>(ui: &mut Ui, state: &mut State<K>, locale: &Locale)
+where
+    K: MatrixNumber,
+{
     if ui.button(locale.get_translated("Add Matrix")).clicked() {
-        set_editor_to_matrix(&mut state.editor, &K::default().to_string());
+        set_editor_to_matrix(&mut state.editor, &K::zero().to_string());
     }
 }
 
-fn display_add_scalar_button(ui: &mut Ui, state: &mut State<K>, locale: &Locale) {
+fn display_add_scalar_button<K>(ui: &mut Ui, state: &mut State<K>, locale: &Locale)
+where
+    K: MatrixNumber,
+{
     if ui.button(locale.get_translated("Add Scalar")).clicked() {
-        set_editor_to_scalar(&mut state.editor, &K::default().to_string());
+        set_editor_to_scalar(&mut state.editor, &K::zero().to_string());
     }
 }
 
-fn display_env_element(
+fn display_env_element<K>(
     windows: &mut HashMap<Identifier, WindowState>,
     ui: &mut Ui,
     (identifier, value): (&Identifier, &mut Type<K>),
     locale: &Locale,
-) {
+) where
+    K: MatrixNumber,
+{
     let mut is_open = windows.get(identifier).unwrap().is_open;
     ui.horizontal(|ui| {
         ui.checkbox(&mut is_open, identifier.to_string());
@@ -219,13 +206,15 @@ fn display_env_element(
     windows.insert(identifier.clone(), WindowState { is_open });
 }
 
-fn display_env_element_window(
+fn display_env_element_window<K>(
     ctx: &Context,
     (identifier, value): (&Identifier, &Type<K>),
     locale: &Locale,
     clipboard: &mut ClipboardContext,
     is_open: &mut bool,
-) {
+) where
+    K: MatrixNumber,
+{
     egui::Window::new(identifier.to_string())
         .open(is_open)
         .resizable(false)
@@ -272,7 +261,7 @@ fn display_env_element_window(
         });
 }
 
-fn display_shell<T: MatrixNumber + ToString>(
+fn display_shell<K: MatrixNumber>(
     ctx: &Context,
     State {
         shell,

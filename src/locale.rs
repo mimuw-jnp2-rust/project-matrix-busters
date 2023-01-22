@@ -9,6 +9,17 @@ pub enum Language {
     Polish,
 }
 
+impl Language {
+    pub fn of(str: Option<String>) -> Language {
+        str.map_or(Language::English, |str| match str.as_str() {
+            "en" | "english" => Language::English,
+            "es" | "spanish" => Language::Spanish,
+            "pl" | "polish" => Language::Polish,
+            _ => Language::English,
+        })
+    }
+}
+
 #[allow(dead_code)]
 pub struct Locale {
     language: Language,
@@ -79,7 +90,10 @@ lazy_static! {
         ("matrix", "Matriz"),
         ("Add Matrix", "Añadir Matriz"),
         ("Add Scalar", "Añadir Escalar"),
-        ("JP2GMD - Matrix Calculator", "JP2GMD - Calculadora de Matrices"),
+        (
+            "JP2GMD - Matrix Calculator",
+            "JP2GMD - Calculadora de Matrices"
+        ),
         ("Echelon", "Echelon"),
         ("Run", "Ejecutar"),
         ("Editor", "Editor"),
