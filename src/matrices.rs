@@ -1,7 +1,9 @@
+use crate::constants::MATRIX_PADDING;
 use crate::locale::Locale;
 use crate::traits::{CheckedMulScl, LaTeXable};
 use crate::traits::{GuiDisplayable, MatrixNumber};
 use anyhow::{bail, Context};
+use egui::{pos2, Align2, Color32, FontId, Pos2, Rect};
 use num_traits::{CheckedAdd, CheckedMul, CheckedNeg, CheckedSub};
 use std::ops::{Add, Mul, Neg, Sub};
 
@@ -456,6 +458,56 @@ impl<T: MatrixNumber + ToString> GuiDisplayable for Matrix<T> {
         let (h, w) = self.get_shape();
         let name = locale.get_translated("matrix");
         format!("{name}::<{h}, {w}>")
+    }
+
+    fn to_shape(&self, ctx: &egui::Context, font_id: FontId, color: Color32) -> egui::Shape {
+        let (rows, cols) = self.get_shape();
+        let mut shapes: Vec<Vec<egui::Shape>> = self
+            .get_data()
+            .iter()
+            .map(|row| {
+                row.iter()
+                    .map(|element| element.to_shape(ctx, font_id.clone(), color))
+                    .collect()
+            })
+            .collect();
+
+        let mut row_heights = vec![0. as f32; rows];
+        let mut column_widths = vec![0. as f32; cols];
+        for i in 0..rows {
+            for j in 0..cols {
+                let rect = shapes[i][j].visual_bounding_rect();
+                row_heights[i] = row_heights[i].max(rect.height());
+                column_widths[j] = column_widths[j].max(rect.width());
+            }
+        }
+
+        let mut upper_left = pos2(0., 0.);
+        for i in 0..rows {
+            for j in 0..cols {
+                let rect = shapes[i][j].visual_bounding_rect().size();
+                shapes[i][j].translate(
+                    egui::Align2::CENTER_CENTER
+                        .align_size_within_rect(
+                            rect,
+                            Rect {
+                                min: upper_left,
+                                max: pos2(
+                                    upper_left.x + column_widths[j],
+                                    upper_left.y + row_heights[i],
+                                ),
+                            },
+                        )
+                        .min
+                        .to_vec2(),
+                );
+                upper_left.x += column_widths[j] + MATRIX_PADDING;
+            }
+            upper_left.x = 0.;
+            upper_left.y += row_heights[i] + MATRIX_PADDING;
+        }
+
+        egui::Shape::Vec(shapes.into_iter().flat_map(|row| row.into_iter()).collect())
     }
 }
 

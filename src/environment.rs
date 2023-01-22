@@ -61,6 +61,18 @@ impl<T: MatrixNumber + ToString> GuiDisplayable for Type<T> {
             Type::Matrix(m) => m.display_string(locale),
         }
     }
+
+    fn to_shape(
+        &self,
+        ctx: &egui::Context,
+        font_id: egui::FontId,
+        color: egui::Color32,
+    ) -> egui::Shape {
+        match self {
+            Type::Scalar(s) => s.to_shape(ctx, font_id, color),
+            Type::Matrix(m) => m.to_shape(ctx, font_id, color),
+        }
+    }
 }
 
 pub struct Environment<T: MatrixNumber> {

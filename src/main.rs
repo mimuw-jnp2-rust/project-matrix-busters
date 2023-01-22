@@ -18,8 +18,10 @@ use crate::locale::Locale;
 use crate::matrices::Matrix;
 use crate::parser::parse_expression;
 use crate::traits::{GuiDisplayable, MatrixNumber};
+use constants::{FONT_ID, TEXT_COLOR};
 use eframe::egui;
-use egui::{Context, Sense, Ui};
+use egui::plot;
+use egui::{pos2, vec2, Align2, Color32, Context, FontId, Frame, Sense, Ui, Vec2};
 use num_rational::Rational64;
 use std::collections::HashMap;
 use std::default::Default;
@@ -199,10 +201,20 @@ fn display_env_element_window(
     is_open: &mut bool,
 ) {
     egui::Window::new(identifier.to_string())
-        .default_width(320.0)
         .open(is_open)
         .show(ctx, |ui| {
-            ui.label(value.to_string());
+            ui.allocate_space(ui.available_size());
+            let mut value_shape = value.to_shape(ctx, FONT_ID, TEXT_COLOR);
+            value_shape.translate(
+                egui::Align2::CENTER_CENTER
+                    .align_size_within_rect(
+                        value_shape.visual_bounding_rect().size(),
+                        ui.painter().clip_rect(),
+                    )
+                    .min
+                    .to_vec2(),
+            );
+            ui.painter().add(value_shape);
         });
 }
 
