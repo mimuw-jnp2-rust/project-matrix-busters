@@ -43,7 +43,7 @@ and all other things added as GH Issues.
 ## Dependencies
 ### Ubuntu
 ```bash
-sudo apt-get install libfontconfig libfontconfig1-dev cmake xorg-dev
+sudo apt-get install libfontconfig libfontconfig1-dev cmake xorg-dev libxcb-shape0-dev libxcb-xfixes0-dev
 ```
 ### Windows
 ```bash
