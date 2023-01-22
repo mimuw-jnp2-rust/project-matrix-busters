@@ -30,22 +30,6 @@ pub trait GuiDisplayable {
     fn to_shape(&self, ctx: &egui::Context, font_id: FontId, color: Color32) -> Shape;
 }
 
-impl GuiDisplayable for i64 {
-    fn display_string(&self, _locale: &Locale) -> String {
-        self.to_string()
-    }
-
-    fn to_shape(&self, ctx: &egui::Context, font_id: FontId, color: Color32) -> Shape {
-        let text_shape = TextShape::new(
-            pos2(0., 0.),
-            ctx.fonts().layout_no_wrap(self.to_string(), font_id, color),
-        );
-        let mut shape = Shape::Text(text_shape);
-        shape.translate(-shape.visual_bounding_rect().min.to_vec2());
-        shape
-    }
-}
-
 pub trait MatrixNumber:
     Num
     + CheckedOps
@@ -85,8 +69,34 @@ macro_rules! to_string_to_latex {
     }
 }
 
+#[macro_export]
+macro_rules! gui_displayable_for_primitive {
+    ($($t:ty),*) => {
+        $(
+            impl GuiDisplayable for $t {
+                fn display_string(&self, _locale: &Locale) -> String {
+                    self.to_string()
+                }
+
+                fn to_shape(&self, ctx: &egui::Context, font_id: FontId, color: Color32) -> Shape {
+                    let text_shape = TextShape::new(
+                        pos2(0., 0.),
+                        ctx.fonts().layout_no_wrap(self.to_string(), font_id, color),
+                    );
+                    let mut shape = Shape::Text(text_shape);
+                    shape.translate(-shape.visual_bounding_rect().min.to_vec2());
+                    shape
+                }
+            }
+        )*
+    }
+}
+
 // We add LaTeX support for all the basic types
 to_string_to_latex!(i8, i16, i32, i64, i128, isize);
+
+// We add display support for all the basic types
+gui_displayable_for_primitive!(i8, i16, i32, i64, i128, isize);
 
 #[cfg(test)]
 mod tests {
@@ -107,6 +117,6 @@ mod tests {
             }
         }
 
-        //test_matrix_number!(i8, i16, i32, i64, i128, isize);
+        test_matrix_number!(i8, i16, i32, i64, i128, isize);
     }
 }
