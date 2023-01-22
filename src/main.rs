@@ -33,7 +33,7 @@ type K = Rational64;
 
 fn main() {
     let options = eframe::NativeOptions {
-        initial_window_size: Some(egui::vec2(DEFAULT_WIDTH, DEFAULT_HEIGHT)),
+        initial_window_size: Some(vec2(DEFAULT_WIDTH, DEFAULT_HEIGHT)),
         ..Default::default()
     };
     let locale = Locale::new(Polish);
@@ -166,6 +166,7 @@ impl eframe::App for MatrixApp {
                 display_env_element_window(
                     ctx,
                     (id, element),
+                    &self.locale,
                     &mut self.state.clipboard,
                     &mut window.is_open,
                 );
@@ -221,6 +222,7 @@ fn display_env_element(
 fn display_env_element_window(
     ctx: &Context,
     (identifier, value): (&Identifier, &Type<K>),
+    locale: &Locale,
     clipboard: &mut ClipboardContext,
     is_open: &mut bool,
 ) {
@@ -235,7 +237,7 @@ fn display_env_element_window(
                         .set_contents(latex)
                         .expect("Failed to copy LaTeX to clipboard!");
                 }
-                if ui.button("Echelon").clicked() {
+                if ui.button(locale.get_translated("Echelon")).clicked() {
                     let echelon = match value {
                         Type::Scalar(_) => "1".to_string(),
                         Type::Matrix(m) => match m.echelon() {

@@ -45,17 +45,50 @@ lazy_static! {
     pub static ref TRANS_EN_RAW: Vec<(&'static str, &'static str)> = vec![
         ("objects", "Objects"),
         ("matrix", "Matrix"),
-        ("Add Matrix", "Add Matrix")
+        ("Add Matrix", "Add Matrix"),
+        ("Add Scalar", "Add Scalar"),
+        ("JP2GMD - Matrix Calculator", "JP2GMD - Matrix Calculator"),
+        ("Echelon", "Echelon"),
+        ("Run", "Run"),
+        ("Editor", "Editor"),
+        ("Identifier:", "Identifier:"),
+        ("Matrix is invalid!", "Matrix is invalid!"),
+        ("Add", "Add"),
+        ("Error", "Error"),
+        ("Enter the matrix:", "Enter the matrix:"),
+        ("Enter the scalar:", "Enter the scalar:"),
     ];
     pub static ref TRANS_PL_RAW: Vec<(&'static str, &'static str)> = vec![
         ("objects", "Obiekty"),
         ("matrix", "Macierz"),
-        ("Add Matrix", "Dodaj Macierz")
+        ("Add Matrix", "Dodaj Macierz"),
+        ("Add Scalar", "Dodaj Skalar"),
+        ("JP2GMD - Matrix Calculator", "JP2GMD - Kalkulator Macierzy"),
+        ("Echelon", "Schodkuj"),
+        ("Run", "Uruchom"),
+        ("Editor", "Edytor"),
+        ("Identifier:", "Identyfikator:"),
+        ("Matrix is invalid!", "Macierz jest niepoprawna!"),
+        ("Add", "Dodaj"),
+        ("Error", "Błąd"),
+        ("Enter the matrix:", "Wprowadź macierz:"),
+        ("Enter the scalar:", "Wprowadź skalar:"),
     ];
     pub static ref TRANS_ES_RAW: Vec<(&'static str, &'static str)> = vec![
         ("objects", "Objetos"),
         ("matrix", "Matriz"),
-        ("Add Matrix", "Añadir Matriz")
+        ("Add Matrix", "Añadir Matriz"),
+        ("Add Scalar", "Añadir Escalar"),
+        ("JP2GMD - Matrix Calculator", "JP2GMD - Calculadora de Matrices"),
+        ("Echelon", "Echelon"),
+        ("Run", "Ejecutar"),
+        ("Editor", "Editor"),
+        ("Identifier:", "Identificador:"),
+        ("Matrix is invalid!", "¡La matriz es inválida!"),
+        ("Add", "Añadir"),
+        ("Error", "Error"),
+        ("Enter the matrix:", "Introduzca la matriz:"),
+        ("Enter the scalar:", "Introduzca el escalar:"),
     ];
 }
 

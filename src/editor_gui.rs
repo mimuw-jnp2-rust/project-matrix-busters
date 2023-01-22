@@ -87,7 +87,7 @@ where
                 identifier_name,
                 editor_type,
             } = content;
-            ui.label("Identifier:");
+            ui.label(locale.get_translated("Identifier:"));
             ui.text_edit_singleline(identifier_name);
             let result = match editor_type {
                 EditorType::Matrix(h, w, data) => {
@@ -102,10 +102,10 @@ where
             let mut err_msg = if Identifier::is_valid(identifier_name) {
                 None
             } else {
-                Some(String::from("Identifier is invalid!"))
+                Some(String::from(locale.get_translated("Identifier is invalid!")))
             };
             if let Err(err) = &result {
-                err_msg = Some(format!("Matrix is invalid! {err}"));
+                err_msg = Some(locale.get_translated("Matrix is invalid!") + format!("{err}").as_str());
             };
             ui.horizontal(|ui| {
                 let sense = if err_msg.is_some() {
@@ -148,7 +148,7 @@ where
 {
     let mut result: Vec<K> = vec![];
     for e in data.iter() {
-        result.push(K::from_str(e).ok().context("xd")?)
+        result.push(K::from_str(e).ok().context("Invalid data")?)
     }
     Ok(Type::Matrix(Matrix::from_vec(result, (*h, *w))?))
 }
