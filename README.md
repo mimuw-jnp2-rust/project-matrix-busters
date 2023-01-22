@@ -46,8 +46,8 @@ and all other things added as GH Issues.
 sudo apt-get install libfontconfig libfontconfig1-dev cmake xorg-dev libxcb-shape0-dev libxcb-xfixes0-dev
 ```
 ### Windows
-```bash
-# not tested
+```cmd
+# Compiled and tested on Windows 10
 ```
 
 
