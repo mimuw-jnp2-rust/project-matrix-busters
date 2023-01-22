@@ -340,8 +340,8 @@ mod tests {
 
         test_expr("A+A", a.clone() + a.clone());
         test_expr("A*B", a.clone() * b.clone());
-        test_expr("A*B*Id_2", a.clone() * b.clone() * i2.clone());
-        test_expr("Id_2-Id_2", i2.clone() - i2.clone());
+        test_expr("A*B*Id_2", a * b * i2.clone());
+        test_expr("Id_2-Id_2", i2.clone() - i2);
     }
 
     #[test]
@@ -376,11 +376,11 @@ mod tests {
 
         test_expr("A+a*A", a.clone() + a.clone() * 2);
         test_expr("A*2*B", a.clone() * b.clone() * 2);
-        test_expr("A*B*a*Id_2", a.clone() * b.clone() * i2.clone() * 2);
+        test_expr("A*B*a*Id_2", a * b * i2.clone() * 2);
         test_expr("2*Id_2-Id_2", i2.clone() * 2 - i2.clone());
-        test_expr("C^0", i2.clone());
+        test_expr("C^0", i2);
         test_expr("C^1", c.clone());
-        test_expr("C^2", c.clone() * c.clone());
+        test_expr("C^2", c.clone() * c);
     }
 
     #[test]
@@ -388,10 +388,7 @@ mod tests {
         let mut env = Environment::new();
         let fib = im![0, 1; 1, 1];
 
-        env.insert(
-            Identifier::new("A".to_string()).unwrap(),
-            Type::Matrix(fib.clone()),
-        );
+        env.insert(Identifier::new("A".to_string()).unwrap(), Type::Matrix(fib));
 
         let test_expr = |raw, expected| {
             assert_eq!(parse_expression(raw, &env).unwrap(), Type::Matrix(expected))

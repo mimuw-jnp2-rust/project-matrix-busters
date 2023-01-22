@@ -1,12 +1,10 @@
-use std::ops::RangeInclusive;
-
 use crate::{
     constants::{
         FRACTION_FONT_SIZE_RATIO, FRACTION_HMARGIN, FRACTION_LINE_WIDTH, FRACTION_VMARGIN,
     },
     traits::{GuiDisplayable, LaTeXable},
 };
-use egui::{pos2, vec2, FontId, Pos2, Rect, Rounding, Shape, Stroke};
+use egui::{pos2, vec2, FontId, Rect, Rounding, Shape};
 use num_rational::Rational64;
 use num_traits::sign::Signed;
 
@@ -33,7 +31,7 @@ impl LaTeXable for Rational64 {
 }
 
 impl GuiDisplayable for Rational64 {
-    fn display_string(&self, locale: &crate::locale::Locale) -> String {
+    fn display_string(&self, _locale: &crate::locale::Locale) -> String {
         self.to_string()
     }
 

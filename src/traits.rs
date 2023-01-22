@@ -1,11 +1,10 @@
 use eframe::epaint::TextShape;
-use egui::{pos2, Align2, Color32, FontId, Galley, Pos2, Rect, Shape};
+use egui::{pos2, Color32, FontId, Shape};
 use num_traits::{
     CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, FromPrimitive, Signed, ToPrimitive,
 };
 use std::ops::Mul;
 use std::str::FromStr;
-use std::sync::Arc;
 
 use crate::locale::Locale;
 use num_traits::Num;
@@ -32,7 +31,7 @@ pub trait GuiDisplayable {
 }
 
 impl GuiDisplayable for i64 {
-    fn display_string(&self, locale: &Locale) -> String {
+    fn display_string(&self, _locale: &Locale) -> String {
         self.to_string()
     }
 

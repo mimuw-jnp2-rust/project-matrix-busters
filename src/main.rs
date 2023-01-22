@@ -20,8 +20,8 @@ use crate::parser::parse_expression;
 use crate::traits::{GuiDisplayable, MatrixNumber};
 use constants::{FONT_ID, TEXT_COLOR};
 use eframe::egui;
-use egui::plot;
-use egui::{pos2, vec2, Align2, Color32, Context, FontId, Frame, Sense, Ui, Vec2};
+
+use egui::{Context, Sense, Ui};
 use num_rational::Rational64;
 use std::collections::HashMap;
 use std::default::Default;
