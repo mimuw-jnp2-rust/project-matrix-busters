@@ -63,7 +63,6 @@ impl GuiDisplayable for Rational64 {
 
             let num_rect = num_shape.visual_bounding_rect();
             let denom_rect = denom_shape.visual_bounding_rect();
-            println!("{:?} {:?}", num_rect, denom_rect);
             let single_width = num_rect.width().max(denom_rect.width()) + 2. * FRACTION_HMARGIN;
 
             num_shape.translate(vec2((single_width - num_rect.width()) / 2., 0.));

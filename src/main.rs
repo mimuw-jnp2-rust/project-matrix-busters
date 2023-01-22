@@ -19,10 +19,10 @@ use crate::matrix_algorithms::Aftermath;
 use crate::parser::parse_instruction;
 use crate::traits::{GuiDisplayable, LaTeXable, MatrixNumber};
 use clipboard::{ClipboardContext, ClipboardProvider};
-use constants::{FONT_ID, TEXT_COLOR};
+use constants::{FONT_ID, TEXT_COLOR, VALUE_PADDING};
 use eframe::egui;
 
-use egui::{Context, Sense, Ui};
+use egui::{vec2, Context, Sense, Ui};
 use num_rational::Rational64;
 use std::collections::HashMap;
 use std::default::Default;
@@ -226,37 +226,47 @@ fn display_env_element_window(
 ) {
     egui::Window::new(identifier.to_string())
         .open(is_open)
+        .resizable(false)
         .show(ctx, |ui| {
-            ui.allocate_space(ui.available_size());
+            ui.horizontal(|ui| {
+                if ui.button("LaTeX").clicked() {
+                    let latex = value.to_latex();
+                    clipboard
+                        .set_contents(latex)
+                        .expect("Failed to copy LaTeX to clipboard!");
+                }
+                if ui.button("Echelon").clicked() {
+                    let echelon = match value {
+                        Type::Scalar(_) => "1".to_string(),
+                        Type::Matrix(m) => match m.echelon() {
+                            Ok(Aftermath { result: _, steps }) => steps.join("\n"),
+                            Err(err) => err.to_string(),
+                        },
+                    };
+                    clipboard
+                        .set_contents(echelon)
+                        .expect("Failed to copy LaTeX to clipboard!");
+                }
+            });
             let mut value_shape = value.to_shape(ctx, FONT_ID, TEXT_COLOR);
+            let value_rect = value_shape.visual_bounding_rect();
+
+            ui.set_min_width(value_rect.width() + 2. * VALUE_PADDING);
+            ui.set_max_width(ui.min_size().x);
+            ui.separator();
+
+            let bar_height = ui.min_size().y;
+
+            ui.add_space(value_rect.height() + VALUE_PADDING);
+
             value_shape.translate(
-                egui::Align2::CENTER_CENTER
-                    .align_size_within_rect(
-                        value_shape.visual_bounding_rect().size(),
-                        ui.painter().clip_rect(),
-                    )
-                    .min
-                    .to_vec2(),
+                ui.clip_rect().min.to_vec2()
+                    + vec2(
+                        (ui.min_size().x - value_rect.width()) / 2.,
+                        bar_height + VALUE_PADDING,
+                    ),
             );
             ui.painter().add(value_shape);
-            if ui.button("LaTeX").clicked() {
-                let latex = value.to_latex();
-                clipboard
-                    .set_contents(latex)
-                    .expect("Failed to copy LaTeX to clipboard!");
-            }
-            if ui.button("Echelon").clicked() {
-                let echelon = match value {
-                    Type::Scalar(_) => "1".to_string(),
-                    Type::Matrix(m) => match m.echelon() {
-                        Ok(Aftermath { result: _, steps }) => steps.join("\n"),
-                        Err(err) => err.to_string(),
-                    },
-                };
-                clipboard
-                    .set_contents(echelon)
-                    .expect("Failed to copy LaTeX to clipboard!");
-            }
         });
 }
 
