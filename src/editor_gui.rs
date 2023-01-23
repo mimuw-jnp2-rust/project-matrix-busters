@@ -60,11 +60,34 @@ pub fn set_editor_to_matrix(state: &mut EditorState, def: &str) {
     });
 }
 
+pub fn set_editor_to_existing_matrix<K>(state: &mut EditorState, matrix: &Matrix<K>, name: String)
+where
+    K: MatrixNumber,
+{
+    let (w, h) = matrix.get_shape();
+    let data: Vec<K> = matrix.clone().into();
+    let data = data.iter().map(|el| el.to_string()).collect();
+    state.editor_content = Some(EditorContent {
+        identifier_name: name,
+        editor_type: EditorType::Matrix(w, h, data),
+    });
+}
+
 pub fn set_editor_to_scalar(state: &mut EditorState, def: &str) {
     state.editor_content = Some(EditorContent {
         identifier_name: "".to_string(),
         editor_type: EditorType::Scalar(String::from(def)),
     });
+}
+
+pub fn set_editor_to_existing_scalar<K>(state: &mut EditorState, value: &K, name: String)
+where
+    K: MatrixNumber,
+{
+    state.editor_content = Some(EditorContent {
+        identifier_name: name,
+        editor_type: EditorType::Scalar(value.to_string()),
+    })
 }
 
 fn display_editor_is_some<K>(

@@ -613,6 +613,12 @@ impl<T: MatrixNumber> ToString for Matrix<T> {
     }
 }
 
+impl<T: MatrixNumber> From<Matrix<T>> for Vec<T> {
+    fn from(value: Matrix<T>) -> Self {
+        value.data.into_iter().flatten().collect()
+    }
+}
+
 /// Create a matrix row (vector) of Rational64 numbers passed as integers.
 /// Uses ri! macro.
 /// Used as helper macro for rm! macro.

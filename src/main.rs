@@ -10,7 +10,10 @@ mod rationals;
 mod traits;
 
 use crate::constants::{APP_NAME, DEFAULT_HEIGHT, DEFAULT_LEFT_PANEL_WIDTH, DEFAULT_WIDTH};
-use crate::editor_gui::{display_editor, set_editor_to_matrix, set_editor_to_scalar, EditorState};
+use crate::editor_gui::{
+    display_editor, set_editor_to_existing_matrix, set_editor_to_existing_scalar,
+    set_editor_to_matrix, set_editor_to_scalar, EditorState,
+};
 use crate::environment::{Environment, Identifier, Type};
 use crate::locale::{Language, Locale};
 use crate::matrix_algorithms::Aftermath;
@@ -144,6 +147,7 @@ where
                     (id, element),
                     &self.locale,
                     &mut self.state.clipboard,
+                    &mut self.state.editor,
                     &mut window.is_open,
                 );
             }
@@ -211,6 +215,7 @@ fn display_env_element_window<K>(
     (identifier, value): (&Identifier, &Type<K>),
     locale: &Locale,
     clipboard: &mut ClipboardContext,
+    editor: &mut EditorState,
     is_open: &mut bool,
 ) where
     K: MatrixNumber,
@@ -258,6 +263,17 @@ fn display_env_element_window<K>(
                     ),
             );
             ui.painter().add(value_shape);
+            ui.separator();
+            if ui.button(locale.get_translated("Edit")).clicked() {
+                match value {
+                    Type::Scalar(s) => {
+                        set_editor_to_existing_scalar(editor, s, identifier.to_string())
+                    }
+                    Type::Matrix(m) => {
+                        set_editor_to_existing_matrix(editor, m, identifier.to_string())
+                    }
+                }
+            };
         });
 }
 
