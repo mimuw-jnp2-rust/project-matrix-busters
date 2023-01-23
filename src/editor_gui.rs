@@ -171,11 +171,11 @@ fn display_matrix_editor(
 ) {
     ui.label(locale.get_translated("Enter the matrix:"));
     ui.horizontal(|ui| {
-        ui.label("Height");
+        ui.label(locale.get_translated("Height"));
         ui.add(egui::DragValue::new(h));
     });
     ui.horizontal(|ui| {
-        ui.label("Width");
+        ui.label(locale.get_translated("Width"));
         ui.add(egui::DragValue::new(w));
     });
     ui.separator();
@@ -184,9 +184,14 @@ fn display_matrix_editor(
     }
 
     egui::Grid::new("matrix_editor").show(ui, |ui| {
+        ui.label("");
+        for j in 0..*w {
+            ui.label(format!("{}", j + 1).as_str());
+        }
+        ui.end_row();
         for i in 0..*h {
+            ui.label(format!("{}", i + 1).as_str());
             for j in 0..*w {
-                ui.label(format!("({}, {})", i, j));
                 display_k_editor((i, j), data, ui, *w);
             }
             ui.end_row();
