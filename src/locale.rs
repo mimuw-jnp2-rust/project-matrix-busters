@@ -70,6 +70,7 @@ lazy_static! {
         ("Enter the scalar:", "Enter the scalar:"),
         ("Height", "Height"),
         ("Width", "Width"),
+        ("Edit", "Edit"),
     ];
     pub static ref TRANS_PL_RAW: Vec<(&'static str, &'static str)> = vec![
         ("objects", "Obiekty"),
@@ -91,6 +92,7 @@ lazy_static! {
         ("Enter the scalar:", "Wprowadź skalar:"),
         ("Height", "Wysokość"),
         ("Width", "Szerokość"),
+        ("Edit", "Edytuj"),
     ];
     pub static ref TRANS_ES_RAW: Vec<(&'static str, &'static str)> = vec![
         ("objects", "Objetos"),
@@ -112,6 +114,7 @@ lazy_static! {
         ("Enter the scalar:", "Introduzca el escalar:"),
         ("Height", "Altura"),
         ("Width", "Anchura"),
+        ("Editor", "Editar"),
     ];
 }
 
