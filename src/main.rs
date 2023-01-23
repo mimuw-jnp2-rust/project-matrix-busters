@@ -54,10 +54,7 @@ struct ShellState {
     text: String,
 }
 
-pub struct State<K>
-where
-    K: MatrixNumber,
-{
+pub struct State<K: MatrixNumber> {
     env: Environment<K>,
     windows: HashMap<Identifier, WindowState>,
     shell: ShellState,
@@ -66,10 +63,7 @@ where
     clipboard: ClipboardContext,
 }
 
-impl<K> Default for State<K>
-where
-    K: MatrixNumber,
-{
+impl<K: MatrixNumber> Default for State<K> {
     fn default() -> Self {
         Self {
             env: Default::default(),
@@ -82,18 +76,12 @@ where
     }
 }
 
-struct MatrixApp<K>
-where
-    K: MatrixNumber,
-{
+struct MatrixApp<K: MatrixNumber> {
     state: State<K>,
     locale: Locale,
 }
 
-impl<K> MatrixApp<K>
-where
-    K: MatrixNumber,
-{
+impl<K: MatrixNumber> MatrixApp<K> {
     fn new(locale: Locale) -> Self {
         Self {
             state: State::default(),
@@ -107,10 +95,7 @@ where
     }
 }
 
-impl<K> eframe::App for MatrixApp<K>
-where
-    K: MatrixNumber,
-{
+impl<K: MatrixNumber> eframe::App for MatrixApp<K> {
     fn update(&mut self, ctx: &Context, frame: &mut eframe::Frame) {
         let window_size = frame.info().window_info.size;
         self.state.toasts = egui_toast::Toasts::default()
@@ -164,10 +149,7 @@ where
     }
 }
 
-fn display_menu_bar<K>(ctx: &Context, state: &mut State<K>, locale: &Locale)
-where
-    K: MatrixNumber,
-{
+fn display_menu_bar<K: MatrixNumber>(ctx: &Context, state: &mut State<K>, locale: &Locale) {
     egui::TopBottomPanel::top("menu_bar").show(ctx, |ui| {
         egui::menu::bar(ui, |ui| {
             display_add_matrix_button(ui, state, locale);
@@ -176,32 +158,24 @@ where
     });
 }
 
-fn display_add_matrix_button<K>(ui: &mut Ui, state: &mut State<K>, locale: &Locale)
-where
-    K: MatrixNumber,
-{
+fn display_add_matrix_button<K: MatrixNumber>(ui: &mut Ui, state: &mut State<K>, locale: &Locale) {
     if ui.button(locale.get_translated("Add Matrix")).clicked() {
         set_editor_to_matrix(&mut state.editor, &K::zero().to_string());
     }
 }
 
-fn display_add_scalar_button<K>(ui: &mut Ui, state: &mut State<K>, locale: &Locale)
-where
-    K: MatrixNumber,
-{
+fn display_add_scalar_button<K: MatrixNumber>(ui: &mut Ui, state: &mut State<K>, locale: &Locale) {
     if ui.button(locale.get_translated("Add Scalar")).clicked() {
         set_editor_to_scalar(&mut state.editor, &K::zero().to_string());
     }
 }
 
-fn display_env_element<K>(
+fn display_env_element<K: MatrixNumber>(
     windows: &mut HashMap<Identifier, WindowState>,
     ui: &mut Ui,
     (identifier, value): (&Identifier, &mut Type<K>),
     locale: &Locale,
-) where
-    K: MatrixNumber,
-{
+) {
     let mut is_open = windows.get(identifier).unwrap().is_open;
     ui.horizontal(|ui| {
         ui.checkbox(&mut is_open, identifier.to_string());
@@ -210,16 +184,14 @@ fn display_env_element<K>(
     windows.insert(identifier.clone(), WindowState { is_open });
 }
 
-fn display_env_element_window<K>(
+fn display_env_element_window<K: MatrixNumber>(
     ctx: &Context,
     (identifier, value): (&Identifier, &Type<K>),
     locale: &Locale,
     clipboard: &mut ClipboardContext,
     editor: &mut EditorState,
     is_open: &mut bool,
-) where
-    K: MatrixNumber,
-{
+) {
     egui::Window::new(identifier.to_string())
         .open(is_open)
         .resizable(false)

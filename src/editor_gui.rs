@@ -23,10 +23,7 @@ pub struct EditorState {
     editor_content: Option<EditorContent>,
 }
 
-pub fn display_editor<K>(ctx: &egui::Context, state: &mut State<K>, locale: &Locale)
-where
-    K: MatrixNumber,
-{
+pub fn display_editor<K: MatrixNumber>(ctx: &egui::Context, state: &mut State<K>, locale: &Locale) {
     if let Some(editor_content) = &mut state.editor.editor_content {
         let result = display_editor_is_some::<K>(
             ctx,
@@ -60,10 +57,11 @@ pub fn set_editor_to_matrix(state: &mut EditorState, def: &str) {
     });
 }
 
-pub fn set_editor_to_existing_matrix<K>(state: &mut EditorState, matrix: &Matrix<K>, name: String)
-where
-    K: MatrixNumber,
-{
+pub fn set_editor_to_existing_matrix<K: MatrixNumber>(
+    state: &mut EditorState,
+    matrix: &Matrix<K>,
+    name: String,
+) {
     let (w, h) = matrix.get_shape();
     let data: Vec<K> = matrix.clone().into();
     let data = data.iter().map(|el| el.to_string()).collect();
@@ -80,26 +78,24 @@ pub fn set_editor_to_scalar(state: &mut EditorState, def: &str) {
     });
 }
 
-pub fn set_editor_to_existing_scalar<K>(state: &mut EditorState, value: &K, name: String)
-where
-    K: MatrixNumber,
-{
+pub fn set_editor_to_existing_scalar<K: MatrixNumber>(
+    state: &mut EditorState,
+    value: &K,
+    name: String,
+) {
     state.editor_content = Some(EditorContent {
         identifier_name: name,
         editor_type: EditorType::Scalar(value.to_string()),
     })
 }
 
-fn display_editor_is_some<K>(
+fn display_editor_is_some<K: MatrixNumber>(
     ctx: &egui::Context,
     content: &mut EditorContent,
     env: &mut Environment<K>,
     windows: &mut HashMap<Identifier, WindowState>,
     locale: &Locale,
-) -> anyhow::Result<bool>
-where
-    K: MatrixNumber,
-{
+) -> anyhow::Result<bool> {
     let mut handled: anyhow::Result<bool> = Ok(false);
     let mut editor_opened = true;
 
@@ -163,13 +159,10 @@ where
     handled
 }
 
-fn parse_matrix_data<K>(
+fn parse_matrix_data<K: MatrixNumber>(
     (h, w): (&mut usize, &mut usize),
     data: &mut [String],
-) -> anyhow::Result<Type<K>>
-where
-    K: MatrixNumber,
-{
+) -> anyhow::Result<Type<K>> {
     let mut result: Vec<K> = vec![];
     for e in data.iter() {
         result.push(K::from_str(e).ok().context("Invalid data")?)
@@ -177,10 +170,7 @@ where
     Ok(Type::Matrix(Matrix::from_vec(result, (*h, *w))?))
 }
 
-fn parse_scalar_data<K>(data: &mut str) -> anyhow::Result<Type<K>>
-where
-    K: MatrixNumber,
-{
+fn parse_scalar_data<K: MatrixNumber>(data: &mut str) -> anyhow::Result<Type<K>> {
     Ok(Type::Scalar(
         K::from_str(data).ok().context("Invalid cast!")?,
     ))
