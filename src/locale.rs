@@ -74,7 +74,7 @@ lazy_static! {
         ("matrix", "Macierz"),
         ("Add Matrix", "Dodaj Macierz"),
         ("Add Scalar", "Dodaj Skalar"),
-        ("JP2GMD - Matrix Calculator", "JP2GMD - Kalkulator Macierzy"),
+        ("JP2GMD - Matrix Calculator", "Jaki Potężny 2-wymiarowy Generator Macierzy Diagonalizowalnych - Kalkulator Macierzy"),
         ("Echelon", "Schodkuj"),
         ("Run", "Uruchom"),
         ("Editor", "Edytor"),
