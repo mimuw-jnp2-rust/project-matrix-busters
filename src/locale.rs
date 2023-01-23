@@ -68,6 +68,8 @@ lazy_static! {
         ("Error", "Error"),
         ("Enter the matrix:", "Enter the matrix:"),
         ("Enter the scalar:", "Enter the scalar:"),
+        ("Height", "Height"),
+        ("Width", "Width"),
     ];
     pub static ref TRANS_PL_RAW: Vec<(&'static str, &'static str)> = vec![
         ("objects", "Obiekty"),
@@ -84,6 +86,8 @@ lazy_static! {
         ("Error", "Błąd"),
         ("Enter the matrix:", "Wprowadź macierz:"),
         ("Enter the scalar:", "Wprowadź skalar:"),
+        ("Height", "Wysokość"),
+        ("Width", "Szerokość"),
     ];
     pub static ref TRANS_ES_RAW: Vec<(&'static str, &'static str)> = vec![
         ("objects", "Objetos"),
@@ -103,6 +107,8 @@ lazy_static! {
         ("Error", "Error"),
         ("Enter the matrix:", "Introduzca la matriz:"),
         ("Enter the scalar:", "Introduzca el escalar:"),
+        ("Height", "Altura"),
+        ("Width", "Anchura"),
     ];
 }
 
