@@ -162,15 +162,23 @@ pub fn parse_expression<T: MatrixNumber>(
 
     while let Some(token) = tokenizer.next_token()? {
         if !validate_neighbours(&prev_token, &token) {
-            bail!("Invalid expression!")
+            bail!("Invalid expression! The {token:?} cannot follow {prev_token:?}");
         }
 
         match &token {
             Token::Integer(num) => outputs.push_back(WorkingToken::Type(Type::Scalar(
-                T::from_u64(*num).context("Number conversion failed!")?,
+                T::from_u64(*num).context(format!(
+                    "Number conversion failed! {num:?} cannot be parsed into {:?}",
+                    std::any::type_name::<T>()
+                ))?,
             ))),
             Token::Identifier(id) => outputs.push_back(WorkingToken::Type(
-                env.get(id).context("Undefined identifier!")?.clone(),
+                env.get(id)
+                    .context(format!(
+                        "Undefined identifier! Object \"{}\" is unknown.",
+                        id.to_string()
+                    ))?
+                    .clone(),
             )),
             Token::LeftBracket => operators.push_front(WorkingToken::LeftBracket),
             Token::RightBracket => {
