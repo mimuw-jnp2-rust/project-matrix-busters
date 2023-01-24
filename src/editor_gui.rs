@@ -4,9 +4,10 @@ use crate::locale::Locale;
 use crate::matrices::Matrix;
 use crate::traits::MatrixNumber;
 use crate::{State, WindowState};
-use anyhow::Context;
+use anyhow::{bail, Context};
 use egui::{Sense, Ui};
 use std::collections::HashMap;
+use crate::parser::parse_expression;
 
 pub enum EditorType {
     Matrix(usize, usize, Vec<String>),
@@ -111,11 +112,11 @@ fn display_editor_is_some<K: MatrixNumber>(
             let result = match editor_type {
                 EditorType::Matrix(h, w, data) => {
                     display_matrix_editor((h, w), data, ui, locale);
-                    parse_matrix_data::<K>((h, w), data)
+                    parse_matrix_data::<K>((h, w), data, env)
                 }
                 EditorType::Scalar(data) => {
                     display_scalar_editor(data, ui, locale);
-                    parse_scalar_data::<K>(data)
+                    parse_scalar_data::<K>(data, env)
                 }
             };
             let mut err_msg = if Identifier::is_valid(identifier_name) {
@@ -162,18 +163,27 @@ fn display_editor_is_some<K: MatrixNumber>(
 fn parse_matrix_data<K: MatrixNumber>(
     (h, w): (&mut usize, &mut usize),
     data: &mut [String],
+    env: &Environment<K>,
 ) -> anyhow::Result<Type<K>> {
     let mut result: Vec<K> = vec![];
-    for e in data.iter() {
-        result.push(K::from_str(e).ok().context("Invalid data")?)
+    for element in data.iter() {
+        result.push(parse_scalar_with_env(element, env)?)
     }
     Ok(Type::Matrix(Matrix::from_vec(result, (*h, *w))?))
 }
 
-fn parse_scalar_data<K: MatrixNumber>(data: &mut str) -> anyhow::Result<Type<K>> {
+fn parse_scalar_data<K: MatrixNumber>(data: &mut str, env: &Environment<K>) -> anyhow::Result<Type<K>> {
     Ok(Type::Scalar(
-        K::from_str(data).ok().context("Invalid cast!")?,
+        parse_scalar_with_env(data, env)?
     ))
+}
+
+fn parse_scalar_with_env<K: MatrixNumber>(data: &str, env: &Environment<K>) -> anyhow::Result<K> {
+    match parse_expression(data, env) {
+        Ok(Type::Scalar(scalar)) => Ok(scalar),
+        Ok(Type::Matrix(_)) => bail!("Invalid expression! Result is not a scalar."),
+        Err(e) => bail!("Invalid expression! {e}"),
+    }
 }
 
 fn display_matrix_editor(
