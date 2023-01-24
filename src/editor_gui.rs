@@ -183,7 +183,17 @@ fn parse_scalar_with_env<K: MatrixNumber>(data: &str, env: &Environment<K>) -> a
     match parse_expression(data, env) {
         Ok(Type::Scalar(scalar)) => Ok(scalar),
         Ok(Type::Matrix(_)) => bail!("Invalid expression! Result is not a scalar."),
-        Err(e) => bail!("Invalid expression! {e}"),
+        Err(e) => {
+            // As parser doesn't support single argument minus operator (e.g. -5) we do this
+            //  trick to parse the value into a scalar if it's a number. Unfortunately, it's
+            //  not possible to parse an expression with a minus sign in front of it
+            //  (e.g. -5 + 5). Currently if you want to do that you have to use `0 - a` instead.
+            if let Ok(data) = K::from_str(data) {
+                Ok(data)
+            } else {
+                bail!("Invalid expression! {}", e)
+            }
+        },
     }
 }
 
