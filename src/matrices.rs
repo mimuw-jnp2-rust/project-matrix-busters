@@ -541,9 +541,9 @@ impl<T: MatrixNumber> CheckedSub for Matrix<T> {
     }
 }
 
-impl<T: MatrixNumber + CheckedNeg> CheckedNeg for Matrix<T> {
+impl<T: MatrixNumber> CheckedNeg for Matrix<T> {
     fn checked_neg(&self) -> Option<Self> {
-        self.checked_operation(|a| a.checked_neg()).ok()
+        Self::zeros(self.get_shape()).checked_sub(self)
     }
 }
 
