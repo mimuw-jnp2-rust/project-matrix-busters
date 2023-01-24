@@ -50,7 +50,13 @@ impl Locale {
     }
 
     fn unwrap_or_default(str: Option<&String>, default: &str) -> String {
-        str.unwrap_or(&default.to_string()).as_str().to_owned()
+        match str {
+            Some(str) => str.to_string(),
+            None => {
+                println!("Missing translation for \"{}\"", default);
+                default.to_string()
+            }
+        }
     }
 
     pub fn get_translated(&self, s: &str) -> String {
