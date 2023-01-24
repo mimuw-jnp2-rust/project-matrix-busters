@@ -1,5 +1,6 @@
 use lazy_static::lazy_static;
 use std::collections::HashMap;
+use std::fmt::Display;
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -9,9 +10,19 @@ pub enum Language {
     Polish,
 }
 
+impl Display for Language {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Language::English => write!(f, "English"),
+            Language::Spanish => write!(f, "Spanish"),
+            Language::Polish => write!(f, "Polish"),
+        }
+    }
+}
+
 impl Language {
     pub fn of(str: Option<String>) -> Language {
-        str.map_or(Language::English, |str| match str.as_str() {
+        str.map_or(Language::English, |str| match str.to_lowercase().as_str() {
             "en" | "english" => Language::English,
             "es" | "spanish" => Language::Spanish,
             "pl" | "polish" => Language::Polish,

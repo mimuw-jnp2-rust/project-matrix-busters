@@ -138,17 +138,15 @@ fn display_editor_is_some<K: MatrixNumber>(
                     ui.add(egui::Button::new(locale.get_translated("Add")).sense(sense));
                 if let Some(some) = &err_msg {
                     ui.label(locale.get_translated("Error ") + some);
-                } else {
-                    if add_button.clicked() {
-                        insert_to_env(
-                            env,
-                            Identifier::new(identifier_name.to_string()).expect("Should work"),
-                            result.expect("There should be a value."),
-                            windows,
-                        );
-                        handled = Ok(true);
-                    };
-                }
+                } else if add_button.clicked() {
+                    insert_to_env(
+                        env,
+                        Identifier::new(identifier_name.to_string()).expect("Should work"),
+                        result.expect("There should be a value."),
+                        windows,
+                    );
+                    handled = Ok(true);
+                };
             })
         });
 

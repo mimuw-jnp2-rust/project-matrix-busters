@@ -29,6 +29,9 @@ use std::collections::HashMap;
 use std::default::Default;
 use std::time::Duration;
 
+use clap::builder::TypedValueParser;
+use clap::Parser;
+
 /// Field for matrices.
 type F = Rational64;
 
@@ -37,12 +40,30 @@ fn main() {
         initial_window_size: Some(vec2(DEFAULT_WIDTH, DEFAULT_HEIGHT)),
         ..Default::default()
     };
-    let locale = Locale::new(Language::of(std::env::args().nth(1)));
+    let args = MatrixAppArgs::parse();
+    let locale = Locale::new(args.language);
     eframe::run_native(
         &locale.get_translated(APP_NAME),
         options,
         Box::new(|_cc| Box::<MatrixApp<F>>::new(MatrixApp::new(locale))),
     )
+}
+
+#[derive(Parser, Debug)]
+#[command(
+    author,
+    version,
+    about,
+    long_about = "**Just Pure 2D Graphics Matrix Display** is a powerful matrix calculator written in Rust using egui."
+)]
+struct MatrixAppArgs {
+    #[arg(
+    long,
+    default_value_t = Language::English,
+    value_parser = clap::builder::PossibleValuesParser::new(["English", "Polish", "Spanish"])
+    .map(|s| Language::of(Some(s))),
+    )]
+    language: Language,
 }
 
 pub struct WindowState {
