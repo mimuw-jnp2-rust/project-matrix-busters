@@ -29,9 +29,9 @@ Run the program:
 $ cargo run
 ```
 
-Specify the language by passing it as an argument. Possible values are `en`, `english`, `pl`, `polish`, `es` and `spanish`.
+Check program help using
 ```bash
-$ cargo run -- pl
+$ cargo run -- --help
 ```
 
 ---
