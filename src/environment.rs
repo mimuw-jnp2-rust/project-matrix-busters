@@ -45,6 +45,22 @@ pub enum Type<T: MatrixNumber> {
     Matrix(Matrix<T>),
 }
 
+impl<T: MatrixNumber> Type<T> {
+    pub fn from_scalar_option(opt: Option<T>) -> anyhow::Result<Self> {
+        match opt {
+            Some(val) => Ok(Type::Scalar(val)),
+            None => Err(anyhow::anyhow!("Operation error!")),
+        }
+    }
+
+    pub fn from_matrix_option(opt: Option<Matrix<T>>) -> anyhow::Result<Self> {
+        match opt {
+            Some(m) => Ok(Self::Matrix(m)),
+            None => Err(anyhow::anyhow!("Operation error!")),
+        }
+    }
+}
+
 impl<T: MatrixNumber> ToString for Type<T> {
     fn to_string(&self) -> String {
         match self {

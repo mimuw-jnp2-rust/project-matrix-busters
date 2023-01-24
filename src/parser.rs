@@ -4,17 +4,16 @@ use std::collections::VecDeque;
 use std::fmt::{Display, Formatter};
 
 use anyhow::{bail, Context};
-use num_traits::{checked_pow, CheckedAdd, CheckedMul, CheckedSub};
+use num_traits::{checked_pow, CheckedAdd, CheckedMul, CheckedNeg, CheckedSub};
 
 use crate::environment::{Environment, Identifier, Type};
-use crate::matrices::Matrix;
 use crate::traits::{CheckedMulScl, MatrixNumber};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 enum Token {
     Integer(u64),
     Identifier(Identifier),
-    BinaryOp(char),
+    Operator(char),
     LeftBracket,
     RightBracket,
 }
@@ -24,7 +23,7 @@ impl Display for Token {
         match self {
             Token::Integer(i) => write!(f, "int {}", i),
             Token::Identifier(id) => write!(f, "id {}", id.to_string()),
-            Token::BinaryOp(op) => write!(f, "binary operator \"{}\"", op),
+            Token::Operator(op) => write!(f, "operator \"{}\"", op),
             Token::LeftBracket => write!(f, "( bracket"),
             Token::RightBracket => write!(f, ") bracket"),
         }
@@ -53,7 +52,7 @@ impl<'a> Tokenizer<'a> {
         } else if self.raw.starts_with(|c| "+-*/^=".contains(c)) {
             let op = self.raw.chars().next().unwrap();
             self.raw = &self.raw[1..];
-            Ok(Some(Token::BinaryOp(op)))
+            Ok(Some(Token::Operator(op)))
         } else if self.raw.starts_with(|c: char| c.is_ascii_digit()) {
             let i = self
                 .raw
@@ -77,41 +76,44 @@ impl<'a> Tokenizer<'a> {
 #[derive(Debug, Clone, PartialEq, Eq)]
 enum WorkingToken<T: MatrixNumber> {
     Type(Type<T>),
+    UnaryOp(char),
     BinaryOp(char),
     LeftBracket,
     RightBracket,
 }
 
+impl<T: MatrixNumber> Display for WorkingToken<T> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            WorkingToken::Type(_) => write!(f, "value token"),
+            WorkingToken::UnaryOp(op) => write!(f, "unary operator \"{}\"", op),
+            WorkingToken::BinaryOp(op) => write!(f, "binary operator \"{}\"", op),
+            WorkingToken::LeftBracket => write!(f, "( bracket"),
+            WorkingToken::RightBracket => write!(f, ") bracket"),
+        }
+    }
+}
+
 fn binary_op<T: MatrixNumber>(left: Type<T>, right: Type<T>, op: char) -> anyhow::Result<Type<T>> {
-    let wrap_matrix = |opt: Option<Matrix<T>>| match opt {
-        Some(m) => Ok(Type::Matrix(m)),
-        None => Err(anyhow::anyhow!("Operation error!")),
-    };
-
-    let wrap_scalar = |opt: Option<T>| match opt {
-        Some(val) => Ok(Type::Scalar(val)),
-        None => Err(anyhow::anyhow!("Operation error!")),
-    };
-
     match op {
         '+' => match (left, right) {
-            (Type::Matrix(l), Type::Matrix(r)) => wrap_matrix(l.checked_add(&r)),
-            (Type::Scalar(l), Type::Scalar(r)) => wrap_scalar(l.checked_add(&r)),
+            (Type::Matrix(l), Type::Matrix(r)) => Type::from_matrix_option(l.checked_add(&r)),
+            (Type::Scalar(l), Type::Scalar(r)) => Type::from_scalar_option(l.checked_add(&r)),
             _ => bail!("Adding scalar to matrix is not supported!"),
         },
         '-' => match (left, right) {
-            (Type::Matrix(l), Type::Matrix(r)) => wrap_matrix(l.checked_sub(&r)),
-            (Type::Scalar(l), Type::Scalar(r)) => wrap_scalar(l.checked_sub(&r)),
+            (Type::Matrix(l), Type::Matrix(r)) => Type::from_matrix_option(l.checked_sub(&r)),
+            (Type::Scalar(l), Type::Scalar(r)) => Type::from_scalar_option(l.checked_sub(&r)),
             _ => bail!("Substraction of scalar and matrix is not supported!"),
         },
         '*' => match (left, right) {
-            (Type::Matrix(l), Type::Matrix(r)) => wrap_matrix(l.checked_mul(&r)),
-            (Type::Scalar(l), Type::Scalar(r)) => wrap_scalar(l.checked_mul(&r)),
-            (Type::Matrix(l), Type::Scalar(r)) => wrap_matrix(l.checked_mul_scl(&r)),
-            (Type::Scalar(l), Type::Matrix(r)) => wrap_matrix(r.checked_mul_scl(&l)),
+            (Type::Matrix(l), Type::Matrix(r)) => Type::from_matrix_option(l.checked_mul(&r)),
+            (Type::Scalar(l), Type::Scalar(r)) => Type::from_scalar_option(l.checked_mul(&r)),
+            (Type::Matrix(l), Type::Scalar(r)) => Type::from_matrix_option(l.checked_mul_scl(&r)),
+            (Type::Scalar(l), Type::Matrix(r)) => Type::from_matrix_option(r.checked_mul_scl(&l)),
         },
         '/' => match (left, right) {
-            (Type::Scalar(l), Type::Scalar(r)) => wrap_scalar(l.checked_div(&r)),
+            (Type::Scalar(l), Type::Scalar(r)) => Type::from_scalar_option(l.checked_div(&r)),
             (Type::Matrix(_), Type::Matrix(_)) => bail!("WTF dividing by matrix? You should use the `inv` function (not implemented yet, wait for it...)"),
             (Type::Matrix(_), Type::Scalar(_)) => bail!("Diving matrix by scalar is not supported yet..."),
             (Type::Scalar(_), Type::Matrix(_)) => bail!("Diving scalar by matrix does not make sense!"),
@@ -119,12 +121,23 @@ fn binary_op<T: MatrixNumber>(left: Type<T>, right: Type<T>, op: char) -> anyhow
         '^' => if let Type::Scalar(exp) = right {
             let exp = exp.to_usize().context("Exponent should be a nonnegative integer.")?;
             match left {
-                Type::Scalar(base) => wrap_scalar(checked_pow(base, exp)),
-                Type::Matrix(base) => wrap_matrix(base.checked_pow(exp).ok()),
+                Type::Scalar(base) => Type::from_scalar_option(checked_pow(base, exp)),
+                Type::Matrix(base) => Type::from_matrix_option(base.checked_pow(exp).ok()),
             }
         } else {
             bail!("Exponent cannot be a matrix!");
         }
+        _ => unimplemented!(),
+    }
+}
+
+fn unary_op<T: MatrixNumber>(arg: Type<T>, op: char) -> anyhow::Result<Type<T>> {
+    match op {
+        '+' => Ok(arg),
+        '-' => match arg {
+            Type::Matrix(m) => Type::from_matrix_option(m.checked_neg()),
+            Type::Scalar(s) => Type::from_scalar_option(T::zero().checked_sub(&s)),
+        },
         _ => unimplemented!(),
     }
 }
@@ -134,9 +147,10 @@ fn binary_op<T: MatrixNumber>(left: Type<T>, right: Type<T>, op: char) -> anyhow
 <integer>    ::= <digit>+
 <letter>     ::= "a" | "ą" | "b" | ... | "ż"
 <identifier> ::= (<letter> | "_") (<letter> | <digit> | "_")*
+<unary_op>   ::= "+" | "-"
 <binary_op>  ::= "+" | "-" | "*" | "/"
 <expr>       ::= <integer> | <identifier> | <expr> <binary_op> <expr>
-               | "(" <expr> ")"
+               | "(" <expr> ")" | <unary_op> <expr>
  */
 pub fn parse_expression<T: MatrixNumber>(
     raw: &str,
@@ -156,19 +170,27 @@ pub fn parse_expression<T: MatrixNumber>(
         }
     }
 
-    fn validate_neighbours(previous: &Option<Token>, current: &Token) -> bool {
+    fn validate_neighbours<T: MatrixNumber>(
+        previous: &Option<&WorkingToken<T>>,
+        current: &Token,
+    ) -> bool {
         match current {
             Token::Integer(_) | Token::Identifier(_) | Token::LeftBracket => matches!(
                 previous,
-                None | Some(Token::LeftBracket) | Some(Token::BinaryOp(_))
+                None | Some(WorkingToken::LeftBracket)
+                    | Some(WorkingToken::BinaryOp(_))
+                    | Some(WorkingToken::UnaryOp(_))
             ),
-            Token::BinaryOp(_) => matches!(
+            Token::Operator(_) => matches!(
                 previous,
-                Some(Token::RightBracket) | Some(Token::Integer(_)) | Some(Token::Identifier(_))
+                None | Some(WorkingToken::RightBracket)
+                    | Some(WorkingToken::Type(_))
+                    | Some(WorkingToken::BinaryOp(_))
+                    | Some(WorkingToken::LeftBracket)
             ),
             Token::RightBracket => matches!(
                 previous,
-                Some(Token::RightBracket) | Some(Token::Integer(_)) | Some(Token::Identifier(_))
+                Some(WorkingToken::RightBracket) | Some(WorkingToken::Type(_))
             ),
         }
     }
@@ -183,22 +205,31 @@ pub fn parse_expression<T: MatrixNumber>(
             }
         }
 
-        match &token {
-            Token::Integer(num) => outputs.push_back(WorkingToken::Type(Type::Scalar(
-                T::from_u64(*num).context(format!(
-                    "Number conversion failed! {num:?} cannot be parsed into {:?}",
-                    std::any::type_name::<T>()
-                ))?,
-            ))),
-            Token::Identifier(id) => outputs.push_back(WorkingToken::Type(
-                env.get(id)
-                    .context(format!(
-                        "Undefined identifier! Object \"{}\" is unknown.",
-                        id.to_string()
-                    ))?
-                    .clone(),
-            )),
-            Token::LeftBracket => operators.push_front(WorkingToken::LeftBracket),
+        prev_token = match &token {
+            Token::Integer(num) => {
+                outputs.push_back(WorkingToken::Type(Type::Scalar(
+                    T::from_u64(*num).context(format!(
+                        "Number conversion failed! {num:?} cannot be parsed into {:?}",
+                        std::any::type_name::<T>()
+                    ))?,
+                )));
+                outputs.back()
+            }
+            Token::Identifier(id) => {
+                outputs.push_back(WorkingToken::Type(
+                    env.get(id)
+                        .context(format!(
+                            "Undefined identifier! Object \"{}\" is unknown.",
+                            id.to_string()
+                        ))?
+                        .clone(),
+                ));
+                outputs.back()
+            }
+            Token::LeftBracket => {
+                operators.push_front(WorkingToken::LeftBracket);
+                operators.front()
+            }
             Token::RightBracket => {
                 let mut left_found = false;
                 while let Some(op) = operators.pop_front() {
@@ -211,8 +242,29 @@ pub fn parse_expression<T: MatrixNumber>(
                 if !left_found {
                     bail!("Mismatched brackets!");
                 }
+                if let Some(op) = operators.pop_front() {
+                    if matches!(op, WorkingToken::UnaryOp(_)) {
+                        outputs.push_back(op);
+                    } else {
+                        operators.push_front(op);
+                    }
+                }
+                Some(&WorkingToken::RightBracket)
             }
-            Token::BinaryOp(op) if "+-*/^".contains(*op) => {
+            Token::Operator(op)
+                if matches!(
+                    prev_token,
+                    None | Some(WorkingToken::LeftBracket) | Some(WorkingToken::BinaryOp(_))
+                ) =>
+            {
+                if "+-".contains(*op) {
+                    operators.push_front(WorkingToken::UnaryOp(*op));
+                    operators.front()
+                } else {
+                    bail!("Operator {op} cannot be used as a unary operator.")
+                }
+            }
+            Token::Operator(op) if "+-*/^".contains(*op) => {
                 while let Some(stack_token) = operators.pop_front() {
                     if let WorkingToken::BinaryOp(stack_op) = stack_token {
                         if precedence(&stack_op) >= precedence(op) {
@@ -221,17 +273,18 @@ pub fn parse_expression<T: MatrixNumber>(
                             operators.push_front(WorkingToken::BinaryOp(stack_op));
                             break;
                         }
+                    } else if let WorkingToken::UnaryOp(stack_op) = stack_token {
+                        outputs.push_back(WorkingToken::UnaryOp(stack_op))
                     } else {
                         operators.push_front(stack_token);
                         break;
                     }
                 }
                 operators.push_front(WorkingToken::BinaryOp(*op));
+                operators.front()
             }
-            Token::BinaryOp(_) => bail!("Assignment is not allowed in expressions!"),
-        }
-
-        prev_token = Some(token);
+            Token::Operator(_) => bail!("Assignment is not allowed in expressions!"),
+        };
     }
 
     while let Some(token) = operators.pop_front() {
@@ -250,6 +303,10 @@ pub fn parse_expression<T: MatrixNumber>(
                 let left = val_stack.pop_front().context("Invalid expression!")?;
                 val_stack.push_front(binary_op(left, right, op)?)
             }
+            WorkingToken::UnaryOp(op) => {
+                let arg = val_stack.pop_front().context("Invalid expression!")?;
+                val_stack.push_front(unary_op(arg, op)?);
+            }
             _ => unreachable!(),
         }
     }
@@ -267,7 +324,7 @@ pub fn parse_instruction<T: MatrixNumber>(
 ) -> anyhow::Result<Identifier> {
     let mut tokenizer = Tokenizer::new(raw);
     if let Some(Token::Identifier(id)) = tokenizer.next_token()? {
-        if tokenizer.next_token()? == Some(Token::BinaryOp('=')) {
+        if tokenizer.next_token()? == Some(Token::Operator('=')) {
             let value = parse_expression(tokenizer.raw, env)?;
             env.insert(id.clone(), value);
             Ok(id)
@@ -281,6 +338,7 @@ pub fn parse_instruction<T: MatrixNumber>(
 
 #[cfg(test)]
 mod tests {
+    use crate::matrices::Matrix;
     use num_rational::Rational64;
 
     use crate::im;
@@ -313,6 +371,33 @@ mod tests {
         test_expr("(2-6)*9/5", -36, 5);
         test_expr("(2-6*9/5)", -44, 5);
         test_expr("1/2^8", 1, 256);
+    }
+
+    #[test]
+    fn test_expression_unary() {
+        let mut env = Environment::new();
+        env.insert(Identifier::new("x".to_string()).unwrap(), Type::Scalar(-5));
+        let a = im![1, 2, 3; 4, 5, 6];
+        env.insert(
+            Identifier::new("A".to_string()).unwrap(),
+            Type::Matrix(a.clone()),
+        );
+
+        let test_expr = |raw, expected| assert_eq!(parse_expression(raw, &env).unwrap(), expected);
+
+        test_expr("-1", Type::Scalar(-1));
+        test_expr("-x", Type::Scalar(5));
+        test_expr("-1+3", Type::Scalar(2));
+        test_expr("-(1+3)", Type::Scalar(-4));
+        test_expr("2+(-2)", Type::Scalar(0));
+        test_expr("1 - -1", Type::Scalar(2));
+        test_expr("+1 + +1", Type::Scalar(2));
+        test_expr("2 * -3", Type::Scalar(-6));
+        test_expr("+2 * +3", Type::Scalar(6));
+
+        test_expr("-A", Type::Matrix(a.checked_neg().unwrap()));
+        test_expr("+A + -A - -A", Type::Matrix(a.clone()));
+        test_expr("+A - +A + +A", Type::Matrix(a));
     }
 
     #[test]
