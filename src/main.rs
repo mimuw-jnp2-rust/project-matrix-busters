@@ -2,6 +2,7 @@ mod constants;
 mod editor_gui;
 mod env_gui;
 mod environment;
+mod fractal_clock;
 mod locale;
 mod matrices;
 mod matrix_algorithms;
@@ -29,6 +30,7 @@ use std::collections::HashMap;
 use std::default::Default;
 use std::time::Duration;
 
+use crate::fractal_clock::FractalClock;
 use clap::builder::TypedValueParser;
 use clap::Parser;
 
@@ -82,6 +84,7 @@ pub struct State<K: MatrixNumber> {
     editor: EditorState,
     toasts: egui_toast::Toasts,
     clipboard: ClipboardContext,
+    clock: FractalClock,
 }
 
 impl<K: MatrixNumber> Default for State<K> {
@@ -92,6 +95,7 @@ impl<K: MatrixNumber> Default for State<K> {
             shell: Default::default(),
             editor: Default::default(),
             toasts: Default::default(),
+            clock: Default::default(),
             clipboard: ClipboardContext::new().expect("Failed to create Clipboard context!"),
         }
     }
@@ -164,10 +168,17 @@ impl<K: MatrixNumber> eframe::App for MatrixApp<K> {
         // Center panel has to be added last, otherwise the side panel will be on top of it.
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading(self.gt(APP_NAME));
+            self.state.clock.ui(ui, Some(seconds_since_midnight()));
         });
 
         self.state.toasts.show(ctx);
     }
+}
+
+fn seconds_since_midnight() -> f64 {
+    use chrono::Timelike;
+    let time = chrono::Local::now().time();
+    time.num_seconds_from_midnight() as f64 + 1e-9 * (time.nanosecond() as f64)
 }
 
 fn display_menu_bar<K: MatrixNumber>(ctx: &Context, state: &mut State<K>, locale: &Locale) {

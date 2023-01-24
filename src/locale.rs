@@ -88,6 +88,8 @@ lazy_static! {
         ("Height", "Height"),
         ("Width", "Width"),
         ("Edit", "Edit"),
+        ("Error ", "Error "),
+        ("Identifier is invalid!", "Identifier is invalid!"),
     ];
     pub static ref TRANS_PL_RAW: Vec<(&'static str, &'static str)> = vec![
         ("objects", "Obiekty"),
@@ -110,6 +112,8 @@ lazy_static! {
         ("Height", "Wysokość"),
         ("Width", "Szerokość"),
         ("Edit", "Edytuj"),
+        ("Error ", "Błąd "),
+        ("Identifier is invalid!", "Identyfikator jest niepoprawny!"),
     ];
     pub static ref TRANS_ES_RAW: Vec<(&'static str, &'static str)> = vec![
         ("objects", "Objetos"),
@@ -132,6 +136,8 @@ lazy_static! {
         ("Height", "Altura"),
         ("Width", "Anchura"),
         ("Editor", "Editar"),
+        ("Error ", "Error "),
+        ("Identifier is invalid!", "¡El identificador es inválido!"),
     ];
 }
 
