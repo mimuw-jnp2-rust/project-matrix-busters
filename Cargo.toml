@@ -2,6 +2,7 @@
 name = "jp2gmd"
 version = "0.1.0"
 edition = "2021"
+authors = ["Mieszko Grodzicki", "Aleksander Tudruj"]
 
 [[bin]]
 name = "jp2gmd"
@@ -10,7 +11,16 @@ path = "src/main.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-egui = "0.19.0"
+egui = "0.20.1"
+eframe = "0.20.1"
 num-rational = "0.4.1"
 num-traits = "0.2.15"
 anyhow = "1.0.66"
+lazy_static = "1.4.0"
+clipboard = "0.5.0"
+clap = { version = "4.1.1", features = ["derive"] }
+chrono = "0.4"
+# The latest version of `egui-toast` is not compatible with `egui` 0.20.1
+# We use our fork of `egui-toast` until the issue is fixed
+# The PR was created and when merged we can use the original crate [https://github.com/urholaukkarinen/egui-toast/pull/4]
+egui-toast = { git = "https://github.com/tudny/egui-toast", branch = "egui-boost" }

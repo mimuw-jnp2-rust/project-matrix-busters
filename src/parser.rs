@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 
 use std::collections::VecDeque;
+use std::fmt::{Display, Formatter};
 
 use anyhow::{bail, Context};
 use num_traits::{checked_pow, CheckedAdd, CheckedMul, CheckedSub};
@@ -16,6 +17,18 @@ enum Token {
     BinaryOp(char),
     LeftBracket,
     RightBracket,
+}
+
+impl Display for Token {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Token::Integer(i) => write!(f, "int {}", i),
+            Token::Identifier(id) => write!(f, "id {}", id.to_string()),
+            Token::BinaryOp(op) => write!(f, "binary operator \"{}\"", op),
+            Token::LeftBracket => write!(f, "( bracket"),
+            Token::RightBracket => write!(f, ") bracket"),
+        }
+    }
 }
 
 struct Tokenizer<'a> {
@@ -162,15 +175,28 @@ pub fn parse_expression<T: MatrixNumber>(
 
     while let Some(token) = tokenizer.next_token()? {
         if !validate_neighbours(&prev_token, &token) {
-            bail!("Invalid expression!")
+            match prev_token {
+                Some(prev_token) => {
+                    bail!("Invalid expression! The {token} cannot follow {prev_token}")
+                }
+                None => bail!("Invalid expression! The {token} cannot be the first token!"),
+            }
         }
 
         match &token {
             Token::Integer(num) => outputs.push_back(WorkingToken::Type(Type::Scalar(
-                T::from_u64(*num).context("Number conversion failed!")?,
+                T::from_u64(*num).context(format!(
+                    "Number conversion failed! {num:?} cannot be parsed into {:?}",
+                    std::any::type_name::<T>()
+                ))?,
             ))),
             Token::Identifier(id) => outputs.push_back(WorkingToken::Type(
-                env.get(id).context("Undefined identifier!")?.clone(),
+                env.get(id)
+                    .context(format!(
+                        "Undefined identifier! Object \"{}\" is unknown.",
+                        id.to_string()
+                    ))?
+                    .clone(),
             )),
             Token::LeftBracket => operators.push_front(WorkingToken::LeftBracket),
             Token::RightBracket => {
@@ -235,20 +261,22 @@ pub fn parse_expression<T: MatrixNumber>(
 Only assignments so far...
 <inst> ::= <identifier> = <expr>
  */
-fn parse_instruction<T: MatrixNumber>(raw: &str, env: &mut Environment<T>) -> anyhow::Result<()> {
+pub fn parse_instruction<T: MatrixNumber>(
+    raw: &str,
+    env: &mut Environment<T>,
+) -> anyhow::Result<Identifier> {
     let mut tokenizer = Tokenizer::new(raw);
     if let Some(Token::Identifier(id)) = tokenizer.next_token()? {
         if tokenizer.next_token()? == Some(Token::BinaryOp('=')) {
             let value = parse_expression(tokenizer.raw, env)?;
-            env.insert(id, value);
+            env.insert(id.clone(), value);
+            Ok(id)
         } else {
-            bail!("Unrecognized instruction!");
+            bail!("Unrecognized instruction!")
         }
     } else {
-        bail!("Assignment has to begin with an identifier.");
+        bail!("Assignment has to begin with an identifier.")
     }
-
-    Ok(())
 }
 
 #[cfg(test)]
@@ -340,8 +368,8 @@ mod tests {
 
         test_expr("A+A", a.clone() + a.clone());
         test_expr("A*B", a.clone() * b.clone());
-        test_expr("A*B*Id_2", a.clone() * b.clone() * i2.clone());
-        test_expr("Id_2-Id_2", i2.clone() - i2.clone());
+        test_expr("A*B*Id_2", a * b * i2.clone());
+        test_expr("Id_2-Id_2", i2.clone() - i2);
     }
 
     #[test]
@@ -376,11 +404,11 @@ mod tests {
 
         test_expr("A+a*A", a.clone() + a.clone() * 2);
         test_expr("A*2*B", a.clone() * b.clone() * 2);
-        test_expr("A*B*a*Id_2", a.clone() * b.clone() * i2.clone() * 2);
+        test_expr("A*B*a*Id_2", a * b * i2.clone() * 2);
         test_expr("2*Id_2-Id_2", i2.clone() * 2 - i2.clone());
-        test_expr("C^0", i2.clone());
+        test_expr("C^0", i2);
         test_expr("C^1", c.clone());
-        test_expr("C^2", c.clone() * c.clone());
+        test_expr("C^2", c.clone() * c);
     }
 
     #[test]
@@ -388,10 +416,7 @@ mod tests {
         let mut env = Environment::new();
         let fib = im![0, 1; 1, 1];
 
-        env.insert(
-            Identifier::new("A".to_string()).unwrap(),
-            Type::Matrix(fib.clone()),
-        );
+        env.insert(Identifier::new("A".to_string()).unwrap(), Type::Matrix(fib));
 
         let test_expr = |raw, expected| {
             assert_eq!(parse_expression(raw, &env).unwrap(), Type::Matrix(expected))

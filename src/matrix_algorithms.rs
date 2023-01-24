@@ -215,7 +215,7 @@ mod tests {
     fn test_echelon_rational3() {
         let id = rm![1, 0; 0, 1];
 
-        let aftermath = id.clone().echelon().unwrap();
+        let aftermath = id.echelon().unwrap();
 
         assert_eq!(aftermath.result.to_latex(), id.to_latex());
         assert_eq!(
