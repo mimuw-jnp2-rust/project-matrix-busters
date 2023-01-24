@@ -126,7 +126,7 @@ fn display_editor_is_some<K: MatrixNumber>(
             };
             if let Err(err) = &result {
                 err_msg =
-                    Some(locale.get_translated("Matrix is invalid!") + format!("{err}").as_str());
+                    Some(locale.get_translated("Matrix is invalid!\n") + err.to_string().as_str());
             };
             ui.horizontal(|ui| {
                 let sense = if err_msg.is_some() {
@@ -136,10 +136,10 @@ fn display_editor_is_some<K: MatrixNumber>(
                 };
                 let add_button =
                     ui.add(egui::Button::new(locale.get_translated("Add")).sense(sense));
-                if add_button.clicked() {
-                    if let Some(some) = &err_msg {
-                        ui.label(locale.get_translated("Error") + some);
-                    } else {
+                if let Some(some) = &err_msg {
+                    ui.label(locale.get_translated("Error ") + some);
+                } else {
+                    if add_button.clicked() {
                         insert_to_env(
                             env,
                             Identifier::new(identifier_name.to_string()).expect("Should work"),
@@ -147,8 +147,8 @@ fn display_editor_is_some<K: MatrixNumber>(
                             windows,
                         );
                         handled = Ok(true);
-                    }
-                };
+                    };
+                }
             })
         });
 
@@ -191,7 +191,7 @@ fn parse_scalar_with_env<K: MatrixNumber>(data: &str, env: &Environment<K>) -> a
             if let Ok(data) = K::from_str(data) {
                 Ok(data)
             } else {
-                bail!("Invalid expression! {}", e)
+                bail!("{}", e)
             }
         }
     }

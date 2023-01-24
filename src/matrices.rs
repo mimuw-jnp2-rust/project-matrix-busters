@@ -575,7 +575,7 @@ impl<T: MatrixNumber> CheckedMul for Matrix<T> {
         for (i, item) in self.data.iter().enumerate() {
             for j in 0..w {
                 for (k, item_item) in item.iter().enumerate() {
-                    res[i][j] = res[i][j].clone() + item_item.clone() * v.data[k][j].clone();
+                    res[i][j] = (item_item.checked_mul(&v.data[k][j])?).checked_add(&res[i][j])?;
                 }
             }
         }
