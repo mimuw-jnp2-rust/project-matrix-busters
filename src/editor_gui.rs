@@ -2,12 +2,12 @@ use crate::env_gui::insert_to_env;
 use crate::environment::{Environment, Identifier, Type};
 use crate::locale::Locale;
 use crate::matrices::Matrix;
+use crate::parser::parse_expression;
 use crate::traits::MatrixNumber;
 use crate::{State, WindowState};
-use anyhow::{bail, Context};
+use anyhow::bail;
 use egui::{Sense, Ui};
 use std::collections::HashMap;
-use crate::parser::parse_expression;
 
 pub enum EditorType {
     Matrix(usize, usize, Vec<String>),
@@ -172,10 +172,11 @@ fn parse_matrix_data<K: MatrixNumber>(
     Ok(Type::Matrix(Matrix::from_vec(result, (*h, *w))?))
 }
 
-fn parse_scalar_data<K: MatrixNumber>(data: &mut str, env: &Environment<K>) -> anyhow::Result<Type<K>> {
-    Ok(Type::Scalar(
-        parse_scalar_with_env(data, env)?
-    ))
+fn parse_scalar_data<K: MatrixNumber>(
+    data: &mut str,
+    env: &Environment<K>,
+) -> anyhow::Result<Type<K>> {
+    Ok(Type::Scalar(parse_scalar_with_env(data, env)?))
 }
 
 fn parse_scalar_with_env<K: MatrixNumber>(data: &str, env: &Environment<K>) -> anyhow::Result<K> {
