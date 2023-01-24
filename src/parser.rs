@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 
 use std::collections::VecDeque;
+use std::fmt::{Display, Formatter};
 
 use anyhow::{bail, Context};
 use num_traits::{checked_pow, CheckedAdd, CheckedMul, CheckedSub};
@@ -16,6 +17,18 @@ enum Token {
     BinaryOp(char),
     LeftBracket,
     RightBracket,
+}
+
+impl Display for Token {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Token::Integer(i) => write!(f, "int {}", i),
+            Token::Identifier(id) => write!(f, "id {}", id.to_string()),
+            Token::BinaryOp(op) => write!(f, "binary operator \"{}\"", op),
+            Token::LeftBracket => write!(f, "( bracket"),
+            Token::RightBracket => write!(f, ") bracket"),
+        }
+    }
 }
 
 struct Tokenizer<'a> {
@@ -162,7 +175,12 @@ pub fn parse_expression<T: MatrixNumber>(
 
     while let Some(token) = tokenizer.next_token()? {
         if !validate_neighbours(&prev_token, &token) {
-            bail!("Invalid expression! The {token:?} cannot follow {prev_token:?}");
+            match prev_token {
+                Some(prev_token) => {
+                    bail!("Invalid expression! The {token} cannot follow {prev_token}")
+                }
+                None => bail!("Invalid expression! The {token} cannot be the first token!"),
+            }
         }
 
         match &token {

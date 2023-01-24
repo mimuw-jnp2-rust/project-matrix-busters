@@ -193,7 +193,7 @@ fn parse_scalar_with_env<K: MatrixNumber>(data: &str, env: &Environment<K>) -> a
             } else {
                 bail!("Invalid expression! {}", e)
             }
-        },
+        }
     }
 }
 
