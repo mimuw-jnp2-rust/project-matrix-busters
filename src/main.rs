@@ -27,6 +27,7 @@ use constants::{FONT_ID, TEXT_COLOR, VALUE_PADDING};
 use eframe::{egui, IconData};
 
 use egui::{vec2, Context, Response, Sense, Ui};
+use env_gui::insert_to_env;
 use num_rational::Rational64;
 use std::collections::HashMap;
 use std::default::Default;
@@ -169,19 +170,29 @@ impl<K: MatrixNumber> eframe::App for MatrixApp<K> {
             })
             .response;
 
-        self.state.windows.iter_mut().for_each(|(id, window)| {
+        let mut windows_result = None;
+        for (id, window) in self.state.windows.iter_mut() {
             if window.is_open {
                 let element = self.state.env.get(id).unwrap();
-                display_env_element_window(
+                windows_result = windows_result.or(display_env_element_window(
                     ctx,
                     (id, element),
                     &self.locale,
                     &mut self.state.clipboard,
                     &mut self.state.editor,
                     &mut window.is_open,
-                );
+                ));
             }
-        });
+        }
+
+        if let Some(value) = windows_result {
+            insert_to_env(
+                &mut self.state.env,
+                Identifier::result(),
+                value.clone(),
+                &mut self.state.windows,
+            );
+        }
 
         display_shell::<K>(ctx, &mut self.state, &self.locale);
 
@@ -259,7 +270,9 @@ fn display_env_element_window<K: MatrixNumber>(
     clipboard: &mut ClipboardContext,
     editor: &mut EditorState,
     is_open: &mut bool,
-) {
+) -> Option<Type<K>> {
+    let mut window_result = None;
+
     egui::Window::new(identifier.to_string())
         .open(is_open)
         .resizable(false)
@@ -274,7 +287,10 @@ fn display_env_element_window<K: MatrixNumber>(
                 if let Type::Matrix(m) = value {
                     if ui.button(locale.get_translated("Echelon")).clicked() {
                         let echelon = match m.echelon() {
-                            Ok(Aftermath { result: _, steps }) => steps.join("\n"),
+                            Ok(Aftermath { result, steps }) => {
+                                window_result = Some(Type::Matrix(result));
+                                steps.join("\n")
+                            }
                             Err(err) => err.to_string(),
                         };
                         clipboard
@@ -285,11 +301,17 @@ fn display_env_element_window<K: MatrixNumber>(
                 if ui.button(locale.get_translated("Inverse")).clicked() {
                     let inverse = match value {
                         Type::Scalar(s) => match K::one().checked_div(s) {
-                            Some(inv) => inv.to_latex(),
+                            Some(inv) => {
+                                window_result = Some(Type::Scalar(inv.clone()));
+                                inv.to_latex()
+                            }
                             None => "Failed to calculate inverse".to_string(),
                         },
                         Type::Matrix(m) => match m.inverse() {
-                            Ok(Aftermath { result: _, steps }) => steps.join("\n"),
+                            Ok(Aftermath { result, steps }) => {
+                                window_result = Some(Type::Matrix(result));
+                                steps.join("\n")
+                            }
                             Err(err) => err.to_string(),
                         },
                     };
@@ -318,7 +340,7 @@ fn display_env_element_window<K: MatrixNumber>(
             );
             ui.painter().add(value_shape);
             ui.separator();
-            if ui.button(locale.get_translated("Edit")).clicked() {
+            if !identifier.is_result() && ui.button(locale.get_translated("Edit")).clicked() {
                 match value {
                     Type::Scalar(s) => {
                         set_editor_to_existing_scalar(editor, s, identifier.to_string())
@@ -329,6 +351,8 @@ fn display_env_element_window<K: MatrixNumber>(
                 }
             };
         });
+
+    window_result
 }
 
 fn display_shell<K: MatrixNumber>(
