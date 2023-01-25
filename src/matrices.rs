@@ -13,6 +13,10 @@ use std::ops::{Add, Mul, Neg, Sub};
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Matrix<T: MatrixNumber> {
     data: Vec<Vec<T>>,
+
+    /// Index of a column that is followed by a vertical separator (counting
+    /// from 0). This only affects exporting to LaTeX.
+    separator: Option<usize>,
 }
 
 impl<T: MatrixNumber> Matrix<T> {
@@ -32,7 +36,10 @@ impl<T: MatrixNumber> Matrix<T> {
     /// // | 4 5 6 |
     /// ```
     pub fn new_unsafe(data: Vec<Vec<T>>) -> Self {
-        Self { data }
+        Self {
+            data,
+            separator: None,
+        }
     }
 
     /// Creates a new matrix from a 2D vector.
@@ -56,7 +63,10 @@ impl<T: MatrixNumber> Matrix<T> {
     /// // m is an error
     /// ```
     pub fn new(data: Vec<Vec<T>>) -> anyhow::Result<Self> {
-        let matrix = Self { data };
+        let matrix = Self {
+            data,
+            separator: None,
+        };
         if !matrix.is_valid() {
             bail!("Invalid matrix.")
         } else if matrix.is_empty() {
@@ -92,6 +102,43 @@ impl<T: MatrixNumber> Matrix<T> {
         } else {
             Self::new(data.chunks(cols).map(|c| c.to_vec()).collect())
         }
+    }
+
+    /// Gets the index of a column that is followed by a vertical separator (if any).
+    /// # Returns
+    /// The index of the separator (or None if there is no separator).
+    pub fn get_separator(&self) -> Option<usize> {
+        self.separator
+    }
+
+    /// Sets the index of a column that is followed by a vertical separator
+    /// (counting from 0).
+    /// # Arguments
+    /// * `separator` - The index of the separator (or None if there is no separator).
+    /// # Examples
+    /// ```
+    /// let mut m = Matrix::new(vec![vec![1, 2, 3], vec![4, 5, 6]]);
+    /// // m corresponds to the matrix
+    /// // | 1 2 3 |
+    /// // | 4 5 6 |
+    /// m.set_separator(Some(1));
+    /// // m corresponds to the matrix
+    /// // | 1 2 | 3 |
+    /// // | 4 5 | 6 |
+    /// ```
+    pub fn set_separator(&mut self, separator: Option<usize>) {
+        self.separator = separator;
+    }
+
+    /// Creates a new matrix by setting the index of a column that is followed
+    /// by a vertical separator (counting from 0).
+    /// # Arguments
+    /// * `separator` - The index of the separator (or None if there is no separator).
+    /// # Returns
+    /// A new matrix.
+    pub fn with_separator(mut self, separator: Option<usize>) -> Self {
+        self.set_separator(separator);
+        self
     }
 
     /// Creates a new matrix by reshaping an existing matrix.
@@ -153,7 +200,10 @@ impl<T: MatrixNumber> Matrix<T> {
                 *elem = supp(i, j);
             }
         }
-        Self { data }
+        Self {
+            data,
+            separator: None,
+        }
     }
 
     /// Creates zero matrix of shape (h, w).
@@ -429,12 +479,73 @@ impl<T: MatrixNumber> Matrix<T> {
 
         Ok(result)
     }
+
+    /// Concats two matrices horizontally. Assumes that both matrices have the
+    /// same number of rows.
+    /// # Arguments
+    /// * `other` - The other matrix.
+    /// # Returns
+    /// A new matrix with the result of the operation.
+    /// # Examples
+    /// ```rust
+    /// use matrix::Matrix;
+    /// let m1 = Matrix::new(vec![vec![1, 2], vec![3, 4]]).unwrap();
+    /// let m2 = Matrix::new(vec![vec![5, 6], vec![7, 8]]).unwrap();
+    /// let m3 = m1.concat(m2).unwrap();
+    /// assert_eq!(m3, Matrix::new(vec![vec![1, 2, 5, 6], vec![3, 4, 7, 8]]).unwrap());
+    /// ```
+    pub fn concat(mut self, other: Self) -> anyhow::Result<Self> {
+        let (rows, columns) = self.get_shape();
+        if rows != other.get_shape().0 {
+            anyhow::bail!("Cannot concatenate matrices with different number of rows!");
+        }
+
+        std::iter::zip(self.data.iter_mut(), other.data.into_iter())
+            .for_each(|(a, b)| a.extend(b.into_iter()));
+        Ok(self.with_separator(Some(columns)))
+    }
+
+    /// Splits the matrix horizontally at the given column. Drops the separator.
+    /// # Arguments
+    /// * `column` - The column to split at.
+    /// # Returns
+    /// A tuple of two matrices.
+    /// # Examples
+    /// ```rust
+    /// use matrix::Matrix;
+    /// let m1 = Matrix::new(vec![vec![1, 2, 3, 4], vec![5, 6, 7, 8]]).unwrap();
+    /// let (m2, m3) = m1.split(2).unwrap();
+    /// assert_eq!(m2, Matrix::new(vec![vec![1, 2], vec![5, 6]]).unwrap());
+    /// assert_eq!(m3, Matrix::new(vec![vec![3, 4], vec![7, 8]]).unwrap());
+    /// ```
+    pub fn split(mut self, column: usize) -> anyhow::Result<(Self, Self)> {
+        let (_, columns) = self.get_shape();
+        if column > columns {
+            anyhow::bail!("Cannot split matrix at column {}!", column);
+        }
+
+        let right = Self::new_unsafe(
+            self.data
+                .iter_mut()
+                .map(|row| row.split_off(column))
+                .collect(),
+        );
+        self.separator = None;
+        Ok((self, right))
+    }
 }
 
 impl<T: MatrixNumber> LaTeXable for Matrix<T> {
     fn to_latex(&self) -> String {
-        r"\begin{bmatrix}".to_string()
-            + &self
+        let mut column_format = "c".repeat(self.data[0].len());
+        if let Some(s) = self.separator {
+            column_format.insert(s, '|')
+        }
+
+        format!(
+            r"\left[\begin{{array}}{{{}}}{}\end{{array}}\right]",
+            column_format,
+            &self
                 .data
                 .iter()
                 .map(|row| {
@@ -445,7 +556,7 @@ impl<T: MatrixNumber> LaTeXable for Matrix<T> {
                 })
                 .collect::<Vec<_>>()
                 .join(r"\\")
-            + r"\end{bmatrix}"
+        )
     }
 
     fn to_latex_single(&self) -> String {
@@ -689,7 +800,7 @@ mod tests {
         let matrix = im![1, 2, 3; 4, 5, 6];
         assert_eq!(
             matrix.to_latex(),
-            r"\begin{bmatrix}1 & 2 & 3\\4 & 5 & 6\end{bmatrix}"
+            r"\left[\begin{array}{ccc}1 & 2 & 3\\4 & 5 & 6\end{array}\right]"
         );
     }
 
@@ -790,7 +901,7 @@ mod tests {
         let result = m + n;
         assert_eq!(
             result.to_latex(),
-            r"\begin{bmatrix}2 & 4 & 6\\8 & 10 & 12\end{bmatrix}"
+            r"\left[\begin{array}{ccc}2 & 4 & 6\\8 & 10 & 12\end{array}\right]"
         );
     }
 
@@ -802,7 +913,7 @@ mod tests {
         let result = m - n;
         assert_eq!(
             result.to_latex(),
-            r"\begin{bmatrix}0 & 0 & 0\\0 & 0 & 0\end{bmatrix}"
+            r"\left[\begin{array}{ccc}0 & 0 & 0\\0 & 0 & 0\end{array}\right]"
         );
     }
 
@@ -813,7 +924,7 @@ mod tests {
         let result = -m;
         assert_eq!(
             result.to_latex(),
-            r"\begin{bmatrix}-1 & -2 & -3\\-4 & -5 & -6\end{bmatrix}"
+            r"\left[\begin{array}{ccc}-1 & -2 & -3\\-4 & -5 & -6\end{array}\right]"
         );
     }
 
@@ -825,7 +936,7 @@ mod tests {
         let result = m * n;
         assert_eq!(
             result.to_latex(),
-            r"\begin{bmatrix}22 & 28\\49 & 64\end{bmatrix}"
+            r"\left[\begin{array}{cc}22 & 28\\49 & 64\end{array}\right]"
         );
     }
 
@@ -836,7 +947,7 @@ mod tests {
         let result = m * 2;
         assert_eq!(
             result.to_latex(),
-            r"\begin{bmatrix}2 & 4 & 6\\8 & 10 & 12\end{bmatrix}"
+            r"\left[\begin{array}{ccc}2 & 4 & 6\\8 & 10 & 12\end{array}\right]"
         );
     }
 
@@ -847,7 +958,7 @@ mod tests {
         let result = m * ri!(2);
         assert_eq!(
             result.to_latex(),
-            r"\begin{bmatrix}2 & 4 & 6\\8 & 10 & 12\end{bmatrix}"
+            r"\left[\begin{array}{ccc}2 & 4 & 6\\8 & 10 & 12\end{array}\right]"
         );
     }
 

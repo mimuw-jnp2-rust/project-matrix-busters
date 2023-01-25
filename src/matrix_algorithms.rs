@@ -48,6 +48,7 @@ impl<T: MatrixNumber> Matrix<T> {
                         &mut steps,
                         format!(r"w_{{{}}} \leftrightarrow w_{{{}}}", i + 1, j + 1).as_str(),
                         data,
+                        self.get_separator(),
                     );
                 }
 
@@ -61,6 +62,7 @@ impl<T: MatrixNumber> Matrix<T> {
                         &mut steps,
                         format!(r"w_{{{}}} : {}", i + 1, d.to_latex_single()).as_str(),
                         data,
+                        self.get_separator(),
                     );
                 }
 
@@ -88,6 +90,7 @@ impl<T: MatrixNumber> Matrix<T> {
                         &mut steps,
                         format!(r"\substack{{{}}}", &step_ops.join(r"\\")).as_str(),
                         data,
+                        self.get_separator(),
                     );
                 }
 
@@ -103,20 +106,50 @@ impl<T: MatrixNumber> Matrix<T> {
         })
     }
 
+    /// Returns the inverse of the matrix along with all steps represented in
+    /// human-friendly LaTeX notation.
+    pub fn inverse(&self) -> anyhow::Result<Aftermath<T>> {
+        if self.is_empty() {
+            anyhow::bail!("Cannot calculate inverse of an empty matrix!");
+        }
+
+        let (rows, cols) = self.get_shape();
+        if rows != cols {
+            anyhow::bail!("Matrix is not square!");
+        }
+
+        let extended_matrix = self.clone().concat(Matrix::identity(rows))?;
+        let echelon_aftermath = extended_matrix.with_separator(Some(rows)).echelon()?;
+        let (left, right) = echelon_aftermath.result.split(rows)?;
+        if left != Matrix::identity(rows) {
+            anyhow::bail!("Matrix is not invertible!");
+        }
+
+        Ok(Aftermath {
+            result: right,
+            steps: echelon_aftermath.steps,
+        })
+    }
+
     /// Returns a deep copy of matrix data vector.
     fn deep_matrix_data_clone(&self) -> Vec<Vec<T>> {
         self.get_data().iter().map(|row| row.to_vec()).collect()
     }
 
     /// Inserts the LaTeX representation of a single echelonization step with
-    /// transitions `transitions` and new matrix containing `data` into `steps`.
-    /// Returns unchanged `data`.
-    fn push_step(steps: &mut Vec<String>, transitions: &str, data: Vec<Vec<T>>) -> Vec<Vec<T>> {
-        let temp_matrix = Matrix::new_unsafe(data);
+    /// transitions `transitions` and matrix containing `data` with separator
+    /// `separator` into `steps`.
+    fn push_step(
+        steps: &mut Vec<String>,
+        transitions: &str,
+        data: Vec<Vec<T>>,
+        separator: Option<usize>,
+    ) -> Vec<Vec<T>> {
+        let temp_matrix = Self::new_unsafe(data).with_separator(separator);
         steps.push(format!(
             r"\xrightarrow{{{}}} {}",
             transitions,
-            temp_matrix.to_latex()
+            temp_matrix.to_latex(),
         ));
         temp_matrix.consume()
     }
@@ -182,11 +215,11 @@ mod tests {
         assert_eq!(
             aftermath.steps,
             vec![
-                r"\begin{bmatrix}-2 & 1\\1 & 1\end{bmatrix}",
-                r"\xrightarrow{w_{1} \leftrightarrow w_{2}} \begin{bmatrix}1 & 1\\-2 & 1\end{bmatrix}",
-                r"\xrightarrow{\substack{w_{2} + 2w_{1}}} \begin{bmatrix}1 & 1\\0 & 3\end{bmatrix}",
-                r"\xrightarrow{w_{2} : 3} \begin{bmatrix}1 & 1\\0 & 1\end{bmatrix}",
-                r"\xrightarrow{\substack{w_{1} - w_{2}}} \begin{bmatrix}1 & 0\\0 & 1\end{bmatrix}",
+                r"\left[\begin{array}{cc}-2 & 1\\1 & 1\end{array}\right]",
+                r"\xrightarrow{w_{1} \leftrightarrow w_{2}} \left[\begin{array}{cc}1 & 1\\-2 & 1\end{array}\right]",
+                r"\xrightarrow{\substack{w_{2} + 2w_{1}}} \left[\begin{array}{cc}1 & 1\\0 & 3\end{array}\right]",
+                r"\xrightarrow{w_{2} : 3} \left[\begin{array}{cc}1 & 1\\0 & 1\end{array}\right]",
+                r"\xrightarrow{\substack{w_{1} - w_{2}}} \left[\begin{array}{cc}1 & 0\\0 & 1\end{array}\right]",
             ]
         );
     }
@@ -202,11 +235,11 @@ mod tests {
         assert_eq!(
             aftermath.steps,
             vec![
-                r"\begin{bmatrix}4 & 3\\2 & 1\end{bmatrix}",
-                r"\xrightarrow{w_{1} : 4} \begin{bmatrix}1 & \frac{3}{4}\\2 & 1\end{bmatrix}",
-                r"\xrightarrow{\substack{w_{2} - 2w_{1}}} \begin{bmatrix}1 & \frac{3}{4}\\0 & -\frac{1}{2}\end{bmatrix}",
-                r"\xrightarrow{w_{2} : \left(-\frac{1}{2}\right)} \begin{bmatrix}1 & \frac{3}{4}\\0 & 1\end{bmatrix}",
-                r"\xrightarrow{\substack{w_{1} - \frac{3}{4}w_{2}}} \begin{bmatrix}1 & 0\\0 & 1\end{bmatrix}",
+                r"\left[\begin{array}{cc}4 & 3\\2 & 1\end{array}\right]",
+                r"\xrightarrow{w_{1} : 4} \left[\begin{array}{cc}1 & \frac{3}{4}\\2 & 1\end{array}\right]",
+                r"\xrightarrow{\substack{w_{2} - 2w_{1}}} \left[\begin{array}{cc}1 & \frac{3}{4}\\0 & -\frac{1}{2}\end{array}\right]",
+                r"\xrightarrow{w_{2} : \left(-\frac{1}{2}\right)} \left[\begin{array}{cc}1 & \frac{3}{4}\\0 & 1\end{array}\right]",
+                r"\xrightarrow{\substack{w_{1} - \frac{3}{4}w_{2}}} \left[\begin{array}{cc}1 & 0\\0 & 1\end{array}\right]",
             ]
         );
     }
@@ -220,7 +253,7 @@ mod tests {
         assert_eq!(aftermath.result.to_latex(), id.to_latex());
         assert_eq!(
             aftermath.steps,
-            vec![r"\begin{bmatrix}1 & 0\\0 & 1\end{bmatrix}"]
+            vec![r"\left[\begin{array}{cc}1 & 0\\0 & 1\end{array}\right]"]
         );
     }
 
@@ -235,10 +268,33 @@ mod tests {
         assert_eq!(
             aftermath.steps,
             vec![
-                r"\begin{bmatrix}1 & -1 & 1\\1 & 1 & -1\\-1 & 1 & -1\end{bmatrix}",
-                r"\xrightarrow{\substack{w_{2} - w_{1}\\w_{3} + w_{1}}} \begin{bmatrix}1 & -1 & 1\\0 & 2 & -2\\0 & 0 & 0\end{bmatrix}",
-                r"\xrightarrow{w_{2} : 2} \begin{bmatrix}1 & -1 & 1\\0 & 1 & -1\\0 & 0 & 0\end{bmatrix}",
-                r"\xrightarrow{\substack{w_{1} + w_{2}}} \begin{bmatrix}1 & 0 & 0\\0 & 1 & -1\\0 & 0 & 0\end{bmatrix}",
+                r"\left[\begin{array}{ccc}1 & -1 & 1\\1 & 1 & -1\\-1 & 1 & -1\end{array}\right]",
+                r"\xrightarrow{\substack{w_{2} - w_{1}\\w_{3} + w_{1}}} \left[\begin{array}{ccc}1 & -1 & 1\\0 & 2 & -2\\0 & 0 & 0\end{array}\right]",
+                r"\xrightarrow{w_{2} : 2} \left[\begin{array}{ccc}1 & -1 & 1\\0 & 1 & -1\\0 & 0 & 0\end{array}\right]",
+                r"\xrightarrow{\substack{w_{1} + w_{2}}} \left[\begin{array}{ccc}1 & 0 & 0\\0 & 1 & -1\\0 & 0 & 0\end{array}\right]",
+            ]
+        );
+    }
+
+    #[test]
+    fn test_inverse_rational1() {
+        let m = rm![1, 2; 3, 4];
+        let expected = Matrix::new(vec![
+            vec![(-2).into(), 1.into()],
+            vec![Rational64::new(3, 2), Rational64::new(-1, 2)],
+        ])
+        .unwrap();
+
+        let aftermath = m.inverse().unwrap();
+
+        assert_eq!(aftermath.result.to_latex(), expected.to_latex());
+        assert_eq!(
+            aftermath.steps,
+            vec![
+                r"\left[\begin{array}{cc|cc}1 & 2 & 1 & 0\\3 & 4 & 0 & 1\end{array}\right]",
+                r"\xrightarrow{\substack{w_{2} - 3w_{1}}} \left[\begin{array}{cc|cc}1 & 2 & 1 & 0\\0 & -2 & -3 & 1\end{array}\right]",
+                r"\xrightarrow{w_{2} : \left(-2\right)} \left[\begin{array}{cc|cc}1 & 2 & 1 & 0\\0 & 1 & \frac{3}{2} & -\frac{1}{2}\end{array}\right]",
+                r"\xrightarrow{\substack{w_{1} - 2w_{2}}} \left[\begin{array}{cc|cc}1 & 0 & -2 & 1\\0 & 1 & \frac{3}{2} & -\frac{1}{2}\end{array}\right]"
             ]
         );
     }
