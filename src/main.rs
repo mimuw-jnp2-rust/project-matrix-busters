@@ -174,16 +174,15 @@ impl<K: MatrixNumber> eframe::App for MatrixApp<K> {
         for (id, window) in self.state.windows.iter_mut() {
             if window.is_open {
                 let element = self.state.env.get(id).unwrap();
-                windows_result = windows_result.or_else(|| {
-                    display_env_element_window(
-                        ctx,
-                        (id, element),
-                        &self.locale,
-                        &mut self.state.clipboard,
-                        &mut self.state.editor,
-                        &mut window.is_open,
-                    )
-                });
+                let local_result = display_env_element_window(
+                    ctx,
+                    (id, element),
+                    &self.locale,
+                    &mut self.state.clipboard,
+                    &mut self.state.editor,
+                    &mut window.is_open,
+                );
+                windows_result = windows_result.or(local_result);
             }
         }
 
