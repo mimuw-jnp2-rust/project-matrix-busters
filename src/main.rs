@@ -3,6 +3,7 @@ mod editor_gui;
 mod env_gui;
 mod environment;
 mod fractal_clock;
+mod furier;
 mod locale;
 mod matrices;
 mod matrix_algorithms;
@@ -24,13 +25,14 @@ use clipboard::{ClipboardContext, ClipboardProvider};
 use constants::{FONT_ID, TEXT_COLOR, VALUE_PADDING};
 use eframe::egui;
 
-use egui::{vec2, Context, Sense, Ui};
+use egui::{vec2, Context, Response, Sense, Ui};
 use num_rational::Rational64;
 use std::collections::HashMap;
 use std::default::Default;
 use std::time::Duration;
 
 use crate::fractal_clock::FractalClock;
+use crate::furier::Fourier;
 use clap::builder::TypedValueParser;
 use clap::Parser;
 
@@ -85,6 +87,7 @@ pub struct State<K: MatrixNumber> {
     toasts: egui_toast::Toasts,
     clipboard: ClipboardContext,
     clock: FractalClock,
+    furier: Option<Fourier>,
 }
 
 impl<K: MatrixNumber> Default for State<K> {
@@ -97,6 +100,7 @@ impl<K: MatrixNumber> Default for State<K> {
             toasts: Default::default(),
             clock: Default::default(),
             clipboard: ClipboardContext::new().expect("Failed to create Clipboard context!"),
+            furier: Fourier::from_json_file("assets/dft_andrzej.json".to_string()).ok(),
         }
     }
 }
@@ -128,10 +132,10 @@ impl<K: MatrixNumber> eframe::App for MatrixApp<K> {
             .direction(egui::Direction::BottomUp)
             .align_to_end(true);
 
-        display_menu_bar(ctx, &mut self.state, &self.locale);
+        let top_menu = display_menu_bar(ctx, &mut self.state, &self.locale);
         display_editor::<K>(ctx, &mut self.state, &self.locale);
 
-        egui::SidePanel::left("objects")
+        let left_panel = egui::SidePanel::left("objects")
             .resizable(true)
             .default_width(DEFAULT_LEFT_PANEL_WIDTH)
             .show(ctx, |ui| {
@@ -147,7 +151,8 @@ impl<K: MatrixNumber> eframe::App for MatrixApp<K> {
                         display_env_element(&mut self.state.windows, ui, element, &self.locale);
                     });
                 });
-            });
+            })
+            .response;
 
         self.state.windows.iter_mut().for_each(|(id, window)| {
             if window.is_open {
@@ -168,7 +173,14 @@ impl<K: MatrixNumber> eframe::App for MatrixApp<K> {
         // Center panel has to be added last, otherwise the side panel will be on top of it.
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading(self.gt(APP_NAME));
-            self.state.clock.ui(ui, Some(seconds_since_midnight()));
+            match &mut self.state.furier {
+                Some(furier) => {
+                    furier.ui(ui, left_panel.rect.width(), top_menu.rect.height());
+                }
+                None => {
+                    self.state.clock.ui(ui, Some(seconds_since_midnight()));
+                }
+            }
         });
 
         self.state.toasts.show(ctx);
@@ -181,13 +193,19 @@ fn seconds_since_midnight() -> f64 {
     time.num_seconds_from_midnight() as f64 + 1e-9 * (time.nanosecond() as f64)
 }
 
-fn display_menu_bar<K: MatrixNumber>(ctx: &Context, state: &mut State<K>, locale: &Locale) {
-    egui::TopBottomPanel::top("menu_bar").show(ctx, |ui| {
-        egui::menu::bar(ui, |ui| {
-            display_add_matrix_button(ui, state, locale);
-            display_add_scalar_button(ui, state, locale);
+fn display_menu_bar<K: MatrixNumber>(
+    ctx: &Context,
+    state: &mut State<K>,
+    locale: &Locale,
+) -> Response {
+    egui::TopBottomPanel::top("menu_bar")
+        .show(ctx, |ui| {
+            egui::menu::bar(ui, |ui| {
+                display_add_matrix_button(ui, state, locale);
+                display_add_scalar_button(ui, state, locale);
+            })
         })
-    });
+        .response
 }
 
 fn display_add_matrix_button<K: MatrixNumber>(ui: &mut Ui, state: &mut State<K>, locale: &Locale) {
