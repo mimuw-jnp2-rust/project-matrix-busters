@@ -23,7 +23,7 @@ use crate::parser::parse_instruction;
 use crate::traits::{GuiDisplayable, LaTeXable, MatrixNumber};
 use clipboard::{ClipboardContext, ClipboardProvider};
 use constants::{FONT_ID, TEXT_COLOR, VALUE_PADDING};
-use eframe::egui;
+use eframe::{egui, IconData};
 
 use egui::{vec2, Context, Response, Sense, Ui};
 use num_rational::Rational64;
@@ -42,6 +42,7 @@ type F = Rational64;
 fn main() {
     let options = eframe::NativeOptions {
         initial_window_size: Some(vec2(DEFAULT_WIDTH, DEFAULT_HEIGHT)),
+        icon_data: load_icon("assets\\icon.png"),
         ..Default::default()
     };
     let args = MatrixAppArgs::parse();
@@ -51,6 +52,16 @@ fn main() {
         options,
         Box::new(|_cc| Box::<MatrixApp<F>>::new(MatrixApp::new(locale))),
     )
+}
+
+fn load_icon(path: &str) -> Option<IconData> {
+    let image = image::open(path).ok()?.into_rgba8();
+    let (width, height) = image.dimensions();
+    Some(IconData {
+        rgba: image.into_raw(),
+        width,
+        height,
+    })
 }
 
 #[derive(Parser, Debug)]
