@@ -23,7 +23,4 @@ chrono = "0.4"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 itertools = "0.10.5"
-# The latest version of `egui-toast` is not compatible with `egui` 0.20.1
-# We use our fork of `egui-toast` until the issue is fixed
-# The PR was created and when merged we can use the original crate [https://github.com/urholaukkarinen/egui-toast/pull/4]
-egui-toast = { git = "https://github.com/tudny/egui-toast", branch = "egui-boost" }
+egui-toast = "0.5.0"
