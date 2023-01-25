@@ -235,17 +235,16 @@ fn display_env_element_window<K: MatrixNumber>(
                         .set_contents(latex)
                         .expect("Failed to copy LaTeX to clipboard!");
                 }
-                if ui.button(locale.get_translated("Echelon")).clicked() {
-                    let echelon = match value {
-                        Type::Scalar(_) => "1".to_string(),
-                        Type::Matrix(m) => match m.echelon() {
+                if let Type::Matrix(m) = value {
+                    if ui.button(locale.get_translated("Echelon")).clicked() {
+                        let echelon = match m.echelon() {
                             Ok(Aftermath { result: _, steps }) => steps.join("\n"),
                             Err(err) => err.to_string(),
-                        },
-                    };
-                    clipboard
-                        .set_contents(echelon)
-                        .expect("Failed to copy LaTeX to clipboard!");
+                        };
+                        clipboard
+                            .set_contents(echelon)
+                            .expect("Failed to copy LaTeX to clipboard!");
+                    }
                 }
                 if ui.button(locale.get_translated("Inverse")).clicked() {
                     let inverse = match value {
