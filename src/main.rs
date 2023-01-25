@@ -340,14 +340,17 @@ fn display_env_element_window<K: MatrixNumber>(
                     ),
             );
             ui.painter().add(value_shape);
-            ui.separator();
-            if !identifier.is_result() && ui.button(locale.get_translated("Edit")).clicked() {
-                match value {
-                    Type::Scalar(s) => {
-                        set_editor_to_existing_scalar(editor, s, identifier.to_string())
-                    }
-                    Type::Matrix(m) => {
-                        set_editor_to_existing_matrix(editor, m, identifier.to_string())
+
+            if !identifier.is_result() {
+                ui.separator();
+                if ui.button(locale.get_translated("Edit")).clicked() {
+                    match value {
+                        Type::Scalar(s) => {
+                            set_editor_to_existing_scalar(editor, s, identifier.to_string())
+                        }
+                        Type::Matrix(m) => {
+                            set_editor_to_existing_matrix(editor, m, identifier.to_string())
+                        }
                     }
                 }
             };
