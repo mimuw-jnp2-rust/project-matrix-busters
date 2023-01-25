@@ -248,7 +248,10 @@ fn display_env_element_window<K: MatrixNumber>(
                 }
                 if ui.button(locale.get_translated("Inverse")).clicked() {
                     let inverse = match value {
-                        Type::Scalar(_) => "".to_string(), // TODO: Add inverse for scalars???
+                        Type::Scalar(s) => match K::one().checked_div(s) {
+                            Some(inv) => inv.to_latex(),
+                            None => "Failed to calculate inverse".to_string(),
+                        },
                         Type::Matrix(m) => match m.inverse() {
                             Ok(Aftermath { result: _, steps }) => steps.join("\n"),
                             Err(err) => err.to_string(),
