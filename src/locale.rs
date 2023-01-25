@@ -77,6 +77,7 @@ lazy_static! {
         ("Add Scalar", "Add Scalar"),
         ("JP2GMD - Matrix Calculator", "JP2GMD - Matrix Calculator"),
         ("Echelon", "Echelon"),
+        ("Inverse", "Inverse"),
         ("Run", "Run"),
         ("Editor", "Editor"),
         ("Identifier:", "Identifier:"),
@@ -101,6 +102,7 @@ lazy_static! {
             "Jaki Potężny 2-wymiarowy Generator Macierzy Diagonalizowalnych - Kalkulator Macierzy"
         ),
         ("Echelon", "Schodkuj"),
+        ("Inverse", "Odwrotność"),
         ("Run", "Uruchom"),
         ("Editor", "Edytor"),
         ("Identifier:", "Identyfikator:"),
@@ -125,6 +127,7 @@ lazy_static! {
             "JP2GMD - Calculadora de Matrices"
         ),
         ("Echelon", "Echelon"),
+        ("Inverse", "Inversa"),
         ("Run", "Ejecutar"),
         ("Editor", "Editor"),
         ("Identifier:", "Identificador:"),

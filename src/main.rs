@@ -247,6 +247,18 @@ fn display_env_element_window<K: MatrixNumber>(
                         .set_contents(echelon)
                         .expect("Failed to copy LaTeX to clipboard!");
                 }
+                if ui.button(locale.get_translated("Inverse")).clicked() {
+                    let inverse = match value {
+                        Type::Scalar(_) => "".to_string(), // TODO: Add inverse for scalars???
+                        Type::Matrix(m) => match m.inverse() {
+                            Ok(Aftermath { result: _, steps }) => steps.join("\n"),
+                            Err(err) => err.to_string(),
+                        },
+                    };
+                    clipboard
+                        .set_contents(inverse)
+                        .expect("Failed to copy LaTeX to clipboard!");
+                }
             });
             let mut value_shape = value.to_shape(ctx, FONT_ID, TEXT_COLOR);
             let value_rect = value_shape.visual_bounding_rect();
