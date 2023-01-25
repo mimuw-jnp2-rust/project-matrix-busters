@@ -32,7 +32,7 @@ impl Identifier {
     }
 
     pub fn is_result(&self) -> bool {
-        return self.id == Self::RESULT;
+        self.id == Self::RESULT
     }
 
     pub fn is_valid(id: &str) -> bool {
