@@ -3,6 +3,7 @@ mod editor_gui;
 mod env_gui;
 mod environment;
 mod fractal_clock;
+#[cfg(feature = "easter-eggs")]
 mod furier;
 mod locale;
 mod matrices;
@@ -32,6 +33,7 @@ use std::default::Default;
 use std::time::Duration;
 
 use crate::fractal_clock::FractalClock;
+#[cfg(feature = "easter-eggs")]
 use crate::furier::Fourier;
 use clap::builder::TypedValueParser;
 use clap::Parser;
@@ -98,6 +100,7 @@ pub struct State<K: MatrixNumber> {
     toasts: egui_toast::Toasts,
     clipboard: ClipboardContext,
     clock: FractalClock,
+    #[cfg(feature = "easter-eggs")]
     furier: Option<Fourier>,
 }
 
@@ -111,6 +114,7 @@ impl<K: MatrixNumber> Default for State<K> {
             toasts: Default::default(),
             clock: Default::default(),
             clipboard: ClipboardContext::new().expect("Failed to create Clipboard context!"),
+            #[cfg(feature = "easter-eggs")]
             furier: Fourier::from_json_file("assets/dft_andrzej.json".to_string()).ok(),
         }
     }
@@ -143,10 +147,10 @@ impl<K: MatrixNumber> eframe::App for MatrixApp<K> {
             .direction(egui::Direction::BottomUp)
             .align_to_end(true);
 
-        let top_menu = display_menu_bar(ctx, &mut self.state, &self.locale);
+        let _top_menu = display_menu_bar(ctx, &mut self.state, &self.locale);
         display_editor::<K>(ctx, &mut self.state, &self.locale);
 
-        let left_panel = egui::SidePanel::left("objects")
+        let _left_panel = egui::SidePanel::left("objects")
             .resizable(true)
             .default_width(DEFAULT_LEFT_PANEL_WIDTH)
             .show(ctx, |ui| {
@@ -184,14 +188,17 @@ impl<K: MatrixNumber> eframe::App for MatrixApp<K> {
         // Center panel has to be added last, otherwise the side panel will be on top of it.
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading(self.gt(APP_NAME));
+            #[cfg(feature = "easter-eggs")]
             match &mut self.state.furier {
                 Some(furier) => {
-                    furier.ui(ui, left_panel.rect.width(), top_menu.rect.height());
+                    furier.ui(ui, _left_panel.rect.width(), _top_menu.rect.height());
                 }
                 None => {
                     self.state.clock.ui(ui, Some(seconds_since_midnight()));
                 }
             }
+            #[cfg(not(feature = "easter-eggs"))]
+            self.state.clock.ui(ui, Some(seconds_since_midnight()));
         });
 
         self.state.toasts.show(ctx);
