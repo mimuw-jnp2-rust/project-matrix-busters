@@ -15,12 +15,24 @@ pub struct Identifier {
 }
 
 impl Identifier {
+    pub const RESULT: &'static str = "$";
+
     pub fn new(id: String) -> anyhow::Result<Self> {
         if Self::is_valid(&id) {
             Ok(Self { id })
         } else {
             bail!("Invalid identifier.")
         }
+    }
+
+    pub fn result() -> Self {
+        Self {
+            id: Self::RESULT.to_string(),
+        }
+    }
+
+    pub fn is_result(&self) -> bool {
+        self.id == Self::RESULT
     }
 
     pub fn is_valid(id: &str) -> bool {

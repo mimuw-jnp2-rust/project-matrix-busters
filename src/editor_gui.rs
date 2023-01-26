@@ -125,8 +125,9 @@ fn display_editor_is_some<K: MatrixNumber>(
                 Some(locale.get_translated("Identifier is invalid!"))
             };
             if let Err(err) = &result {
-                err_msg =
-                    Some(locale.get_translated("Matrix is invalid!\n") + err.to_string().as_str());
+                err_msg = Some(
+                    locale.get_translated("Matrix is invalid!") + "\n" + err.to_string().as_str(),
+                );
             };
             ui.horizontal(|ui| {
                 let sense = if err_msg.is_some() {

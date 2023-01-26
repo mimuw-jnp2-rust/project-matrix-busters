@@ -61,6 +61,9 @@ impl<'a> Tokenizer<'a> {
             let num = &self.raw[..i];
             self.raw = &self.raw[i..];
             Ok(Some(Token::Integer(num.parse::<u64>()?)))
+        } else if let Some(rest) = self.raw.strip_prefix(Identifier::RESULT) {
+            self.raw = rest;
+            Ok(Some(Token::Identifier(Identifier::result())))
         } else {
             let i = self
                 .raw
@@ -146,7 +149,7 @@ fn unary_op<T: MatrixNumber>(arg: Type<T>, op: char) -> anyhow::Result<Type<T>> 
 <digit>      ::= "0" | "1" | ... | "9"
 <integer>    ::= <digit>+
 <letter>     ::= "a" | "ą" | "b" | ... | "ż"
-<identifier> ::= (<letter> | "_") (<letter> | <digit> | "_")*
+<identifier> ::= (<letter> | "_") (<letter> | <digit> | "_")* | "$"
 <unary_op>   ::= "+" | "-"
 <binary_op>  ::= "+" | "-" | "*" | "/"
 <expr>       ::= <integer> | <identifier> | <expr> <binary_op> <expr>
@@ -315,13 +318,17 @@ pub fn parse_expression<T: MatrixNumber>(
 }
 
 /*
-Only assignments so far...
-<inst> ::= <identifier> = <expr>
+<inst> ::= <identifier> = <expr> | <expr>
  */
 pub fn parse_instruction<T: MatrixNumber>(
     raw: &str,
     env: &mut Environment<T>,
 ) -> anyhow::Result<Identifier> {
+    if let Ok(value) = parse_expression(raw, env) {
+        env.insert(Identifier::result(), value);
+        return Ok(Identifier::result());
+    }
+
     let mut tokenizer = Tokenizer::new(raw);
     if let Some(Token::Identifier(id)) = tokenizer.next_token()? {
         if tokenizer.next_token()? == Some(Token::Operator('=')) {
@@ -332,7 +339,7 @@ pub fn parse_instruction<T: MatrixNumber>(
             bail!("Unrecognized instruction!")
         }
     } else {
-        bail!("Assignment has to begin with an identifier.")
+        bail!("Invalid instruction!")
     }
 }
 
@@ -544,6 +551,21 @@ mod tests {
         assert_eq!(
             *env.get(&Identifier::new("b".to_string()).unwrap()).unwrap(),
             Type::<i64>::Scalar(89)
+        );
+    }
+
+    #[test]
+    fn test_expression_as_instruction() {
+        let mut env = Environment::<i64>::new();
+
+        let mut exec = |raw| parse_instruction(raw, &mut env).unwrap();
+
+        exec("2 + 2");
+        exec("a = $ ^ $");
+
+        assert_eq!(
+            *env.get(&Identifier::new("a".to_string()).unwrap()).unwrap(),
+            Type::<i64>::Scalar(256)
         );
     }
 }
