@@ -91,8 +91,11 @@ lazy_static! {
         ("Edit", "Edit"),
         ("Error ", "Error "),
         ("Identifier is invalid!", "Identifier is invalid!"),
+        ("LaTeX copied to clipboard", "LaTeX copied to clipboard"),
+        ("Failed to generate LaTeX", "Failed to generate LaTeX"),
     ];
-    pub static ref TRANS_PL_RAW: Vec<(&'static str, &'static str)> = vec![
+    pub static ref TRANS_PL_RAW: Vec<(&'static str, &'static str)> =
+        vec![
         ("objects", "Obiekty"),
         ("matrix", "Macierz"),
         ("Add Matrix", "Dodaj Macierz"),
@@ -116,6 +119,8 @@ lazy_static! {
         ("Edit", "Edytuj"),
         ("Error ", "Błąd "),
         ("Identifier is invalid!", "Identyfikator jest niepoprawny!"),
+        ("LaTeX copied to clipboard", "Skopiowano LaTeX'a do schowka"),
+        ("Failed to generate LaTeX", "Nie udało się wygenerować LaTeX'a"),
     ];
     pub static ref TRANS_ES_RAW: Vec<(&'static str, &'static str)> = vec![
         ("objects", "Objetos"),
@@ -141,6 +146,8 @@ lazy_static! {
         ("Editor", "Editar"),
         ("Error ", "Error "),
         ("Identifier is invalid!", "¡El identificador es inválido!"),
+        ("LaTeX copied to clipboard", "LaTeX copiado al portapapeles"),
+        ("Failed to generate LaTeX", "No se pudo generar LaTeX"),
     ];
 }
 
