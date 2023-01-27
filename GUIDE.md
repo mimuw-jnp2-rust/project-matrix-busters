@@ -15,7 +15,8 @@ displayed as $\frac{p/g}{q/g}$, where $g=\text{gcd}(p, q)$. Also if $q/g = 1$ th
 Scalars can be both added in *shell* or via GUI editor. 
 
 ### Matrix
-Matrices are 
+Matrices are 2D arrays of Scalars. More precisely matrix $A \in \hat{Q}^{N\times M}$
+is a matrix over field $\hat{Q}$ with width $N$ and height $M$.
 
 ## Operations
 * **Addition** - both `Scalars` and `Matrices` support addition operation.
