@@ -118,28 +118,28 @@ There are certain operations that can be performed on objects:
 
 ### Echelon LaTeX example
 
-Let's say we have a matrix $A = \begin{bmatrix} 1 & 2 & 3 \\ 11 & 67 & 2 \\ 8 & 1 & 34 \end{bmatrix}$. `Echelon`
+Let's say we have a matrix $A = \begin{bmatrix} 1 & 2 & 3  \\  11 & 67 & 2  \\  8 & 1 & 34 \end{bmatrix}$. `Echelon`
 operation
 will result in the following LaTeX code:
 
 $$
 \left[\begin{array}{ccc}
-1 & 2 & 3\\11 & 67 & 2\\8 & 1 & 34
+1 & 2 & 3 \\ 11 & 67 & 2 \\ 8 & 1 & 34
 \end{array}\right]
-\xrightarrow{\substack{w_{2} - 11w_{1}\\w_{3} - 8w_{1}}} \left[\begin{array}{ccc}
-1 & 2 & 3\\0 & 45 & -31\\0 & -15 & 10
+\xrightarrow{\substack{w_{2} - 11w_{1} \\ w_{3} - 8w_{1}}} \left[\begin{array}{ccc}
+1 & 2 & 3 \\ 0 & 45 & -31 \\ 0 & -15 & 10
 \end{array}\right]
 \xrightarrow{w_{2} : 45} \left[\begin{array}{ccc}
-1 & 2 & 3\\0 & 1 & -\frac{31}{45}\\0 & -15 & 10
+1 & 2 & 3 \\ 0 & 1 & -\frac{31}{45} \\ 0 & -15 & 10
 \end{array}\right]
-\xrightarrow{\substack{w_{1} - 2w_{2}\\w_{3} + 15w_{2}}} \left[\begin{array}{ccc}
-1 & 0 & \frac{197}{45}\\0 & 1 & -\frac{31}{45}\\0 & 0 & -\frac{1}{3}
+\xrightarrow{\substack{w_{1} - 2w_{2} \\ w_{3} + 15w_{2}}} \left[\begin{array}{ccc}
+1 & 0 & \frac{197}{45} \\ 0 & 1 & -\frac{31}{45} \\ 0 & 0 & -\frac{1}{3}
 \end{array}\right]
 \xrightarrow{w_{3} : \left(-\frac{1}{3}\right)} \left[\begin{array}{ccc}
-1 & 0 & \frac{197}{45}\\0 & 1 & -\frac{31}{45}\\0 & 0 & 1
+1 & 0 & \frac{197}{45} \\ 0 & 1 & -\frac{31}{45} \\ 0 & 0 & 1
 \end{array}\right]
-\xrightarrow{\substack{w_{1} - \frac{197}{45}w_{3}\\w_{2} + \frac{31}{45}w_{3}}} \left[\begin{array}{ccc}
-1 & 0 & 0\\0 & 1 & 0\\0 & 0 & 1
+\xrightarrow{\substack{w_{1} - \frac{197}{45}w_{3} \\ w_{2} + \frac{31}{45}w_{3}}} \left[\begin{array}{ccc}
+1 & 0 & 0 \\ 0 & 1 & 0 \\ 0 & 0 & 1
 \end{array}\right]
 $$
 
