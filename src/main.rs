@@ -38,6 +38,7 @@ use crate::fractal_clock::FractalClock;
 use crate::furier::Fourier;
 use clap::builder::TypedValueParser;
 use clap::Parser;
+use egui_toast::Toasts;
 
 /// Field for matrices.
 type F = Rational64;
@@ -98,7 +99,7 @@ pub struct State<K: MatrixNumber> {
     windows: HashMap<Identifier, WindowState>,
     shell: ShellState,
     editor: EditorState,
-    toasts: egui_toast::Toasts,
+    toasts: Toasts,
     clipboard: ClipboardContext,
     clock: FractalClock,
     #[cfg(feature = "easter-eggs")]
@@ -143,7 +144,7 @@ impl<K: MatrixNumber> MatrixApp<K> {
 impl<K: MatrixNumber> eframe::App for MatrixApp<K> {
     fn update(&mut self, ctx: &Context, frame: &mut eframe::Frame) {
         let window_size = frame.info().window_info.size;
-        self.state.toasts = egui_toast::Toasts::default()
+        self.state.toasts = Toasts::default()
             .anchor((window_size.x - 10., window_size.y - 40.))
             .direction(egui::Direction::BottomUp)
             .align_to_end(true);
@@ -180,6 +181,7 @@ impl<K: MatrixNumber> eframe::App for MatrixApp<K> {
                     &self.locale,
                     &mut self.state.clipboard,
                     &mut self.state.editor,
+                    &mut self.state.toasts,
                     &mut window.is_open,
                 );
                 windows_result = windows_result.or(local_result);
@@ -270,6 +272,7 @@ fn display_env_element_window<K: MatrixNumber>(
     locale: &Locale,
     clipboard: &mut ClipboardContext,
     editor: &mut EditorState,
+    toasts: &mut Toasts,
     is_open: &mut bool,
 ) -> Option<Type<K>> {
     let mut window_result = None;
@@ -281,22 +284,18 @@ fn display_env_element_window<K: MatrixNumber>(
             ui.horizontal(|ui| {
                 if ui.button("LaTeX").clicked() {
                     let latex = value.to_latex();
-                    clipboard
-                        .set_contents(latex)
-                        .expect("Failed to copy LaTeX to clipboard!");
+                    set_clipboard(Ok(latex), clipboard, toasts, locale);
                 }
                 if let Type::Matrix(m) = value {
                     if ui.button(locale.get_translated("Echelon")).clicked() {
                         let echelon = match m.echelon() {
                             Ok(Aftermath { result, steps }) => {
                                 window_result = Some(Type::Matrix(result));
-                                steps.join("\n")
+                                Ok(steps.join("\n"))
                             }
-                            Err(err) => err.to_string(),
+                            Err(err) => Err(err),
                         };
-                        clipboard
-                            .set_contents(echelon)
-                            .expect("Failed to copy LaTeX to clipboard!");
+                        set_clipboard(echelon, clipboard, toasts, locale);
                     }
                 }
                 if ui.button(locale.get_translated("Inverse")).clicked() {
@@ -304,21 +303,21 @@ fn display_env_element_window<K: MatrixNumber>(
                         Type::Scalar(s) => match K::one().checked_div(s) {
                             Some(inv) => {
                                 window_result = Some(Type::Scalar(inv.clone()));
-                                inv.to_latex()
+                                Ok(inv.to_latex())
                             }
-                            None => "Failed to calculate inverse".to_string(),
+                            None => Err(anyhow::Error::msg(
+                                locale.get_translated("Failed to calculate inverse"),
+                            )),
                         },
                         Type::Matrix(m) => match m.inverse() {
                             Ok(Aftermath { result, steps }) => {
                                 window_result = Some(Type::Matrix(result));
-                                steps.join("\n")
+                                Ok(steps.join("\n"))
                             }
-                            Err(err) => err.to_string(),
+                            Err(err) => Err(err),
                         },
                     };
-                    clipboard
-                        .set_contents(inverse)
-                        .expect("Failed to copy LaTeX to clipboard!");
+                    set_clipboard(inverse, clipboard, toasts, locale);
                 }
             });
             let mut value_shape = value.to_shape(ctx, FONT_ID, TEXT_COLOR);
@@ -357,6 +356,39 @@ fn display_env_element_window<K: MatrixNumber>(
         });
 
     window_result
+}
+
+fn set_clipboard(
+    message: anyhow::Result<String>,
+    clipboard: &mut ClipboardContext,
+    toasts: &mut Toasts,
+    locale: &Locale,
+) {
+    const CLIPBOARD_TOAST_DURATION: Duration = Duration::from_secs(5);
+    match message {
+        Ok(latex) => match clipboard.set_contents(latex) {
+            Ok(_) => {
+                toasts.info(
+                    locale.get_translated("LaTeX copied to clipboard"),
+                    CLIPBOARD_TOAST_DURATION,
+                );
+            }
+            Err(e) => {
+                toasts.error(
+                    locale.get_translated("Failed to copy LaTeX to clipboard")
+                        + "\n"
+                        + e.to_string().as_str(),
+                    CLIPBOARD_TOAST_DURATION,
+                );
+            }
+        },
+        Err(e) => {
+            toasts.error(
+                locale.get_translated("Failed to generate LaTeX") + "\n" + e.to_string().as_str(),
+                CLIPBOARD_TOAST_DURATION,
+            );
+        }
+    }
 }
 
 fn display_shell<K: MatrixNumber>(

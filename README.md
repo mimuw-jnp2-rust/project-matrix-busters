@@ -16,7 +16,7 @@ One of its most powerful features is the ability to generate `LaTeX` code for th
 
 ---
 
-## Usage
+## Installation
 Install dependencies if applicable:
 
 Ubuntu
@@ -36,6 +36,8 @@ $ cargo run -- --help
 
 ---
 
+# Development
+
 ## Plan
 - [X] 1.1. Implement rational numbers representation.
 - [X] 1.2. Implement matrix module for given any number representation.
@@ -52,12 +54,8 @@ developing more critical features. They are not
 intended to be developed during the JNP3 project - 
 maybe in the future if time allows.
 
----
-
 ## GUI Preview
 ![gui.png](gui.png)
-
----
 
 ## Libraries
 - [egui](https://crates.io/crates/egui) - (https://github.com/emilk/egui)
