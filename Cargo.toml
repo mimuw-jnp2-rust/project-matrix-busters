@@ -9,7 +9,9 @@ name = "jp2gmd"
 path = "src/main.rs"
 
 [features]
-easter-eggs = []
+fft = []
+clock = []
+easter-eggs = ["clock", "fft"]
 
 [dependencies]
 egui = "0.20.1"
