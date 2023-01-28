@@ -253,7 +253,7 @@ fn display_menu_bar<K: MatrixNumber>(
 }
 
 fn display_zoom_panel(ui: &mut Ui, ctx: &Context) {
-    ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
+    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
         if ui.button("+").clicked() {
             gui_zoom::zoom_in(ctx);
         }
