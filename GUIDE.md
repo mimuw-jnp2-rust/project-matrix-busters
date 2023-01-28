@@ -164,8 +164,33 @@ which represents a system of linear equations, we get a much more useful result:
 \xrightarrow{\substack{w_{1} - \frac{32}{13}w_{3}\\w_{2} + \frac{8}{13}w_{3}}} \left[\begin{array}{cccc}1 & 0 & 0 & -\frac{171}{67}\\0 & 1 & 0 & \frac{294}{67}\\0 & 0 & 1 & -\frac{485}{134}\end{array}\right]
 ```
 
-Producing a echelon row form is a very tedious task, but with this calculator, it is as easy as clicking a button.
+Producing a row echelon form is a very tedious task, but with this calculator, it is as easy as clicking a button.
 It may be very useful for students, as it can be used to create LaTeX for their homework.
+
+Another useful application is to calculate the inverse of a matrix. Let's say we have a matrix
+```math
+Z = \left[\begin{array}{cc}1 & 2\\6 & 1\end{array}\right]
+```
+If we produce a matrix
+```math
+Z' = \left[\begin{array}{cc|cc}1 & 2 & 1 & 0\\6 & 1 & 0 & 1\end{array}\right]
+```
+and perform `Echelon` operation on it, we get
+```math
+\left[\begin{array}{cccc}1 & 2 & 1 & 0\\6 & 1 & 0 & 1\end{array}\right]
+\xrightarrow{\substack{w_{2} - 6w_{1}}} \left[\begin{array}{cccc}1 & 2 & 1 & 0\\0 & -11 & -6 & 1\end{array}\right]
+\xrightarrow{w_{2} : \left(-11\right)} \left[\begin{array}{cccc}1 & 2 & 1 & 0\\0 & 1 & \frac{6}{11} & -\frac{1}{11}\end{array}\right]
+\xrightarrow{\substack{w_{1} - 2w_{2}}} \left[\begin{array}{cccc}1 & 0 & -\frac{1}{11} & \frac{2}{11}\\0 & 1 & \frac{6}{11} & -\frac{1}{11}\end{array}\right]
+```
+and as supprising as it may seem, the inverse of `Z` is
+```math
+\left[\begin{array}{cc|cc}-\frac{1}{11} & \frac{2}{11} & 1 & 0\\\frac{6}{11} & -\frac{1}{11} & 0 & 1\end{array}\right]
+\xrightarrow{w_{1} : \left(-\frac{1}{11}\right)} \left[\begin{array}{cc|cc}1 & -2 & -11 & 0\\\frac{6}{11} & -\frac{1}{11} & 0 & 1\end{array}\right]
+\xrightarrow{\substack{w_{2} - \frac{6}{11}w_{1}}} \left[\begin{array}{cc|cc}1 & -2 & -11 & 0\\0 & 1 & 6 & 1\end{array}\right]
+\xrightarrow{\substack{w_{1} + 2w_{2}}} \left[\begin{array}{cc|cc}1 & 0 & 1 & 2\\0 & 1 & 6 & 1\end{array}\right].
+```
+We just inverted the matrix `Z` by performing elementary row operations on the augmented matrix and got all transformations in LaTeX. 
+
 
 ## GUI editor
 
