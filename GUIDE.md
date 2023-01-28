@@ -164,6 +164,9 @@ which represents a system of linear equations, we get a much more useful result:
 \xrightarrow{\substack{w_{1} - \frac{32}{13}w_{3}\\w_{2} + \frac{8}{13}w_{3}}} \left[\begin{array}{cccc}1 & 0 & 0 & -\frac{171}{67}\\0 & 1 & 0 & \frac{294}{67}\\0 & 0 & 1 & -\frac{485}{134}\end{array}\right]
 ```
 
+Producing a echelon row form is a very tedious task, but with this calculator, it is as easy as clicking a button.
+It may be very useful for students, as it can be used to create LaTeX for their homework.
+
 ## GUI editor
 
 GUI editor is a graphical interface for creating matrices and scalars. To open it click on `Add matrix` or `Add scalar`
