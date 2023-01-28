@@ -44,6 +44,35 @@ will not apply to `y`.
   * For `Matrices` it is defined as $\hat{Q}^{N\times N} \to \hat{Q}^{N\times N}$. Inverse $A^{-1}$ of matrix $A$ is defined as $A^{-1}A = AA^{-1} = I$, where $I$ is identity matrix.
 * **Echelon** - only `Matrices` support echelon operation.
   * For `Matrices` it is defined as $\hat{Q}^{N\times M} \to \hat{Q}^{N\times M}$. Echelon form is defined [here](https://en.wikipedia.org/wiki/Row_echelon_form).
+* **Power** - both `Scalars` and `Matrices` support power operation.
+  * For `Scalars` it is defined as $\hat{Q} \times \hat{Q} \to \hat{Q}$, and works as expected for rational numbers.
+  * For `Matrices` it is defined as $\hat{Q}^{N\times N} \times \hat{Q} \to \hat{Q}^{N\times N}$. Power $A^k$ of matrix $A$ is defined as $A^k = A \cdot A \cdot \dots \cdot A$ where $k$ is a positive integer.
+
+## Examples
+```matlab
+x = 1/3
+y = 2/3
+M = [1 2; 5 3]  % This syntax is not supported yet.
+N = [6 7; 3 1]  % Use GUI editor instead.
+% Addition
+z = x + y   % z = 1
+P = M + N   % P = [7 9; 8 4]
+% Subtraction
+z = x - y   % z = -1/3
+P = M - N   % P = [-5 -5; 2 2]
+% Multiplication
+z = x * y   % z = 2/9
+P = M * N   % P = [18 10; 36 22]
+% Division
+z = x / y   % z = 1/2
+% Inverse (only in GUI)
+P = inv(M)    % P = 1/7 * [-3 2; 5 -1]
+% Echelon (only in GUI)
+P = echelon(M)    % P = [1 0; 0 1]
+% Power
+z = x^2   % z = 1/9
+P = M^2   % P = [11 8; 20 19]
+```
 
 ## Shell
 Shell is a command line interface for the calculator. It is used to input commands.
@@ -65,3 +94,8 @@ There are certain operations that can be performed on objects:
   * `Echelon` - calculates echelon form of the matrix, copies its LaTeX representation to clipboard and stores the numerical value in `$`.
   * `LaTeX` - copies the matrix's LaTeX representation to clipboard.
 If an error occurs during the operation, the error message will be displayed as a popup toast.
+
+## GUI editor
+GUI editor is a graphical interface for creating matrices and scalars. To open it click on `Add matrix` or `Add scalar` button.
+A new variable has to have a name and a value, that can be evaluated using existing environment variables.
+If provided value is invalid, an error message will be displayed and new variable will not be created.
