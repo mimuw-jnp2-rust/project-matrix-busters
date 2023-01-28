@@ -192,13 +192,13 @@ fn display_matrix_editor(
     locale: &Locale,
 ) {
     ui.label(locale.get_translated("Enter the matrix:"));
-    ui.horizontal(|ui| {
+    egui::Grid::new("dimensions").show(ui, |ui| {
         ui.label(locale.get_translated("Height"));
         ui.add(egui::DragValue::new(h));
-    });
-    ui.horizontal(|ui| {
+        ui.end_row();
         ui.label(locale.get_translated("Width"));
         ui.add(egui::DragValue::new(w));
+        ui.end_row();
     });
     ui.separator();
     if data.len() != *h * *w {
