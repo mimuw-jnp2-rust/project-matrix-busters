@@ -34,10 +34,10 @@ Check program help using
 $ cargo run -- --help
 ```
 
----
+# Usage
+Check out [the guide](GUIDE.md).
 
 # Development
-
 ## Plan
 - [X] 1.1. Implement rational numbers representation.
 - [X] 1.2. Implement matrix module for given any number representation.
