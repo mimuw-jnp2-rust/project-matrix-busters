@@ -27,7 +27,7 @@ use clipboard::{ClipboardContext, ClipboardProvider};
 use constants::{FONT_ID, TEXT_COLOR, VALUE_PADDING};
 use eframe::{egui, IconData};
 
-use egui::{vec2, Context, Response, Sense, Ui};
+use egui::{gui_zoom, vec2, Context, Response, Sense, Ui};
 use env_gui::insert_to_env;
 use num_rational::Rational64;
 use std::collections::HashMap;
@@ -147,6 +147,10 @@ impl<K: MatrixNumber> MatrixApp<K> {
 
 impl<K: MatrixNumber> eframe::App for MatrixApp<K> {
     fn update(&mut self, ctx: &Context, frame: &mut eframe::Frame) {
+        if !frame.is_web() {
+            egui::gui_zoom::zoom_with_keyboard_shortcuts(ctx, frame.info().native_pixels_per_point);
+        }
+
         let window_size = frame.info().window_info.size;
         self.state.toasts = Toasts::default()
             .anchor((window_size.x - 10., window_size.y - 40.))
@@ -242,9 +246,23 @@ fn display_menu_bar<K: MatrixNumber>(
             egui::menu::bar(ui, |ui| {
                 display_add_matrix_button(ui, state, locale);
                 display_add_scalar_button(ui, state, locale);
+                display_zoom_panel(ui, ctx);
             })
         })
         .response
+}
+
+fn display_zoom_panel(ui: &mut Ui, ctx: &Context) {
+    ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
+        if ui.button("+").clicked() {
+            gui_zoom::zoom_in(ctx);
+        }
+        ui.label(format!("{} %", (ctx.pixels_per_point() * 100.).round()));
+        if ui.button("-").clicked() {
+            gui_zoom::zoom_out(ctx);
+        }
+        ui.allocate_space(ui.available_size());
+    });
 }
 
 fn display_add_matrix_button<K: MatrixNumber>(ui: &mut Ui, state: &mut State<K>, locale: &Locale) {
