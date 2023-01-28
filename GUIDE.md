@@ -48,7 +48,6 @@ will not apply to `y`.
     * For `Scalars` it is defined as $\hat{Q} \times \hat{Q} \to \hat{Q}$, and works as expected for rational numbers.
     * For `Matrices` it is defined as $\hat{Q}^{N\times M} \times \hat{Q}^{M\times K} \to \hat{Q}^{N\times K}$ and works as expected for matrices.
     * For `Matrices` and `Scalars` it is defined as $\hat{Q}^{N\times M} \times \hat{Q} \to \hat{Q}^{N\times M}$ and works as expected for matrices and scalars.
-      as expected for matrices.
 * **Division** - only `Scalars` support division operation.
     * For `Scalars` it is defined as $\hat{Q} \times \hat{Q} \to \hat{Q}$, and works as expected for rational numbers.
 * **Inverse** - only `Matrices` support inverse operation.
