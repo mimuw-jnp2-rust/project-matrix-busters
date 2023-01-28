@@ -122,7 +122,7 @@ Let's say we have a matrix $A = \begin{bmatrix} 1 & 2 & 3  \\  11 & 67 & 2  \\  
 operation
 will result in the following LaTeX code:
 
-$$
+```math
 \left[\begin{array}{ccc}
 1 & 2 & 3 \\ 11 & 67 & 2 \\ 8 & 1 & 34
 \end{array}\right]
@@ -141,7 +141,7 @@ $$
 \xrightarrow{\substack{w_{1} - \frac{197}{45}w_{3} \\ w_{2} + \frac{31}{45}w_{3}}} \left[\begin{array}{ccc}
 1 & 0 & 0 \\ 0 & 1 & 0 \\ 0 & 0 & 1
 \end{array}\right]
-$$
+```
 
 ## GUI editor
 
