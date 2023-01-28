@@ -118,11 +118,13 @@ There are certain operations that can be performed on objects:
 
 ### Echelon LaTeX example
 
-Let's say we have a matrix 
+Let's say we have a matrix
+
 ```math
 A = \begin{bmatrix} 1 & 2 & 3 \\ 11 & 67 & 2 \\ 8 & 1 & 34 \end{bmatrix}.
 ```
-`Echelon` operation  will result in LaTeX code representing this:
+
+`Echelon` operation will result in LaTeX code representing this:
 
 ```math
 \left[\begin{array}{ccc}
@@ -143,6 +145,23 @@ A = \begin{bmatrix} 1 & 2 & 3 \\ 11 & 67 & 2 \\ 8 & 1 & 34 \end{bmatrix}.
 \xrightarrow{\substack{w_{1} - \frac{197}{45}w_{3}\\w_{2} + \frac{31}{45}w_{3}}} \left[\begin{array}{ccc}
 1 & 0 & 0\\0 & 1 & 0\\0 & 0 & 1
 \end{array}\right]
+```
+
+This may not look useful, as it produced an identity matrix, but when we take a different matrix
+
+```math
+B = \left[\begin{array}{cccc}1 & 4 & 0 & 15\\6 & 11 & 8 & 4\\-1 & 3 & 6 & -6\end{array}\right]
+```
+
+which represents a system of linear equations, we get a much more useful result:
+
+```math
+\left[\begin{array}{cccc}1 & 4 & 0 & 15\\6 & 11 & 8 & 4\\-1 & 3 & 6 & -6\end{array}\right]
+\xrightarrow{\substack{w_{2} - 6w_{1}\\w_{3} + w_{1}}} \left[\begin{array}{cccc}1 & 4 & 0 & 15\\0 & -13 & 8 & -86\\0 & 7 & 6 & 9\end{array}\right]
+\xrightarrow{w_{2} : \left(-13\right)} \left[\begin{array}{cccc}1 & 4 & 0 & 15\\0 & 1 & -\frac{8}{13} & \frac{86}{13}\\0 & 7 & 6 & 9\end{array}\right]
+\xrightarrow{\substack{w_{1} - 4w_{2}\\w_{3} - 7w_{2}}} \left[\begin{array}{cccc}1 & 0 & \frac{32}{13} & -\frac{149}{13}\\0 & 1 & -\frac{8}{13} & \frac{86}{13}\\0 & 0 & \frac{134}{13} & -\frac{485}{13}\end{array}\right]
+\xrightarrow{w_{3} : \frac{134}{13}} \left[\begin{array}{cccc}1 & 0 & \frac{32}{13} & -\frac{149}{13}\\0 & 1 & -\frac{8}{13} & \frac{86}{13}\\0 & 0 & 1 & -\frac{485}{134}\end{array}\right]
+\xrightarrow{\substack{w_{1} - \frac{32}{13}w_{3}\\w_{2} + \frac{8}{13}w_{3}}} \left[\begin{array}{cccc}1 & 0 & 0 & -\frac{171}{67}\\0 & 1 & 0 & \frac{294}{67}\\0 & 0 & 1 & -\frac{485}{134}\end{array}\right]
 ```
 
 ## GUI editor
