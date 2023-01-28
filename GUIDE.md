@@ -187,7 +187,7 @@ and as surprising as it may seem, the inverse of `Z` is
 \left[\begin{array}{cc}-\frac{1}{11} & \frac{2}{11}\\\frac{6}{11} & -\frac{1}{11}\end{array}\right]
 ```
 We just inverted the matrix `Z` by performing elementary row operations on the augmented matrix and got all transformations in LaTeX. 
-Finally the `Inverse` operation will also produce LaTeX code representing all the transformations.
+Finally, the `Inverse` operation will also produce LaTeX code representing all the transformations.
 
 
 ## GUI editor
