@@ -257,7 +257,12 @@ fn display_zoom_panel(ui: &mut Ui, ctx: &Context) {
         if ui.button("+").clicked() {
             gui_zoom::zoom_in(ctx);
         }
-        ui.label(format!("{} %", (ctx.pixels_per_point() * 100.).round()));
+        if ui
+            .button(format!("{} %", (ctx.pixels_per_point() * 100.).round()))
+            .clicked()
+        {
+            ctx.set_pixels_per_point(1.);
+        }
         if ui.button("-").clicked() {
             gui_zoom::zoom_out(ctx);
         }
