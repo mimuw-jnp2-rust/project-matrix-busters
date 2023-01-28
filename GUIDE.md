@@ -20,6 +20,9 @@ is a matrix over field $\hat{Q}$ with width $N$ and height $M$.
 
 Currently, the only way to create a matrix is to use *GUI editor*.
 
+## Warning
+A matrix $M\in \hat{Q}^{1,1}$ is **not** a scalar. It is a matrix with one element.
+
 ## Variables
 Variables are supported, and they are calculated during their initialization. Let's say 
 there is a variable called `x` and it stores the value $\frac{1}{3}$. Creating variable
@@ -41,3 +44,24 @@ will not apply to `y`.
   * For `Matrices` it is defined as $\hat{Q}^{N\times N} \to \hat{Q}^{N\times N}$. Inverse $A^{-1}$ of matrix $A$ is defined as $A^{-1}A = AA^{-1} = I$, where $I$ is identity matrix.
 * **Echelon** - only `Matrices` support echelon operation.
   * For `Matrices` it is defined as $\hat{Q}^{N\times M} \to \hat{Q}^{N\times M}$. Echelon form is defined [here](https://en.wikipedia.org/wiki/Row_echelon_form).
+
+## Shell
+Shell is a command line interface for the calculator. It is used to input commands.
+Supported commands are:
+* `x = <expression>` - creates a variable `x` and assigns it the value of `<expression>`.
+* `<expression>` - evaluates `<expression>` and stores it in special variable `$`.
+Error messages are displayed as a popup notification toast.
+
+## GUI
+GUI is a graphical user interface for the calculator. All objects created in current environment are displayed 
+on `Objects` list. Clicking on an object will open a new window with object's properties. In such window,
+the value can be edited. If the value is edited, the object will be updated. 
+There are certain operations that can be performed on objects:
+* `Scalar`
+  * `Inverse` - calculates inverse of the scalar, copies its LaTeX representation to clipboard and stores the numerical value in `$`.
+  * `LaTeX` - copies the scalar's LaTeX representation to clipboard.
+* `Matrix`
+  * `Inverse` - calculates inverse of the matrix, copies its LaTeX representation to clipboard and stores the numerical value in `$`.
+  * `Echelon` - calculates echelon form of the matrix, copies its LaTeX representation to clipboard and stores the numerical value in `$`.
+  * `LaTeX` - copies the matrix's LaTeX representation to clipboard.
+If an error occurs during the operation, the error message will be displayed as a popup toast.
