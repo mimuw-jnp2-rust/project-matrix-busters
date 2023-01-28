@@ -2,8 +2,9 @@ mod constants;
 mod editor_gui;
 mod env_gui;
 mod environment;
+#[cfg(feature = "clock")]
 mod fractal_clock;
-#[cfg(feature = "easter-eggs")]
+#[cfg(feature = "fft")]
 mod furier;
 mod locale;
 mod matrices;
@@ -33,8 +34,9 @@ use std::collections::HashMap;
 use std::default::Default;
 use std::time::Duration;
 
+#[cfg(feature = "clock")]
 use crate::fractal_clock::FractalClock;
-#[cfg(feature = "easter-eggs")]
+#[cfg(feature = "fft")]
 use crate::furier::Fourier;
 use clap::builder::TypedValueParser;
 use clap::Parser;
@@ -101,8 +103,9 @@ pub struct State<K: MatrixNumber> {
     editor: EditorState,
     toasts: Toasts,
     clipboard: ClipboardContext,
+    #[cfg(feature = "clock")]
     clock: FractalClock,
-    #[cfg(feature = "easter-eggs")]
+    #[cfg(feature = "fft")]
     furier: Option<Fourier>,
 }
 
@@ -114,9 +117,10 @@ impl<K: MatrixNumber> Default for State<K> {
             shell: Default::default(),
             editor: Default::default(),
             toasts: Default::default(),
+            #[cfg(feature = "clock")]
             clock: Default::default(),
             clipboard: ClipboardContext::new().expect("Failed to create Clipboard context!"),
-            #[cfg(feature = "easter-eggs")]
+            #[cfg(feature = "fft")]
             furier: Fourier::from_json_file("assets/dft_andrzej.json".to_string()).ok(),
         }
     }
@@ -202,16 +206,18 @@ impl<K: MatrixNumber> eframe::App for MatrixApp<K> {
         // Center panel has to be added last, otherwise the side panel will be on top of it.
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading(self.gt(APP_NAME));
-            #[cfg(feature = "easter-eggs")]
+            #[cfg(feature = "fft")]
             match &mut self.state.furier {
                 Some(furier) => {
                     furier.ui(ui, _left_panel.rect.width(), _top_menu.rect.height());
                 }
                 None => {
+                    #[cfg(feature = "clock")]
                     self.state.clock.ui(ui, Some(seconds_since_midnight()));
                 }
             }
-            #[cfg(not(feature = "easter-eggs"))]
+            #[cfg(feature = "clock")]
+            #[cfg(not(feature = "fft"))]
             self.state.clock.ui(ui, Some(seconds_since_midnight()));
         });
 
@@ -219,6 +225,7 @@ impl<K: MatrixNumber> eframe::App for MatrixApp<K> {
     }
 }
 
+#[cfg(feature = "clock")]
 fn seconds_since_midnight() -> f64 {
     use chrono::Timelike;
     let time = chrono::Local::now().time();
