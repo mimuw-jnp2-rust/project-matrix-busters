@@ -2,7 +2,7 @@ use crate::{
     constants::{
         FRACTION_FONT_SIZE_RATIO, FRACTION_HMARGIN, FRACTION_LINE_WIDTH, FRACTION_VMARGIN,
     },
-    traits::{GuiDisplayable, LaTeXable},
+    traits::{BoxedShape, GuiDisplayable, LaTeXable},
 };
 use egui::{pos2, vec2, FontId, Rect, Rounding, Shape};
 use num_rational::Rational64;
@@ -61,8 +61,8 @@ impl GuiDisplayable for Rational64 {
                 color,
             );
 
-            let num_rect = num_shape.visual_bounding_rect();
-            let denom_rect = denom_shape.visual_bounding_rect();
+            let num_rect = num_shape.get_rect();
+            let denom_rect = denom_shape.get_rect();
             let single_width = num_rect.width().max(denom_rect.width()) + 2. * FRACTION_HMARGIN;
 
             num_shape.translate(vec2((single_width - num_rect.width()) / 2., 0.));

@@ -33,6 +33,7 @@ use num_rational::Rational64;
 use std::collections::HashMap;
 use std::default::Default;
 use std::time::Duration;
+use traits::BoxedShape;
 
 #[cfg(feature = "clock")]
 use crate::fractal_clock::FractalClock;
@@ -328,7 +329,7 @@ fn display_env_element_window<K: MatrixNumber>(
                 }
             });
             let mut value_shape = value.to_shape(ctx, FONT_ID, TEXT_COLOR);
-            let value_rect = value_shape.visual_bounding_rect();
+            let value_rect = value_shape.get_rect();
 
             ui.set_min_width(value_rect.width() + 2. * VALUE_PADDING);
             ui.set_max_width(ui.min_size().x);

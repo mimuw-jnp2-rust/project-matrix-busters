@@ -1,6 +1,6 @@
-use crate::constants::MATRIX_PADDING;
+use crate::constants::{MATRIX_HPADDING, MATRIX_VPADDING};
 use crate::locale::Locale;
-use crate::traits::{CheckedMulScl, LaTeXable};
+use crate::traits::{BoxedShape, CheckedMulScl, LaTeXable};
 use crate::traits::{GuiDisplayable, MatrixNumber};
 use anyhow::{bail, Context};
 use egui::{pos2, Color32, FontId, Rect};
@@ -587,7 +587,7 @@ impl<T: MatrixNumber> GuiDisplayable for Matrix<T> {
         let mut column_widths = vec![0_f32; cols];
         for (i, row) in shapes.iter().enumerate() {
             for (j, shape) in row.iter().enumerate() {
-                let rect = shape.visual_bounding_rect();
+                let rect = shape.get_rect();
                 row_heights[i] = row_heights[i].max(rect.height());
                 column_widths[j] = column_widths[j].max(rect.width());
             }
@@ -596,7 +596,7 @@ impl<T: MatrixNumber> GuiDisplayable for Matrix<T> {
         let mut upper_left = pos2(0., 0.);
         for (i, row) in shapes.iter_mut().enumerate() {
             for (j, shape) in row.iter_mut().enumerate() {
-                let rect = shape.visual_bounding_rect().size();
+                let rect = shape.get_rect().size();
                 shape.translate(
                     egui::Align2::CENTER_CENTER
                         .align_size_within_rect(
@@ -612,10 +612,10 @@ impl<T: MatrixNumber> GuiDisplayable for Matrix<T> {
                         .min
                         .to_vec2(),
                 );
-                upper_left.x += column_widths[j] + MATRIX_PADDING;
+                upper_left.x += column_widths[j] + MATRIX_HPADDING;
             }
             upper_left.x = 0.;
-            upper_left.y += row_heights[i] + MATRIX_PADDING;
+            upper_left.y += row_heights[i] + MATRIX_VPADDING;
         }
 
         egui::Shape::Vec(shapes.into_iter().flat_map(|row| row.into_iter()).collect())

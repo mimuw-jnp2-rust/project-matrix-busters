@@ -30,6 +30,19 @@ pub trait GuiDisplayable {
     fn to_shape(&self, ctx: &egui::Context, font_id: FontId, color: Color32) -> Shape;
 }
 
+pub trait BoxedShape {
+    fn get_rect(&self) -> egui::Rect;
+}
+
+impl BoxedShape for Shape {
+    fn get_rect(&self) -> egui::Rect {
+        match self {
+            Shape::Text(text_shape) => text_shape.galley.rect,
+            _ => self.visual_bounding_rect(),
+        }
+    }
+}
+
 pub trait MatrixNumber:
     Num
     + CheckedOps
@@ -85,9 +98,7 @@ macro_rules! gui_displayable_for_primitive {
                         pos2(0., 0.),
                         ctx.fonts().layout_no_wrap(self.to_string(), font_id, color),
                     );
-                    let mut shape = Shape::Text(text_shape);
-                    shape.translate(-shape.visual_bounding_rect().min.to_vec2());
-                    shape
+                    Shape::Text(text_shape)
                 }
             }
         )*
