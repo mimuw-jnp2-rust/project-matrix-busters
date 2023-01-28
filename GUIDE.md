@@ -46,7 +46,8 @@ will not apply to `y`.
     * For both `Scalars` and `Matrices` it is defined as $\hat{Q} \times \hat{Q} \to \hat{Q}$ and works like addition.
 * **Multiplication** - both `Scalars` and `Matrices` support multiplication operation.
     * For `Scalars` it is defined as $\hat{Q} \times \hat{Q} \to \hat{Q}$, and works as expected for rational numbers.
-    * For `Matrices` it is defined as $\hat{Q}^{N\times M} \times \hat{Q}^{M\times K} \to \hat{Q}^{N\times K}$ and works
+    * For `Matrices` it is defined as $\hat{Q}^{N\times M} \times \hat{Q}^{M\times K} \to \hat{Q}^{N\times K}$ and works as expected for matrices.
+    * For `Matrices` and `Scalars` it is defined as $\hat{Q}^{N\times M} \times \hat{Q} \to \hat{Q}^{N\times M}$ and works as expected for matrices and scalars.
       as expected for matrices.
 * **Division** - only `Scalars` support division operation.
     * For `Scalars` it is defined as $\hat{Q} \times \hat{Q} \to \hat{Q}$, and works as expected for rational numbers.
@@ -57,8 +58,8 @@ will not apply to `y`.
     * For `Matrices` it is defined as $\hat{Q}^{N\times M} \to \hat{Q}^{N\times M}$. Echelon form is
       defined [here](https://en.wikipedia.org/wiki/Row_echelon_form).
 * **Power** - both `Scalars` and `Matrices` support power operation.
-    * For `Scalars` it is defined as $\hat{Q} \times \hat{Q} \to \hat{Q}$, and works as expected for rational numbers.
-    * For `Matrices` it is defined as $\hat{Q}^{N\times N} \times \hat{Q} \to \hat{Q}^{N\times N}$. Power $A^k$ of
+    * For `Scalars` it is defined as $\hat{Q} \times \mathbb{N} \to \hat{Q}$, and works as expected for rational numbers.
+    * For `Matrices` it is defined as $\hat{Q}^{N\times N} \times \mathbb{N} \to \hat{Q}^{N\times N}$. Power $A^k$ of
       matrix $A$ is defined as $A^k = A \cdot A \cdot \dots \cdot A$ where $k$ is a positive integer.
 
 ## Examples
@@ -96,6 +97,26 @@ Supported commands are:
 * `x = <expression>` - creates a variable `x` and assigns it the value of `<expression>`.
 * `<expression>` - evaluates `<expression>` and stores it in special variable `$`.
   Error messages are displayed as a popup notification toast.
+
+These are the rules expressed in BNF:
+```bnf
+<digit>      ::= "0" | "1" | ... | "9"
+<integer>    ::= <digit>+
+<letter>     ::= "a" | "ą" | "b" | ... | "ż"
+<identifier> ::= (<letter> | "_") (<letter> | <digit> | "_")* | "$"
+<unary_op>   ::= "+" | "-"
+<binary_op>  ::= "+" | "-" | "*" | "/"
+<expr>       ::= <integer> | <identifier> | <expr> <binary_op> <expr> | "(" <expr> ")" | <unary_op> <expr>
+```
+
+### Examples
+```matlab
+v = 1/3 + 4/15 - 4/19 * 2/3 - 4^5 * (3/4 - 2/3)
+w = ((((4/3 + 5/2) * 14) - 44) / 2) ^ 2
+N = M^14 - Z * 4 * (M - Z)    % where M, Z are square matrices
+a = -v
+very_simple_NAME_123 = 1/3
+```
 
 ## GUI
 
@@ -196,3 +217,10 @@ GUI editor is a graphical interface for creating matrices and scalars. To open i
 button.
 A new variable has to have a name and a value, that can be evaluated using existing environment variables.
 If provided value is invalid, an error message will be displayed and new variable will not be created.
+
+## Features
+If you get bored with plain background and want to spice things up, you can turn `fft` feature on.
+It will draw an image of a Fourier transformed image provided in `assets/`. The other way to change
+the background is to turn `clock` feature on. It will draw a fractal clock in the background. If both 
+`fft` and `clock` are turned on, `fft` will prioritize `clock` - only if image file is missing
+the clock will be drawn.
