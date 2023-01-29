@@ -1,10 +1,9 @@
 use crate::constants::{MATRIX_HPADDING, MATRIX_VPADDING};
 use crate::locale::Locale;
-use crate::traits::{BoxedShape, CheckedMulScl, LaTeXable};
+use crate::traits::{BoxedShape, LaTeXable};
 use crate::traits::{GuiDisplayable, MatrixNumber};
 use anyhow::{bail, Context};
 use egui::{pos2, Color32, FontId, Rect};
-use num_traits::{CheckedAdd, CheckedMul, CheckedNeg, CheckedSub};
 use std::ops::{Add, Mul, Neg, Sub};
 
 /// A matrix of type `T`.
@@ -454,6 +453,108 @@ impl<T: MatrixNumber> Matrix<T> {
         self.checked_operation_on_two(self, |a, _| operation(a))
     }
 
+    /// Performs matrix addition.
+    /// # Arguments
+    /// * `other` - The other matrix.
+    /// # Returns
+    /// A new matrix with the result of the addition.
+    /// # Errors
+    /// Returns `Err` if the matrices have different shapes.
+    /// # Examples
+    /// ```rust
+    /// use matrix::Matrix;
+    /// let m1 = Matrix::new(vec![vec![1, 2], vec![3, 4]]).unwrap();
+    /// let m2 = Matrix::new(vec![vec![1, 2], vec![3, 4]]).unwrap();
+    /// let m3 = m1.checked_add(&m2).unwrap();
+    /// assert_eq!(m3, Matrix::new(vec![vec![2, 4], vec![6, 8]]).unwrap());
+    /// ```
+    pub fn checked_add(&self, rhs: &Self) -> anyhow::Result<Self> {
+        self.checked_operation_on_two(rhs, |a, b| a.checked_add(b))
+    }
+
+    /// Performs matrix subtraction.
+    /// # Arguments
+    /// * `other` - The other matrix.
+    /// # Returns
+    /// A new matrix with the result of the subtraction.
+    /// # Errors
+    /// Returns `Err` if the matrices have different shapes.
+    /// # Examples
+    /// ```rust
+    /// use matrix::Matrix;
+    /// let m1 = Matrix::new(vec![vec![1, 2], vec![3, 4]]).unwrap();
+    /// let m2 = Matrix::new(vec![vec![1, 2], vec![3, 4]]).unwrap();
+    /// let m3 = m1.checked_sub(&m2).unwrap();
+    /// assert_eq!(m3, Matrix::new(vec![vec![0, 0], vec![0, 0]]).unwrap());
+    /// ```
+    pub fn checked_sub(&self, v: &Self) -> anyhow::Result<Self> {
+        self.checked_operation_on_two(v, |a, b| a.checked_sub(b))
+    }
+
+    /// Performs matrix negation.
+    /// # Returns
+    /// A new matrix with the result of the negation.
+    /// # Examples
+    /// ```rust
+    /// use matrix::Matrix;
+    /// let m1 = Matrix::new(vec![vec![1, 2], vec![3, 4]]).unwrap();
+    /// let m2 = m1.checked_neg().unwrap();
+    /// assert_eq!(m2, Matrix::new(vec![vec![-1, -2], vec![-3, -4]]).unwrap());
+    /// ```
+    pub fn checked_neg(&self) -> anyhow::Result<Self> {
+        Self::zeros(self.get_shape()).checked_sub(self)
+    }
+
+    /// Performs matrix multiplication.
+    /// # Arguments
+    /// * `other` - The other matrix.
+    /// # Returns
+    /// A new matrix with the result of the multiplication.
+    /// # Errors
+    /// Returns `Err` if height of the first matrix is not equal to the width of the second matrix.
+    /// # Examples
+    /// ```rust
+    /// use matrix::Matrix;
+    /// let m1 = Matrix::new(vec![vec![1, 2], vec![3, 4]]).unwrap();
+    /// let m2 = Matrix::new(vec![vec![1, 2], vec![3, 4]]).unwrap();
+    /// let m3 = m1.checked_mul(&m2).unwrap();
+    /// assert_eq!(m3, Matrix::new(vec![vec![7, 10], vec![15, 22]]).unwrap());
+    /// ```
+    pub fn checked_mul(&self, v: &Self) -> anyhow::Result<Self> {
+        const OVERFLOW_MSG: &str = "Overflow during matrix multiplication!";
+        let (h, w) = self.result_shape_for_mul(v)?;
+
+        let mut res = Matrix::<T>::zeros((h, w)).data;
+        for (i, item) in self.data.iter().enumerate() {
+            for j in 0..w {
+                for (k, item_item) in item.iter().enumerate() {
+                    res[i][j] = (item_item.checked_mul(&v.data[k][j]).context(OVERFLOW_MSG)?)
+                        .checked_add(&res[i][j])
+                        .context(OVERFLOW_MSG)?;
+                }
+            }
+        }
+        Self::new(res)
+    }
+
+    /// Performs matrix multiplication by a scalar.
+    /// # Arguments
+    /// * `other` - The scalar.
+    /// # Returns
+    /// A new matrix with the result of the multiplication.
+    /// # Errors
+    /// Returns `Err` if the multiplication overflows.
+    /// # Examples
+    /// ```rust
+    /// use matrix::Matrix;
+    /// let m1 = Matrix::new(vec![vec![1, 2], vec![3, 4]]).unwrap();
+    /// let m2 = m1.checked_mul_scl(&2).unwrap();
+    /// assert_eq!(m2, Matrix::new(vec![vec![2, 4], vec![6, 8]]).unwrap());
+    /// ```
+    pub fn checked_mul_scl(&self, other: &T) -> anyhow::Result<Self> {
+        self.checked_operation(|a| a.checked_mul(other))
+    }
+
     /// Performs matrix to the power.
     /// # Arguments
     /// * `exponent` - The power to raise the matrix to.
@@ -630,31 +731,11 @@ impl<T: MatrixNumber> Add for Matrix<T> {
     }
 }
 
-impl<T: MatrixNumber> CheckedAdd for Matrix<T> {
-    fn checked_add(&self, rhs: &Self) -> Option<Self> {
-        self.checked_operation_on_two(rhs, |a, b| a.checked_add(b))
-            .ok()
-    }
-}
-
 impl<T: MatrixNumber> Sub for Matrix<T> {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self::Output {
         self.checked_sub(&rhs).expect("Matrix subtraction failed!")
-    }
-}
-
-impl<T: MatrixNumber> CheckedSub for Matrix<T> {
-    fn checked_sub(&self, v: &Self) -> Option<Self> {
-        self.checked_operation_on_two(v, |a, b| a.checked_sub(b))
-            .ok()
-    }
-}
-
-impl<T: MatrixNumber> CheckedNeg for Matrix<T> {
-    fn checked_neg(&self) -> Option<Self> {
-        Self::zeros(self.get_shape()).checked_sub(self)
     }
 }
 
@@ -674,23 +755,8 @@ impl<T: MatrixNumber> Mul<Self> for Matrix<T> {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self::Output {
-        self::CheckedMul::checked_mul(&self, &rhs).expect("Matrix multiplication failed!")
-    }
-}
-
-impl<T: MatrixNumber> CheckedMul for Matrix<T> {
-    fn checked_mul(&self, v: &Self) -> Option<Self> {
-        let (h, w) = self.result_shape_for_mul(v).ok()?;
-
-        let mut res = Matrix::<T>::zeros((h, w)).data;
-        for (i, item) in self.data.iter().enumerate() {
-            for j in 0..w {
-                for (k, item_item) in item.iter().enumerate() {
-                    res[i][j] = (item_item.checked_mul(&v.data[k][j])?).checked_add(&res[i][j])?;
-                }
-            }
-        }
-        Self::new(res).ok()
+        self.checked_mul(&rhs)
+            .expect("Matrix multiplication failed!")
     }
 }
 
@@ -700,12 +766,6 @@ impl<T: MatrixNumber> Mul<T> for Matrix<T> {
     fn mul(self, rhs: T) -> Self::Output {
         self.checked_mul_scl(&rhs)
             .expect("Matrix multiplication failed!")
-    }
-}
-
-impl<T: MatrixNumber> CheckedMulScl<T> for Matrix<T> {
-    fn checked_mul_scl(&self, other: &T) -> Option<Self> {
-        self.checked_operation(|a| a.checked_mul(other)).ok()
     }
 }
 

@@ -3,7 +3,6 @@ use egui::{pos2, Color32, FontId, Shape};
 use num_traits::{
     CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, FromPrimitive, Signed, ToPrimitive,
 };
-use std::ops::Mul;
 use std::str::FromStr;
 
 use crate::locale::Locale;
@@ -14,10 +13,6 @@ pub trait LaTeXable {
     fn to_latex_single(&self) -> String {
         self.to_latex()
     }
-}
-
-pub trait CheckedMulScl<T: MatrixNumber>: Sized + Mul<Self, Output = Self> {
-    fn checked_mul_scl(&self, other: &T) -> Option<Self>;
 }
 
 pub trait CheckedOps: CheckedAdd + CheckedSub + CheckedMul + CheckedDiv {}

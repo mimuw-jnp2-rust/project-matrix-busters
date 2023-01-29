@@ -4,10 +4,10 @@ use std::collections::VecDeque;
 use std::fmt::{Display, Formatter};
 
 use anyhow::{bail, Context};
-use num_traits::{checked_pow, CheckedAdd, CheckedMul, CheckedNeg, CheckedSub};
+use num_traits::checked_pow;
 
 use crate::environment::{Environment, Identifier, Type};
-use crate::traits::{CheckedMulScl, MatrixNumber};
+use crate::traits::MatrixNumber;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 enum Token {
@@ -100,23 +100,27 @@ impl<T: MatrixNumber> Display for WorkingToken<T> {
 fn binary_op<T: MatrixNumber>(left: Type<T>, right: Type<T>, op: char) -> anyhow::Result<Type<T>> {
     match op {
         '+' => match (left, right) {
-            (Type::Matrix(l), Type::Matrix(r)) => Type::from_matrix_option(l.checked_add(&r)),
+            (Type::Matrix(l), Type::Matrix(r)) => Type::from_matrix_result(l.checked_add(&r)),
             (Type::Scalar(l), Type::Scalar(r)) => Type::from_scalar_option(l.checked_add(&r)),
             _ => bail!("Adding scalar to matrix is not supported!"),
         },
         '-' => match (left, right) {
-            (Type::Matrix(l), Type::Matrix(r)) => Type::from_matrix_option(l.checked_sub(&r)),
+            (Type::Matrix(l), Type::Matrix(r)) => Type::from_matrix_result(l.checked_sub(&r)),
             (Type::Scalar(l), Type::Scalar(r)) => Type::from_scalar_option(l.checked_sub(&r)),
             _ => bail!("Substraction of scalar and matrix is not supported!"),
         },
         '*' => match (left, right) {
-            (Type::Matrix(l), Type::Matrix(r)) => Type::from_matrix_option(l.checked_mul(&r)),
+            (Type::Matrix(l), Type::Matrix(r)) => Type::from_matrix_result(l.checked_mul(&r)),
             (Type::Scalar(l), Type::Scalar(r)) => Type::from_scalar_option(l.checked_mul(&r)),
-            (Type::Matrix(l), Type::Scalar(r)) => Type::from_matrix_option(l.checked_mul_scl(&r)),
-            (Type::Scalar(l), Type::Matrix(r)) => Type::from_matrix_option(r.checked_mul_scl(&l)),
+            (Type::Matrix(l), Type::Scalar(r)) => Type::from_matrix_result(l.checked_mul_scl(&r)),
+            (Type::Scalar(l), Type::Matrix(r)) => Type::from_matrix_result(r.checked_mul_scl(&l)),
         },
         '/' => match (left, right) {
-            (Type::Scalar(l), Type::Scalar(r)) => Type::from_scalar_option(l.checked_div(&r)),
+            (Type::Scalar(l), Type::Scalar(r)) => if !r.is_zero() {
+                Type::from_scalar_option(l.checked_div(&r))
+            } else {
+                bail!("Division by zero!")
+            },
             (Type::Matrix(_), Type::Matrix(_)) => bail!("WTF dividing by matrix? You should use the `inv` function (not implemented yet, wait for it...)"),
             (Type::Matrix(_), Type::Scalar(_)) => bail!("Diving matrix by scalar is not supported yet..."),
             (Type::Scalar(_), Type::Matrix(_)) => bail!("Diving scalar by matrix does not make sense!"),
@@ -125,7 +129,7 @@ fn binary_op<T: MatrixNumber>(left: Type<T>, right: Type<T>, op: char) -> anyhow
             let exp = exp.to_usize().context("Exponent should be a nonnegative integer.")?;
             match left {
                 Type::Scalar(base) => Type::from_scalar_option(checked_pow(base, exp)),
-                Type::Matrix(base) => Type::from_matrix_option(base.checked_pow(exp).ok()),
+                Type::Matrix(base) => Type::from_matrix_result(base.checked_pow(exp)),
             }
         } else {
             bail!("Exponent cannot be a matrix!");
@@ -138,7 +142,7 @@ fn unary_op<T: MatrixNumber>(arg: Type<T>, op: char) -> anyhow::Result<Type<T>> 
     match op {
         '+' => Ok(arg),
         '-' => match arg {
-            Type::Matrix(m) => Type::from_matrix_option(m.checked_neg()),
+            Type::Matrix(m) => Type::from_matrix_result(m.checked_neg()),
             Type::Scalar(s) => Type::from_scalar_option(T::zero().checked_sub(&s)),
         },
         _ => unimplemented!(),
@@ -324,23 +328,18 @@ pub fn parse_instruction<T: MatrixNumber>(
     raw: &str,
     env: &mut Environment<T>,
 ) -> anyhow::Result<Identifier> {
-    if let Ok(value) = parse_expression(raw, env) {
-        env.insert(Identifier::result(), value);
-        return Ok(Identifier::result());
-    }
-
     let mut tokenizer = Tokenizer::new(raw);
     if let Some(Token::Identifier(id)) = tokenizer.next_token()? {
         if tokenizer.next_token()? == Some(Token::Operator('=')) {
             let value = parse_expression(tokenizer.raw, env)?;
             env.insert(id.clone(), value);
-            Ok(id)
-        } else {
-            bail!("Unrecognized instruction!")
+            return Ok(id);
         }
-    } else {
-        bail!("Invalid instruction!")
     }
+
+    let value = parse_expression(raw, env)?;
+    env.insert(Identifier::result(), value);
+    Ok(Identifier::result())
 }
 
 #[cfg(test)]

@@ -60,16 +60,15 @@ pub enum Type<T: MatrixNumber> {
 impl<T: MatrixNumber> Type<T> {
     pub fn from_scalar_option(opt: Option<T>) -> anyhow::Result<Self> {
         match opt {
-            Some(val) => Ok(Type::Scalar(val)),
-            None => Err(anyhow::anyhow!("Operation error!")),
+            Some(val) => Ok(Self::Scalar(val)),
+            None => Err(anyhow::anyhow!(
+                "Arithmetic operation resulted in overflow!"
+            )),
         }
     }
 
-    pub fn from_matrix_option(opt: Option<Matrix<T>>) -> anyhow::Result<Self> {
-        match opt {
-            Some(m) => Ok(Self::Matrix(m)),
-            None => Err(anyhow::anyhow!("Operation error!")),
-        }
+    pub fn from_matrix_result(opt: anyhow::Result<Matrix<T>>) -> anyhow::Result<Self> {
+        Ok(Self::Matrix(opt?))
     }
 }
 
