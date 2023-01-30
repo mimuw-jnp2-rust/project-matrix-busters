@@ -41,7 +41,7 @@ jobs:
       - name: Upload binary
         uses: taiki-e/upload-rust-binary-action@v1
         with:
-          bin: matrix-calculator
+          bin: jp2gmd
           target: ${{ matrix.target }}
           ref: refs/tags/${{ github.ref_name }}
           tar: all
