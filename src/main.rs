@@ -284,10 +284,7 @@ fn display_zoom_panel(ui: &mut Ui, ctx: &Context) {
 fn display_langauge_panel(ui: &mut Ui, locale: &Locale) -> Locale {
     let mut selected = locale.get_language();
     egui::ComboBox::from_label(locale.get_translated("Language"))
-        .selected_text(format!(
-            "{}",
-            locale.get_translated_from(selected.to_string())
-        ))
+        .selected_text(locale.get_translated_from(selected.to_string()))
         .show_ui(ui, |ui| {
             ui.selectable_value(
                 &mut selected,
@@ -476,7 +473,7 @@ fn display_shell<K: MatrixNumber>(
             windows.insert(identifier, WindowState { is_open: true });
         }
         Err(error) => {
-            println!("{}", error);
+            println!("{error}");
             toasts.error(error.to_string(), Duration::from_secs(5));
         }
     };
