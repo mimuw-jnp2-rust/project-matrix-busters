@@ -52,11 +52,12 @@ impl Locale {
     fn unwrap_or_default(str: Option<&String>, default: &str) -> String {
         match str {
             Some(str) => str.to_string(),
-            None => {
-                println!("Missing translation for \"{}\"", default);
-                default.to_string()
-            }
+            None => default.to_string(),
         }
+    }
+
+    pub fn get_language(&self) -> Language {
+        self.language
     }
 
     pub fn get_translated(&self, s: &str) -> String {
@@ -93,6 +94,10 @@ lazy_static! {
         ("Identifier is invalid!", "Identifier is invalid!"),
         ("LaTeX copied to clipboard", "LaTeX copied to clipboard"),
         ("Failed to generate LaTeX", "Failed to generate LaTeX"),
+        ("Language", "Language"),
+        ("English", "English"),
+        ("Polish", "Polish"),
+        ("Spanish", "Spanish"),
     ];
     pub static ref TRANS_PL_RAW: Vec<(&'static str, &'static str)> =
         vec![
@@ -121,6 +126,10 @@ lazy_static! {
         ("Identifier is invalid!", "Identyfikator jest niepoprawny!"),
         ("LaTeX copied to clipboard", "Skopiowano LaTeX'a do schowka"),
         ("Failed to generate LaTeX", "Nie udało się wygenerować LaTeX'a"),
+        ("Language", "Język"),
+        ("English", "Angielski"),
+        ("Polish", "Polski"),
+        ("Spanish", "Hiszpański"),
     ];
     pub static ref TRANS_ES_RAW: Vec<(&'static str, &'static str)> = vec![
         ("objects", "Objetos"),
@@ -148,6 +157,10 @@ lazy_static! {
         ("Identifier is invalid!", "¡El identificador es inválido!"),
         ("LaTeX copied to clipboard", "LaTeX copiado al portapapeles"),
         ("Failed to generate LaTeX", "No se pudo generar LaTeX"),
+        ("Language", "Idioma"),
+        ("English", "Inglés"),
+        ("Polish", "Polaco"),
+        ("Spanish", "Español"),
     ];
 }
 
