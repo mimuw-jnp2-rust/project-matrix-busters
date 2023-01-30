@@ -40,7 +40,7 @@ jobs:
         name: Install system dependencies
         uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: xorg-dev libxcb-shape0-dev libxcb-xfixes0-dev fontconfig libfontconfig-dev libfreetype6-dev
+          packages: xorg-dev libxcb-shape0-dev libxcb-xfixes0-dev fontconfig libfontconfig-dev libfreetype6-dev libfontconfig1-dev
           version: 1.0
 
       - name: Upload binary
