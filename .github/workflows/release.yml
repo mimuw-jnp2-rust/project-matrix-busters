@@ -10,6 +10,7 @@ env:
 
 jobs:
   upload-binary:
+    permissions: write-all
     name: ${{ matrix.target }}
     strategy:
       matrix:
