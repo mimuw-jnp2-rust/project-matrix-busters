@@ -21,9 +21,9 @@ enum Token {
 impl Display for Token {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            Token::Integer(i) => write!(f, "int {}", i),
+            Token::Integer(i) => write!(f, "int {i}"),
             Token::Identifier(id) => write!(f, "id {}", id.to_string()),
-            Token::Operator(op) => write!(f, "operator \"{}\"", op),
+            Token::Operator(op) => write!(f, "operator \"{op}\""),
             Token::LeftBracket => write!(f, "( bracket"),
             Token::RightBracket => write!(f, ") bracket"),
         }
@@ -89,8 +89,8 @@ impl<T: MatrixNumber> Display for WorkingToken<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             WorkingToken::Type(_) => write!(f, "value token"),
-            WorkingToken::UnaryOp(op) => write!(f, "unary operator \"{}\"", op),
-            WorkingToken::BinaryOp(op) => write!(f, "binary operator \"{}\"", op),
+            WorkingToken::UnaryOp(op) => write!(f, "unary operator \"{op}\""),
+            WorkingToken::BinaryOp(op) => write!(f, "binary operator \"{op}\""),
             WorkingToken::LeftBracket => write!(f, "( bracket"),
             WorkingToken::RightBracket => write!(f, ") bracket"),
         }

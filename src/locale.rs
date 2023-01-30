@@ -34,29 +34,30 @@ impl Language {
 #[allow(dead_code)]
 pub struct Locale {
     language: Language,
-    translation_map: HashMap<String, String>,
+    translation_map: &'static HashMap<String, String>,
 }
 
 impl Locale {
     pub fn new(language: Language) -> Self {
         Self {
             language,
-            translation_map: gen_map(match language {
-                Language::English => &TRANS_EN_RAW,
-                Language::Polish => &TRANS_PL_RAW,
-                Language::Spanish => &TRANS_ES_RAW,
-            }),
+            translation_map: match language {
+                Language::English => &TRANS_EN_MAP,
+                Language::Polish => &TRANS_PL_MAP,
+                Language::Spanish => &TRANS_ES_MAP,
+            },
         }
     }
 
     fn unwrap_or_default(str: Option<&String>, default: &str) -> String {
         match str {
             Some(str) => str.to_string(),
-            None => {
-                println!("Missing translation for \"{}\"", default);
-                default.to_string()
-            }
+            None => default.to_string(),
         }
+    }
+
+    pub fn get_language(&self) -> Language {
+        self.language
     }
 
     pub fn get_translated(&self, s: &str) -> String {
@@ -93,6 +94,10 @@ lazy_static! {
         ("Identifier is invalid!", "Identifier is invalid!"),
         ("LaTeX copied to clipboard", "LaTeX copied to clipboard"),
         ("Failed to generate LaTeX", "Failed to generate LaTeX"),
+        ("Language", "Language"),
+        ("English", "English"),
+        ("Polish", "Polish"),
+        ("Spanish", "Spanish"),
     ];
     pub static ref TRANS_PL_RAW: Vec<(&'static str, &'static str)> =
         vec![
@@ -121,6 +126,10 @@ lazy_static! {
         ("Identifier is invalid!", "Identyfikator jest niepoprawny!"),
         ("LaTeX copied to clipboard", "Skopiowano LaTeX'a do schowka"),
         ("Failed to generate LaTeX", "Nie udało się wygenerować LaTeX'a"),
+        ("Language", "Język"),
+        ("English", "Angielski"),
+        ("Polish", "Polski"),
+        ("Spanish", "Hiszpański"),
     ];
     pub static ref TRANS_ES_RAW: Vec<(&'static str, &'static str)> = vec![
         ("objects", "Objetos"),
@@ -148,7 +157,14 @@ lazy_static! {
         ("Identifier is invalid!", "¡El identificador es inválido!"),
         ("LaTeX copied to clipboard", "LaTeX copiado al portapapeles"),
         ("Failed to generate LaTeX", "No se pudo generar LaTeX"),
+        ("Language", "Idioma"),
+        ("English", "Inglés"),
+        ("Polish", "Polaco"),
+        ("Spanish", "Español"),
     ];
+    pub static ref TRANS_EN_MAP: HashMap<String, String> = gen_map(&TRANS_EN_RAW);
+    pub static ref TRANS_PL_MAP: HashMap<String, String> = gen_map(&TRANS_PL_RAW);
+    pub static ref TRANS_ES_MAP: HashMap<String, String> = gen_map(&TRANS_ES_RAW);
 }
 
 fn gen_map(vec: &[(&'static str, &'static str)]) -> HashMap<String, String> {

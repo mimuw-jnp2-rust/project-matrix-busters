@@ -149,7 +149,7 @@ impl<K: MatrixNumber> MatrixApp<K> {
 impl<K: MatrixNumber> eframe::App for MatrixApp<K> {
     fn update(&mut self, ctx: &Context, frame: &mut eframe::Frame) {
         if !frame.is_web() {
-            egui::gui_zoom::zoom_with_keyboard_shortcuts(ctx, frame.info().native_pixels_per_point);
+            gui_zoom::zoom_with_keyboard_shortcuts(ctx, frame.info().native_pixels_per_point);
         }
 
         let window_size = frame.info().window_info.size;
@@ -158,7 +158,7 @@ impl<K: MatrixNumber> eframe::App for MatrixApp<K> {
             .direction(egui::Direction::BottomUp)
             .align_to_end(true);
 
-        let _top_menu = display_menu_bar(ctx, &mut self.state, &self.locale);
+        let (_top_menu, new_locale) = display_menu_bar(ctx, &mut self.state, &self.locale);
         display_editor::<K>(ctx, &mut self.state, &self.locale);
 
         let _left_panel = egui::SidePanel::left("objects")
@@ -227,6 +227,10 @@ impl<K: MatrixNumber> eframe::App for MatrixApp<K> {
         });
 
         self.state.toasts.show(ctx);
+
+        if let Some(new_locale) = new_locale {
+            self.locale = new_locale
+        }
     }
 }
 
@@ -241,34 +245,64 @@ fn display_menu_bar<K: MatrixNumber>(
     ctx: &Context,
     state: &mut State<K>,
     locale: &Locale,
-) -> Response {
-    egui::TopBottomPanel::top("menu_bar")
-        .show(ctx, |ui| {
-            egui::menu::bar(ui, |ui| {
-                display_add_matrix_button(ui, state, locale);
-                display_add_scalar_button(ui, state, locale);
-                display_zoom_panel(ui, ctx);
+) -> (Response, Option<Locale>) {
+    let mut new_locale = None;
+    (
+        egui::TopBottomPanel::top("menu_bar")
+            .show(ctx, |ui| {
+                egui::menu::bar(ui, |ui| {
+                    display_add_matrix_button(ui, state, locale);
+                    display_add_scalar_button(ui, state, locale);
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        display_zoom_panel(ui, ctx);
+                        ui.separator();
+                        new_locale = Some(display_language_panel(ui, locale));
+                        ui.allocate_space(ui.available_size());
+                    });
+                })
             })
-        })
-        .response
+            .response,
+        new_locale,
+    )
 }
 
 fn display_zoom_panel(ui: &mut Ui, ctx: &Context) {
-    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-        if ui.button("+").clicked() {
-            gui_zoom::zoom_in(ctx);
-        }
-        if ui
-            .button(format!("{} %", (ctx.pixels_per_point() * 100.).round()))
-            .clicked()
-        {
-            ctx.set_pixels_per_point(1.);
-        }
-        if ui.button("-").clicked() {
-            gui_zoom::zoom_out(ctx);
-        }
-        ui.allocate_space(ui.available_size());
-    });
+    if ui.button("+").clicked() {
+        gui_zoom::zoom_in(ctx);
+    }
+    if ui
+        .button(format!("{} %", (ctx.pixels_per_point() * 100.).round()))
+        .clicked()
+    {
+        ctx.set_pixels_per_point(1.);
+    }
+    if ui.button("-").clicked() {
+        gui_zoom::zoom_out(ctx);
+    }
+}
+
+fn display_language_panel(ui: &mut Ui, locale: &Locale) -> Locale {
+    let mut selected = locale.get_language();
+    egui::ComboBox::from_label(locale.get_translated("Language"))
+        .selected_text(locale.get_translated_from(selected.to_string()))
+        .show_ui(ui, |ui| {
+            ui.selectable_value(
+                &mut selected,
+                Language::English,
+                locale.get_translated("English"),
+            );
+            ui.selectable_value(
+                &mut selected,
+                Language::Polish,
+                locale.get_translated("Polish"),
+            );
+            ui.selectable_value(
+                &mut selected,
+                Language::Spanish,
+                locale.get_translated("Spanish"),
+            );
+        });
+    Locale::new(selected)
 }
 
 fn display_add_matrix_button<K: MatrixNumber>(ui: &mut Ui, state: &mut State<K>, locale: &Locale) {
@@ -439,7 +473,7 @@ fn display_shell<K: MatrixNumber>(
             windows.insert(identifier, WindowState { is_open: true });
         }
         Err(error) => {
-            println!("{}", error);
+            println!("{error}");
             toasts.error(error.to_string(), Duration::from_secs(5));
         }
     };
