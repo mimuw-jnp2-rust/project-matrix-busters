@@ -38,6 +38,12 @@ jobs:
           profile: minimal
           override: true
 
+      - name: Install system dependencies
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: xorg-dev libxcb-shape0-dev libxcb-xfixes0-dev
+          version: 1.0
+
       - name: Upload binary
         uses: taiki-e/upload-rust-binary-action@v1
         with:
