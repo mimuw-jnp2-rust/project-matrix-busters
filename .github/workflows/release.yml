@@ -6,9 +6,6 @@ on:
       publish-tag:
         required: true
         type: string
-    secrets:
-      CARGO_REGISTRY_TOKEN:
-        required: true
 
 env:
   RUST_BACKTRACE: 1
