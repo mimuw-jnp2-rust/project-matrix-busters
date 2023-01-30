@@ -253,9 +253,12 @@ fn display_menu_bar<K: MatrixNumber>(
                 egui::menu::bar(ui, |ui| {
                     display_add_matrix_button(ui, state, locale);
                     display_add_scalar_button(ui, state, locale);
-                    ui.separator();
-                    new_locale = Some(display_langauge_panel(ui, locale));
-                    display_zoom_panel(ui, ctx);
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        display_zoom_panel(ui, ctx);
+                        ui.separator();
+                        new_locale = Some(display_language_panel(ui, locale));
+                        ui.allocate_space(ui.available_size());
+                    });
                 })
             })
             .response,
@@ -264,24 +267,21 @@ fn display_menu_bar<K: MatrixNumber>(
 }
 
 fn display_zoom_panel(ui: &mut Ui, ctx: &Context) {
-    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-        if ui.button("+").clicked() {
-            gui_zoom::zoom_in(ctx);
-        }
-        if ui
-            .button(format!("{} %", (ctx.pixels_per_point() * 100.).round()))
-            .clicked()
-        {
-            ctx.set_pixels_per_point(1.);
-        }
-        if ui.button("-").clicked() {
-            gui_zoom::zoom_out(ctx);
-        }
-        ui.allocate_space(ui.available_size());
-    });
+    if ui.button("+").clicked() {
+        gui_zoom::zoom_in(ctx);
+    }
+    if ui
+        .button(format!("{} %", (ctx.pixels_per_point() * 100.).round()))
+        .clicked()
+    {
+        ctx.set_pixels_per_point(1.);
+    }
+    if ui.button("-").clicked() {
+        gui_zoom::zoom_out(ctx);
+    }
 }
 
-fn display_langauge_panel(ui: &mut Ui, locale: &Locale) -> Locale {
+fn display_language_panel(ui: &mut Ui, locale: &Locale) -> Locale {
     let mut selected = locale.get_language();
     egui::ComboBox::from_label(locale.get_translated("Language"))
         .selected_text(locale.get_translated_from(selected.to_string()))
