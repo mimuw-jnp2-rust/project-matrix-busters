@@ -34,18 +34,18 @@ impl Language {
 #[allow(dead_code)]
 pub struct Locale {
     language: Language,
-    translation_map: HashMap<String, String>,
+    translation_map: &'static HashMap<String, String>,
 }
 
 impl Locale {
     pub fn new(language: Language) -> Self {
         Self {
             language,
-            translation_map: gen_map(match language {
-                Language::English => &TRANS_EN_RAW,
-                Language::Polish => &TRANS_PL_RAW,
-                Language::Spanish => &TRANS_ES_RAW,
-            }),
+            translation_map: match language {
+                Language::English => &TRANS_EN_MAP,
+                Language::Polish => &TRANS_PL_MAP,
+                Language::Spanish => &TRANS_ES_MAP,
+            },
         }
     }
 
@@ -162,6 +162,9 @@ lazy_static! {
         ("Polish", "Polaco"),
         ("Spanish", "Español"),
     ];
+    pub static ref TRANS_EN_MAP: HashMap<String, String> = gen_map(&TRANS_EN_RAW);
+    pub static ref TRANS_PL_MAP: HashMap<String, String> = gen_map(&TRANS_PL_RAW);
+    pub static ref TRANS_ES_MAP: HashMap<String, String> = gen_map(&TRANS_ES_RAW);
 }
 
 fn gen_map(vec: &[(&'static str, &'static str)]) -> HashMap<String, String> {
