@@ -41,9 +41,9 @@ jobs:
       - name: Upload binary
         uses: taiki-e/upload-rust-binary-action@v1
         with:
-          bin: cargo-semver-checks
+          bin: matrix-calculator
           target: ${{ matrix.target }}
-          ref: refs/tags/${{ inputs.publish-tag }}
+          ref: refs/tags/${{ github.ref_name }}
           tar: all
           zip: windows
         env:
