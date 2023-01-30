@@ -1,11 +1,8 @@
 name: Release
 
 on:
-  workflow_call:
-    inputs:
-      publish-tag:
-        required: true
-        type: string
+  release:
+    types: [published]
 
 env:
   RUST_BACKTRACE: 1
