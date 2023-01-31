@@ -8,7 +8,6 @@ pub struct Aftermath<T: MatrixNumber> {
     pub steps: Vec<String>,
 }
 
-#[allow(dead_code)]
 impl<T: MatrixNumber> Matrix<T> {
     /// Returns a copy of the matrix which is in the row echelon form along
     /// with all steps represented in human-friendly LaTeX notation.

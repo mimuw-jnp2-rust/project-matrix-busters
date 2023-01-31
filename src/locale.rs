@@ -2,7 +2,6 @@ use lazy_static::lazy_static;
 use std::collections::HashMap;
 use std::fmt::Display;
 
-#[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Language {
     English,
@@ -31,7 +30,6 @@ impl Language {
     }
 }
 
-#[allow(dead_code)]
 pub struct Locale {
     language: Language,
     translation_map: &'static HashMap<String, String>,
@@ -64,7 +62,6 @@ impl Locale {
         Self::unwrap_or_default(self.translation_map.get(s), s)
     }
 
-    #[allow(dead_code)]
     pub fn get_translated_from(&self, s: String) -> String {
         self.get_translated(&s)
     }

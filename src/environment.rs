@@ -1,6 +1,4 @@
-#![allow(dead_code)]
-
-use std::collections::btree_map::{Iter, IterMut};
+use std::collections::btree_map::IterMut;
 use std::collections::BTreeMap;
 
 use anyhow::bail;
@@ -38,10 +36,6 @@ impl Identifier {
     pub fn is_valid(id: &str) -> bool {
         id.chars().all(|c| c.is_alphanumeric() || c == '_')
             && id.starts_with(|c: char| c.is_alphabetic() || c == '_')
-    }
-
-    pub fn get(&self) -> &str {
-        &self.id
     }
 }
 
@@ -129,10 +123,6 @@ impl<T: MatrixNumber> Environment<T> {
 
     pub fn get(&self, id: &Identifier) -> Option<&Type<T>> {
         self.env.get(id)
-    }
-
-    pub fn iter(&self) -> Iter<'_, Identifier, Type<T>> {
-        self.env.iter()
     }
 
     pub fn iter_mut(&mut self) -> IterMut<'_, Identifier, Type<T>> {

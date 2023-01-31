@@ -159,7 +159,6 @@ impl<T: MatrixNumber> Matrix<T> {
     /// // | 3 4 |
     /// // | 5 6 |
     /// ```
-    #[allow(dead_code)]
     pub fn reshape(&self, (rows, cols): (usize, usize)) -> anyhow::Result<Self> {
         let (h, w) = self.get_shape();
         if h * w != rows * cols {
@@ -233,7 +232,6 @@ impl<T: MatrixNumber> Matrix<T> {
     /// // | 1 1 1 |
     /// // | 1 1 1 |
     /// ```
-    #[allow(dead_code)] // TODO: Remove this when used
     pub fn ones((h, w): (usize, usize)) -> Self {
         Self::filled((h, w), |_, _| T::one())
     }
@@ -598,7 +596,7 @@ impl<T: MatrixNumber> Matrix<T> {
     pub fn concat(mut self, other: Self) -> anyhow::Result<Self> {
         let (rows, columns) = self.get_shape();
         if rows != other.get_shape().0 {
-            anyhow::bail!("Cannot concatenate matrices with different number of rows!");
+            bail!("Cannot concatenate matrices with different number of rows!");
         }
 
         std::iter::zip(self.data.iter_mut(), other.data.into_iter())
@@ -622,7 +620,7 @@ impl<T: MatrixNumber> Matrix<T> {
     pub fn split(mut self, column: usize) -> anyhow::Result<(Self, Self)> {
         let (_, columns) = self.get_shape();
         if column > columns {
-            anyhow::bail!("Cannot split matrix at column {}!", column);
+            bail!("Cannot split matrix at column {}!", column);
         }
 
         let right = Self::new_unsafe(
