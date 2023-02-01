@@ -44,8 +44,8 @@ Check out [the guide](GUIDE.md).
 - [X] 1.3. Implement basic operations on matrices.
 - [X] 1.4. Implement `LaTeX` code generation.
 - [X] 2.1. Implement GUI.
-- [ ] 2.2. Extend the number representation module to allow for more sophisticated numbers.
-- [ ] 2.3. Implement complex operations on matrices.
+- [ ] ~~2.2. Extend the number representation module to allow for more sophisticated numbers.~~
+- [ ] ~~2.3. Implement complex operations on matrices.~~
 
 and all other things added as GH Issues.
 Issue marked [NITD] (Not Intended To be Developed) 
