@@ -23,7 +23,7 @@ use crate::locale::{Language, Locale};
 use crate::matrix_algorithms::Aftermath;
 use crate::parser::parse_instruction;
 use crate::traits::{GuiDisplayable, LaTeXable, MatrixNumber};
-use clipboard::{ClipboardContext, ClipboardProvider};
+use arboard::Clipboard;
 use constants::{FONT_ID, TEXT_COLOR, VALUE_PADDING};
 use eframe::{egui, IconData};
 
@@ -103,7 +103,7 @@ pub struct State<K: MatrixNumber> {
     shell: ShellState,
     editor: EditorState,
     toasts: Toasts,
-    clipboard: ClipboardContext,
+    clipboard: Clipboard,
     #[cfg(feature = "clock")]
     clock: FractalClock,
     #[cfg(feature = "fft")]
@@ -120,7 +120,7 @@ impl<K: MatrixNumber> Default for State<K> {
             toasts: Default::default(),
             #[cfg(feature = "clock")]
             clock: Default::default(),
-            clipboard: ClipboardContext::new().expect("Failed to create Clipboard context!"),
+            clipboard: Clipboard::new().expect("Failed to create Clipboard context!"),
             #[cfg(feature = "fft")]
             furier: Fourier::from_json_file("assets/dft_andrzej.json".to_string()).ok(),
         }
@@ -335,7 +335,7 @@ fn display_env_element_window<K: MatrixNumber>(
     ctx: &Context,
     (identifier, value): (&Identifier, &Type<K>),
     locale: &Locale,
-    clipboard: &mut ClipboardContext,
+    clipboard: &mut Clipboard,
     editor: &mut EditorState,
     toasts: &mut Toasts,
     is_open: &mut bool,
@@ -425,13 +425,13 @@ fn display_env_element_window<K: MatrixNumber>(
 
 fn set_clipboard(
     message: anyhow::Result<String>,
-    clipboard: &mut ClipboardContext,
+    clipboard: &mut Clipboard,
     toasts: &mut Toasts,
     locale: &Locale,
 ) {
     const CLIPBOARD_TOAST_DURATION: Duration = Duration::from_secs(5);
     match message {
-        Ok(latex) => match clipboard.set_contents(latex) {
+        Ok(latex) => match clipboard.set_text(latex) {
             Ok(_) => {
                 toasts.info(
                     locale.get_translated("LaTeX copied to clipboard"),
