@@ -51,6 +51,7 @@ jobs:
           ref: refs/tags/${{ github.ref_name }}
           tar: all
           zip: windows
+          include: assets
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CARGO_PROFILE_RELEASE_CODEGEN_UNITS: 1
