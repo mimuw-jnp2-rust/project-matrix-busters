@@ -21,7 +21,7 @@ num-traits = "0.2.15"
 anyhow = "1.0.66"
 image = "0.24.2"
 lazy_static = "1.4.0"
-clipboard = "0.5.0"
+arboard = "3.2.0"
 clap = { version = "4.1.1", features = ["derive"] }
 chrono = "0.4"
 serde = { version = "1.0", features = ["derive"] }
