@@ -26,7 +26,7 @@ sudo apt-get install libfontconfig libfontconfig1-dev cmake xorg-dev libxcb-shap
 
 Run the program:
 ```bash
-$ cargo run
+$ bazel run //:jp2gmd
 ```
 
 Check program help using

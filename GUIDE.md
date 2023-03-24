@@ -223,3 +223,8 @@ It will draw an image of a Fourier transformed image provided in `assets/`. The 
 the background is to turn `clock` feature on. It will draw a fractal clock in the background. If both 
 `fft` and `clock` are turned on, `fft` will prioritize `clock` - only if image file is missing
 the clock will be drawn.
+
+```bash
+$ bazel run //:jp2gmd_fft
+$ bazel run //:jp2gmd_clock
+```
