@@ -31,7 +31,7 @@ $ bazel run //:jp2gmd
 
 Check program help using
 ```bash
-$ cargo run -- --help
+$ bazel run //:jp2gmd -- --help
 ```
 
 # Usage
