@@ -1,4 +1,5 @@
-load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_test")
+load("@rules_rust//rust:defs.bzl", "rust_binary")
+load("@crate_index//:defs.bzl", "all_crate_deps")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -12,22 +13,9 @@ common_assets = ["assets/icon.png"]
 
 common_rustc_flags = ["-O"]
 
-common_deps = [
-        "@crate_index//:itertools",
-        "@crate_index//:egui",
-        "@crate_index//:eframe",
-        "@crate_index//:num-rational",
-        "@crate_index//:num-traits",
-        "@crate_index//:anyhow",
-        "@crate_index//:image",
-        "@crate_index//:lazy_static",
-        "@crate_index//:arboard",
-        "@crate_index//:clap",
-        "@crate_index//:chrono",
-        "@crate_index//:serde",
-        "@crate_index//:serde_json",
-        "@crate_index//:egui-toast",
-]
+common_deps = all_crate_deps(
+    normal = True,
+)
 
 rust_binary(
     name = "jp2gmd",
