@@ -47,7 +47,7 @@ def dft(points):
 
 if __name__ == '__main__':
     # 🫢 Coincidence of names
-    with open('andrzej.json') as f:
+    with open('dft_source.json') as f:
         json_obj = json.load(f)
         data = json_obj['points']
         metadata = json_obj['metadata']
@@ -58,5 +58,5 @@ if __name__ == '__main__':
     data = data[::10]
     dft_data = dft(data)
 
-    with open('dft_andrzej.json', 'w') as f:
+    with open('dft_parsed.json', 'w') as f:
         json.dump({"epicycles": dft_data, "metadata": metadata}, f)

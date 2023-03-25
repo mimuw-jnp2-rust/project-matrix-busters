@@ -1,3 +1,8 @@
+[workspace]
+members = [
+    "assets",
+]
+
 [package]
 name = "jp2gmd"
 version = "0.1.0"

@@ -13,7 +13,11 @@ mod parser;
 mod rationals;
 mod traits;
 
-use crate::constants::{APP_NAME, DEFAULT_HEIGHT, DEFAULT_LEFT_PANEL_WIDTH, DEFAULT_WIDTH};
+#[cfg(feature = "fft")]
+use crate::constants::DFT_PATH;
+use crate::constants::{
+    APP_NAME, DEFAULT_HEIGHT, DEFAULT_LEFT_PANEL_WIDTH, DEFAULT_WIDTH, ICON_PATH,
+};
 use crate::editor_gui::{
     display_editor, set_editor_to_existing_matrix, set_editor_to_existing_scalar,
     set_editor_to_matrix, set_editor_to_scalar, EditorState,
@@ -49,7 +53,7 @@ type F = Rational64;
 fn main() {
     let options = eframe::NativeOptions {
         initial_window_size: Some(vec2(DEFAULT_WIDTH, DEFAULT_HEIGHT)),
-        icon_data: load_icon("assets\\icon.png"),
+        icon_data: load_icon(ICON_PATH),
         ..Default::default()
     };
     let args = MatrixAppArgs::parse();
@@ -122,7 +126,7 @@ impl<K: MatrixNumber> Default for State<K> {
             clock: Default::default(),
             clipboard: Clipboard::new().expect("Failed to create Clipboard context!"),
             #[cfg(feature = "fft")]
-            furier: Fourier::from_json_file("assets/dft_andrzej.json".to_string()).ok(),
+            furier: Fourier::from_json_file(DFT_PATH.to_string()).ok(),
         }
     }
 }

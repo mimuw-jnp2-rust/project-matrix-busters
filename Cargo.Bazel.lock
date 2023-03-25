@@ -1,5 +1,5 @@
 {
-  "checksum": "81c135632a88fd02a135450ffb61e52dbe57134f2b75f5c656d81a9e7778900b",
+  "checksum": "c1c86b32aacf4f5f9d8583206f266970fc66d2c7664a613d896e7a752c3f4c08",
   "crates": {
     "ab_glyph 0.2.20": {
       "name": "ab_glyph",
@@ -611,7 +611,7 @@
           "selects": {
             "cfg(all(unix, not(any(target_os = \"macos\", target_os = \"android\", target_os = \"emscripten\"))))": [
               {
-                "id": "image 0.24.5",
+                "id": "image 0.24.6",
                 "target": "image"
               },
               {
@@ -633,7 +633,7 @@
                 "target": "core_graphics"
               },
               {
-                "id": "image 0.24.5",
+                "id": "image 0.24.6",
                 "target": "image"
               },
               {
@@ -1147,7 +1147,7 @@
               "target": "quote"
             },
             {
-              "id": "syn 2.0.8",
+              "id": "syn 2.0.10",
               "target": "syn"
             }
           ],
@@ -1658,7 +1658,7 @@
               "target": "quote"
             },
             {
-              "id": "syn 2.0.8",
+              "id": "syn 2.0.10",
               "target": "syn"
             }
           ],
@@ -2978,7 +2978,7 @@
               "target": "scratch"
             },
             {
-              "id": "syn 2.0.8",
+              "id": "syn 2.0.10",
               "target": "syn"
             }
           ],
@@ -3055,7 +3055,7 @@
               "target": "quote"
             },
             {
-              "id": "syn 2.0.8",
+              "id": "syn 2.0.10",
               "target": "syn"
             }
           ],
@@ -3435,7 +3435,7 @@
               "target": "egui_toast"
             },
             {
-              "id": "image 0.24.5",
+              "id": "image 0.24.6",
               "target": "image"
             },
             {
@@ -5419,13 +5419,13 @@
       },
       "license": "MIT OR Apache-2.0"
     },
-    "gif 0.11.4": {
+    "gif 0.12.0": {
       "name": "gif",
-      "version": "0.11.4",
+      "version": "0.12.0",
       "repository": {
         "Http": {
-          "url": "https://crates.io/api/v1/crates/gif/0.11.4/download",
-          "sha256": "3edd93c6756b4dfaf2709eafcc345ba2636565295c198a9cfbf75fa5e3e00b06"
+          "url": "https://crates.io/api/v1/crates/gif/0.12.0/download",
+          "sha256": "80792593675e051cf94a4b111980da2ba60d4a83e43e0048c5693baab3977045"
         }
       },
       "targets": [
@@ -5446,6 +5446,7 @@
         ],
         "crate_features": {
           "common": [
+            "color_quant",
             "default",
             "raii_no_panic",
             "std"
@@ -5466,7 +5467,7 @@
           "selects": {}
         },
         "edition": "2018",
-        "version": "0.11.4"
+        "version": "0.12.0"
       },
       "license": "MIT/Apache-2.0"
     },
@@ -6327,13 +6328,13 @@
       },
       "license": "MIT OR Apache-2.0"
     },
-    "image 0.24.5": {
+    "image 0.24.6": {
       "name": "image",
-      "version": "0.24.5",
+      "version": "0.24.6",
       "repository": {
         "Http": {
-          "url": "https://crates.io/api/v1/crates/image/0.24.5/download",
-          "sha256": "69b7ea949b537b0fd0af141fff8c77690f2ce96f4f41f042ccb6c69c6c965945"
+          "url": "https://crates.io/api/v1/crates/image/0.24.6/download",
+          "sha256": "527909aa81e20ac3a44803521443a765550f09b5130c2c2fa1ea59c2f8f50a3a"
         }
       },
       "targets": [
@@ -6368,7 +6369,7 @@
             "openexr",
             "png",
             "pnm",
-            "scoped_threadpool",
+            "qoi",
             "tga",
             "tiff",
             "webp"
@@ -6394,7 +6395,7 @@
               "target": "exr"
             },
             {
-              "id": "gif 0.11.4",
+              "id": "gif 0.12.0",
               "target": "gif"
             },
             {
@@ -6415,8 +6416,8 @@
               "target": "png"
             },
             {
-              "id": "scoped_threadpool 0.1.9",
-              "target": "scoped_threadpool"
+              "id": "qoi 0.4.1",
+              "target": "qoi"
             },
             {
               "id": "tiff 0.8.1",
@@ -6426,17 +6427,17 @@
           "selects": {}
         },
         "edition": "2018",
-        "version": "0.24.5"
+        "version": "0.24.6"
       },
       "license": "MIT"
     },
-    "indexmap 1.9.2": {
+    "indexmap 1.9.3": {
       "name": "indexmap",
-      "version": "1.9.2",
+      "version": "1.9.3",
       "repository": {
         "Http": {
-          "url": "https://crates.io/api/v1/crates/indexmap/1.9.2/download",
-          "sha256": "1885e79c1fc4b10f0e172c475f458b7f7b93061064d98c3293e98c5ba0c8b399"
+          "url": "https://crates.io/api/v1/crates/indexmap/1.9.3/download",
+          "sha256": "bd070e393353796e801d209ad339e89596eb4c8d430d18ede6a1cced8fafbd99"
         }
       },
       "targets": [
@@ -6477,14 +6478,14 @@
               "target": "hashbrown"
             },
             {
-              "id": "indexmap 1.9.2",
+              "id": "indexmap 1.9.3",
               "target": "build_script_build"
             }
           ],
           "selects": {}
         },
         "edition": "2021",
-        "version": "1.9.2"
+        "version": "1.9.3"
       },
       "build_script_attrs": {
         "data_glob": [
@@ -9872,6 +9873,52 @@
       },
       "license": "MIT OR Apache-2.0"
     },
+    "qoi 0.4.1": {
+      "name": "qoi",
+      "version": "0.4.1",
+      "repository": {
+        "Http": {
+          "url": "https://crates.io/api/v1/crates/qoi/0.4.1/download",
+          "sha256": "7f6d64c71eb498fe9eae14ce4ec935c555749aef511cca85b5568910d6e48001"
+        }
+      },
+      "targets": [
+        {
+          "Library": {
+            "crate_name": "qoi",
+            "crate_root": "src/lib.rs",
+            "srcs": [
+              "**/*.rs"
+            ]
+          }
+        }
+      ],
+      "library_target_name": "qoi",
+      "common_attrs": {
+        "compile_data_glob": [
+          "**"
+        ],
+        "crate_features": {
+          "common": [
+            "default",
+            "std"
+          ],
+          "selects": {}
+        },
+        "deps": {
+          "common": [
+            {
+              "id": "bytemuck 1.13.1",
+              "target": "bytemuck"
+            }
+          ],
+          "selects": {}
+        },
+        "edition": "2021",
+        "version": "0.4.1"
+      },
+      "license": "MIT/Apache-2.0"
+    },
     "quote 1.0.26": {
       "name": "quote",
       "version": "1.0.26",
@@ -10457,36 +10504,6 @@
       },
       "license": "MIT/Apache-2.0"
     },
-    "scoped_threadpool 0.1.9": {
-      "name": "scoped_threadpool",
-      "version": "0.1.9",
-      "repository": {
-        "Http": {
-          "url": "https://crates.io/api/v1/crates/scoped_threadpool/0.1.9/download",
-          "sha256": "1d51f5df5af43ab3f1360b429fa5e0152ac5ce8c0bd6485cae490332e96846a8"
-        }
-      },
-      "targets": [
-        {
-          "Library": {
-            "crate_name": "scoped_threadpool",
-            "crate_root": "src/lib.rs",
-            "srcs": [
-              "**/*.rs"
-            ]
-          }
-        }
-      ],
-      "library_target_name": "scoped_threadpool",
-      "common_attrs": {
-        "compile_data_glob": [
-          "**"
-        ],
-        "edition": "2015",
-        "version": "0.1.9"
-      },
-      "license": "MIT"
-    },
     "scopeguard 1.1.0": {
       "name": "scopeguard",
       "version": "1.1.0",
@@ -10754,7 +10771,7 @@
               "target": "build_script_build"
             },
             {
-              "id": "syn 2.0.8",
+              "id": "syn 2.0.10",
               "target": "syn"
             }
           ],
@@ -11462,13 +11479,13 @@
       },
       "license": "MIT OR Apache-2.0"
     },
-    "syn 2.0.8": {
+    "syn 2.0.10": {
       "name": "syn",
-      "version": "2.0.8",
+      "version": "2.0.10",
       "repository": {
         "Http": {
-          "url": "https://crates.io/api/v1/crates/syn/2.0.8/download",
-          "sha256": "bcc02725fd69ab9f26eab07fad303e2497fad6fb9eba4f96c4d1687bdf704ad9"
+          "url": "https://crates.io/api/v1/crates/syn/2.0.10/download",
+          "sha256": "5aad1363ed6d37b84299588d62d3a7d95b5a5c2d9aad5c85609fda12afaa1f40"
         }
       },
       "targets": [
@@ -11518,7 +11535,7 @@
           "selects": {}
         },
         "edition": "2021",
-        "version": "2.0.8"
+        "version": "2.0.10"
       },
       "license": "MIT OR Apache-2.0"
     },
@@ -11661,7 +11678,7 @@
               "target": "quote"
             },
             {
-              "id": "syn 2.0.8",
+              "id": "syn 2.0.10",
               "target": "syn"
             }
           ],
@@ -12036,7 +12053,7 @@
         "deps": {
           "common": [
             {
-              "id": "indexmap 1.9.2",
+              "id": "indexmap 1.9.3",
               "target": "indexmap"
             },
             {
@@ -12044,7 +12061,7 @@
               "target": "toml_datetime"
             },
             {
-              "id": "winnow 0.4.0",
+              "id": "winnow 0.4.1",
               "target": "winnow"
             }
           ],
@@ -15314,13 +15331,13 @@
       },
       "license": "Apache-2.0"
     },
-    "winnow 0.4.0": {
+    "winnow 0.4.1": {
       "name": "winnow",
-      "version": "0.4.0",
+      "version": "0.4.1",
       "repository": {
         "Http": {
-          "url": "https://crates.io/api/v1/crates/winnow/0.4.0/download",
-          "sha256": "deac0939bd6e4f24ab5919fbf751c97a8cfc8543bb083a305ed5c0c10bb241d1"
+          "url": "https://crates.io/api/v1/crates/winnow/0.4.1/download",
+          "sha256": "ae8970b36c66498d8ff1d66685dc86b91b29db0c7739899012f63a63814b4b28"
         }
       },
       "targets": [
@@ -15357,7 +15374,7 @@
           "selects": {}
         },
         "edition": "2021",
-        "version": "0.4.0"
+        "version": "0.4.1"
       },
       "license": "MIT"
     },

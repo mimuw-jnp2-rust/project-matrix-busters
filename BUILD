@@ -8,8 +8,8 @@ fft_rs_sources = ["src/furier.rs"]
 clock_rs_sources = ["src/fractal_clock.rs"]
 common_rs_sources = [s for s in all_rs_sources if s not in fft_rs_sources + clock_rs_sources]
 
-fft_assets = ["assets/dft_andrzej.json"]
-common_assets = ["assets/icon.png"]
+fft_assets = ["//assets:dft_result"]
+common_assets = ["//assets:icon"]
 
 common_rustc_flags = ["-O"]
 

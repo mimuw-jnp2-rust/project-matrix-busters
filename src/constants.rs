@@ -13,3 +13,7 @@ pub const FRACTION_HMARGIN: f32 = 2.;
 pub const FRACTION_VMARGIN: f32 = 1.;
 pub const FRACTION_LINE_WIDTH: f32 = 1.;
 pub const VALUE_PADDING: f32 = 15.;
+
+pub const ICON_PATH: &str = "assets/icon.png";
+#[cfg(feature = "fft")]
+pub const DFT_PATH: &str = "assets/dft_result.json";

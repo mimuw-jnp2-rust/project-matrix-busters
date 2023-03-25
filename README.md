@@ -29,6 +29,12 @@ Run the program:
 $ bazel run //:jp2gmd
 ```
 
+If for any reason Bazel fails to run the program:
+```bash
+$ bazel clean --expunge
+$ sudo rm ~/.cache/bazel -rf
+```
+
 Check program help using
 ```bash
 $ bazel run //:jp2gmd -- --help
