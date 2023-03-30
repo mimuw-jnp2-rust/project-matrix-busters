@@ -95,22 +95,35 @@ fn save_result(result: DftResult, filename: &str) -> Result<(), String> {
     Ok(())
 }
 
+fn read_env() -> Result<(String, String, usize), String> {
+    const DEFAULT_EXPECTED_POINTS: usize = 1000;
+    fn read_var(name: &str) -> Result<String, String> {
+        std::env::var(name).map_err(|_| format!("{} not set", name))
+    }
+
+    let source_path = read_var("SOURCE_PATH")?;
+    let result_path = read_var("RESULT_PATH")?;
+    let expected_points = std::env::var("EXPECTED_POINTS")
+        .ok()
+        .and_then(|s| s.parse::<usize>().ok())
+        .unwrap_or(DEFAULT_EXPECTED_POINTS);
+    Ok((source_path, result_path, expected_points))
+}
+
 fn main() -> Result<(), String> {
     println!("Generating DFT data...");
 
-    const EXPECTED_POINTS: usize = 1000;
-    const SOURCE_FILE: &str = "assets/dft_source.json";
-    const RESULT_FILE: &str = "assets/dft_result.json";
+    let (source_path, result_path, expected_points) = read_env()?;
 
-    let source = read_source(SOURCE_FILE)?;
+    let source = read_source(&source_path)?;
     let number_of_points = source.points.len();
     let source = DftSource {
         points: take_every_nth(
             source.points,
-            calculate_n(EXPECTED_POINTS, number_of_points),
+            calculate_n(expected_points, number_of_points),
         ),
         ..source
     };
     let result = dft_algorithm(source)?;
-    save_result(result, RESULT_FILE)
+    save_result(result, &result_path)
 }
