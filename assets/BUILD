@@ -7,7 +7,7 @@ rust_binary(
     name = "dft",
     srcs = ["dft.rs"],
     data = ["dft_source.json"],
-    deps = ["@crate_index//:serde_json", "@crate_index//:serde"],
+    deps = ["@crate_index//:serde_json", "@crate_index//:serde", "@crate_index//:log"],
 )
 
 filegroup(

@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use log::{info};
 
 #[derive(Serialize, Deserialize)]
 struct DftMetadata {
@@ -111,11 +112,17 @@ fn read_env() -> Result<(String, String, usize), String> {
 }
 
 fn main() -> Result<(), String> {
-    println!("Generating DFT data...");
+    info!("Generating DFT data...");
 
     let (source_path, result_path, expected_points) = read_env()?;
 
+    info!("Source path: {}", source_path);
+    info!("Result path: {}", result_path);
+
     let source = read_source(&source_path)?;
+
+    info!("Source points read: {}", source.points.len());
+
     let number_of_points = source.points.len();
     let source = DftSource {
         points: take_every_nth(
@@ -125,5 +132,10 @@ fn main() -> Result<(), String> {
         ..source
     };
     let result = dft_algorithm(source)?;
+
+    info!("Result points: {}", result.epicycles.len());
+    info!("DFT data generated successfully!");
+    info!("Saving result to {}", result_path);
+
     save_result(result, &result_path)
 }
