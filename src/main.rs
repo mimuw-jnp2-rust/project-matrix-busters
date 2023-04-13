@@ -217,8 +217,8 @@ impl<K: MatrixNumber> eframe::App for MatrixApp<K> {
             ui.heading(self.gt(APP_NAME));
             #[cfg(feature = "fft")]
             match &mut self.state.fourier {
-                Some(furier) => {
-                    furier.ui(ui, _left_panel.rect.width(), _top_menu.rect.height());
+                Some(fourier) => {
+                    fourier.ui(ui, _left_panel.rect.width(), _top_menu.rect.height());
                 }
                 None => {
                     #[cfg(feature = "clock")]

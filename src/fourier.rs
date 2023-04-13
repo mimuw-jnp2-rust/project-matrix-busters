@@ -37,11 +37,11 @@ impl Fourier {
     pub fn from_json_file(file: String) -> anyhow::Result<Fourier> {
         let file = File::open(file)?;
         let reader = BufReader::new(file);
-        let mut furier: FourierData = serde_json::from_reader(reader)?;
-        furier.epicycles.sort_by(|a, b| b.amp.total_cmp(&a.amp));
+        let mut fourier: FourierData = serde_json::from_reader(reader)?;
+        fourier.epicycles.sort_by(|a, b| b.amp.total_cmp(&a.amp));
 
         Ok(Fourier {
-            data: furier,
+            data: fourier,
             time: 0.0,
             path: vec![],
         })
