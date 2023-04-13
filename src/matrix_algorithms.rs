@@ -298,7 +298,7 @@ mod tests {
             vec![(-2).into(), 1.into()],
             vec![Rational64::new(3, 2), Rational64::new(-1, 2)],
         ])
-            .unwrap();
+        .unwrap();
 
         let aftermath = m.inverse().unwrap();
 
