@@ -36,7 +36,6 @@ struct DftResult {
 const MISSING_FILE: &str = "Missing file: ";
 const INVALID_FILE: &str = "Invalid file: ";
 
-// read file `filename` and return a DftSource using serde-json
 fn read_source(filename: &str) -> Result<DftSource, String> {
     let file = std::fs::File::open(filename).map_err(|_| MISSING_FILE.to_string() + filename)?;
     let reader = std::io::BufReader::new(file);
