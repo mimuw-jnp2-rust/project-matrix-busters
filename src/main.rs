@@ -50,7 +50,7 @@ use egui_toast::Toasts;
 /// Field for matrices.
 type F = Rational64;
 
-fn main() {
+fn main() -> Result<(), eframe::Error> {
     let options = eframe::NativeOptions {
         initial_window_size: Some(vec2(DEFAULT_WIDTH, DEFAULT_HEIGHT)),
         icon_data: load_icon(ICON_PATH),
@@ -507,7 +507,7 @@ fn display_shell<K: MatrixNumber>(
                             .desired_width(ui.available_width())
                             .code_editor(),
                     );
-                    if response.lost_focus() && ui.input().key_pressed(egui::Key::Enter) {
+                    if response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
                         run_shell_command(&mut shell.text);
                         response.request_focus();
                     }
