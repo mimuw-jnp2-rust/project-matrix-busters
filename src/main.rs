@@ -388,6 +388,12 @@ fn display_env_element_window<K: MatrixNumber>(
                     };
                     set_clipboard(inverse, clipboard, toasts, locale);
                 }
+                if let Type::Matrix(m) = value {
+                    if ui.button(locale.get_translated("Transpose")).clicked() {
+                        let transpose = m.transpose();
+                        window_result = Some(Type::Matrix(transpose));
+                    }
+                }
             });
             let mut value_shape = value.to_shape(ctx, FONT_ID, TEXT_COLOR);
             let value_rect = value_shape.get_rect();

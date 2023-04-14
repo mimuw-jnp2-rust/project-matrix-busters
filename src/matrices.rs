@@ -9,7 +9,7 @@ use std::ops::{Add, Mul, Neg, Sub};
 /// A matrix of type `T`.
 /// Matrices are immutable.
 /// Empty matrices have shape (0, 0), so be careful.
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct Matrix<T: MatrixNumber> {
     data: Vec<Vec<T>>,
 
@@ -634,6 +634,20 @@ impl<T: MatrixNumber> Matrix<T> {
     }
 }
 
+impl<T: MatrixNumber> PartialEq for Matrix<T> {
+    fn eq(&self, other: &Self) -> bool {
+        if self.is_empty() && other.is_empty() {
+            return true;
+        }
+        if self.get_shape() != other.get_shape() {
+            return false;
+        }
+        self.data == other.data
+    }
+}
+
+impl<T: MatrixNumber> Eq for Matrix<T> {}
+
 impl<T: MatrixNumber> LaTeXable for Matrix<T> {
     fn to_latex(&self) -> String {
         let mut column_format = "c".repeat(self.data[0].len());
@@ -949,6 +963,18 @@ mod tests {
                 0, 0, 0, 1;
             ]
         );
+    }
+
+    #[test]
+    fn test_empty() {
+        let matrix = Matrix::<Rational64>::empty();
+
+        assert_eq!(matrix, Matrix::zeros((0, 0)));
+        assert_eq!(matrix, Matrix::zeros((0, 7)));
+        assert_eq!(matrix, Matrix::zeros((2, 0)));
+
+        assert_eq!(matrix, Matrix::new_unsafe(vec![]));
+        assert_eq!(matrix, Matrix::new_unsafe(vec![vec![]]));
     }
 
     #[test]

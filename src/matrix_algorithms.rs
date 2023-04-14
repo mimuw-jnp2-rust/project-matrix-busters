@@ -130,6 +130,21 @@ impl<T: MatrixNumber> Matrix<T> {
         })
     }
 
+    /// Returns the transpose of the matrix.
+    /// The transpose of a matrix is an operator which flips a matrix over its
+    /// diagonal, that is it switches the row and column indices of the matrix
+    /// by producing another matrix denoted as A^T.
+    pub fn transpose(&self) -> Matrix<T> {
+        let (rows, cols) = self.get_shape();
+        let mut data = Matrix::zeros((cols, rows)).consume();
+        for i in 0..rows {
+            for (j, col) in data.iter_mut().enumerate() {
+                col[i] = self.get_data()[i][j].clone();
+            }
+        }
+        Self::new_unsafe(data)
+    }
+
     /// Returns a deep copy of matrix data vector.
     fn deep_matrix_data_clone(&self) -> Vec<Vec<T>> {
         self.get_data().iter().map(|row| row.to_vec()).collect()
@@ -202,6 +217,7 @@ mod tests {
     use crate::traits::LaTeXable;
     use crate::{matrices::Matrix, ri, rm, rv};
     use num_rational::Rational64;
+    use num_traits::One;
 
     #[test]
     fn test_echelon_rational1() {
@@ -293,8 +309,44 @@ mod tests {
                 r"\left[\begin{array}{cc|cc}1 & 2 & 1 & 0\\3 & 4 & 0 & 1\end{array}\right]",
                 r"\xrightarrow{\substack{w_{2} - 3w_{1}}} \left[\begin{array}{cc|cc}1 & 2 & 1 & 0\\0 & -2 & -3 & 1\end{array}\right]",
                 r"\xrightarrow{w_{2} : \left(-2\right)} \left[\begin{array}{cc|cc}1 & 2 & 1 & 0\\0 & 1 & \frac{3}{2} & -\frac{1}{2}\end{array}\right]",
-                r"\xrightarrow{\substack{w_{1} - 2w_{2}}} \left[\begin{array}{cc|cc}1 & 0 & -2 & 1\\0 & 1 & \frac{3}{2} & -\frac{1}{2}\end{array}\right]"
+                r"\xrightarrow{\substack{w_{1} - 2w_{2}}} \left[\begin{array}{cc|cc}1 & 0 & -2 & 1\\0 & 1 & \frac{3}{2} & -\frac{1}{2}\end{array}\right]",
             ]
         );
+    }
+
+    #[test]
+    fn test_transpose_rational1() {
+        let m = rm![1, 2; 3, 4];
+        let expected = rm![1, 3; 2, 4];
+
+        let transposition = m.transpose();
+
+        assert_eq!(transposition, expected);
+    }
+
+    #[test]
+    fn test_transpose_rational2() {
+        let m = rm![1, 2, 3; 4, 5, 6];
+        let expected = rm![1, 4; 2, 5; 3, 6];
+
+        let transposition = m.transpose();
+
+        assert_eq!(transposition, expected);
+    }
+
+    #[test]
+    fn test_transpose_rational_null_matrix() {
+        let expected = Matrix::empty();
+        let test_null_matrix = |cols, rows| {
+            let m = Matrix::<Rational64>::filled((cols, rows), |_, _| Rational64::one());
+
+            let transposition = m.transpose();
+
+            assert_eq!(transposition, expected);
+        };
+
+        test_null_matrix(0, 0);
+        test_null_matrix(0, 7);
+        test_null_matrix(7, 0);
     }
 }
