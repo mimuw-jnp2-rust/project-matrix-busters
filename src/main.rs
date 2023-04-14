@@ -2,10 +2,10 @@ mod constants;
 mod editor_gui;
 mod env_gui;
 mod environment;
+#[cfg(feature = "fft")]
+mod fourier;
 #[cfg(feature = "clock")]
 mod fractal_clock;
-#[cfg(feature = "fft")]
-mod furier;
 mod locale;
 mod matrices;
 mod matrix_algorithms;
@@ -39,10 +39,10 @@ use std::default::Default;
 use std::time::Duration;
 use traits::BoxedShape;
 
+#[cfg(feature = "fft")]
+use crate::fourier::Fourier;
 #[cfg(feature = "clock")]
 use crate::fractal_clock::FractalClock;
-#[cfg(feature = "fft")]
-use crate::furier::Fourier;
 use clap::builder::TypedValueParser;
 use clap::Parser;
 use egui_toast::Toasts;
@@ -111,7 +111,7 @@ pub struct State<K: MatrixNumber> {
     #[cfg(feature = "clock")]
     clock: FractalClock,
     #[cfg(feature = "fft")]
-    furier: Option<Fourier>,
+    fourier: Option<Fourier>,
 }
 
 impl<K: MatrixNumber> Default for State<K> {
@@ -126,7 +126,7 @@ impl<K: MatrixNumber> Default for State<K> {
             clock: Default::default(),
             clipboard: Clipboard::new().expect("Failed to create Clipboard context!"),
             #[cfg(feature = "fft")]
-            furier: Fourier::from_json_file(DFT_PATH.to_string()).ok(),
+            fourier: Fourier::from_json_file(DFT_PATH.to_string()).ok(),
         }
     }
 }
@@ -216,9 +216,9 @@ impl<K: MatrixNumber> eframe::App for MatrixApp<K> {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading(self.gt(APP_NAME));
             #[cfg(feature = "fft")]
-            match &mut self.state.furier {
-                Some(furier) => {
-                    furier.ui(ui, _left_panel.rect.width(), _top_menu.rect.height());
+            match &mut self.state.fourier {
+                Some(fourier) => {
+                    fourier.ui(ui, _left_panel.rect.width(), _top_menu.rect.height());
                 }
                 None => {
                     #[cfg(feature = "clock")]
