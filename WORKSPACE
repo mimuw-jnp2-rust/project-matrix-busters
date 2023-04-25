@@ -10,7 +10,7 @@ load("@rules_rust//rust:repositories.bzl", "rules_rust_dependencies", "rust_regi
 
 rules_rust_dependencies()
 
-rust_register_toolchains(versions = ["1.68.1"], edition="2021")
+rust_register_toolchains(versions = ["1.69.0"], edition="2021")
 
 load("@rules_rust//crate_universe:defs.bzl", "crate", "crates_repository", "render_config")
 
@@ -66,10 +66,19 @@ crates_repository(
         "log": crate.spec(
             version = "0.4.17",
         ),
-        "khronos_api": crate.spec(
-            git = "https://github.com/kshcherban/gl-rs/",
-            rev = "40eb5116e72f52365a9f202be2c317f24cc73333",
-        ),
+    },
+    annotations = {
+        "khronos_api": [
+            crate.annotation(
+                patches = [
+                    # https://github.com/brendanzab/gl-rs/pull/536
+                    "@//patches:khronos_api.patch",
+                ],
+                # The patch file was generated using git-diff and khronos_api
+                # is a submodule, so we need to use -p2 to apply the patch.
+                patch_args = ["-p2"],
+            ),
+        ],
     },
     render_config = render_config(
         default_package_name = ""

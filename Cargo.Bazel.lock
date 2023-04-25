@@ -1,5 +1,5 @@
 {
-  "checksum": "6e67a8476e72fff296cf76462315cbc40137e262dd14ab9523ca047952f01a86",
+  "checksum": "1ca6e38201d5e1343918c30ea4d365d8015fdc344994f31ea901a95da318d9f0",
   "crates": {
     "ab_glyph 0.2.21": {
       "name": "ab_glyph",
@@ -3731,10 +3731,6 @@
               "target": "itertools"
             },
             {
-              "id": "khronos_api 3.2.0",
-              "target": "khronos_api"
-            },
-            {
               "id": "lazy_static 1.4.0",
               "target": "lazy_static"
             },
@@ -4123,7 +4119,7 @@
               "target": "glow"
             },
             {
-              "id": "tracing 0.1.37",
+              "id": "tracing 0.1.38",
               "target": "tracing"
             }
           ],
@@ -4233,7 +4229,7 @@
               "target": "nohash_hasher"
             },
             {
-              "id": "tracing 0.1.37",
+              "id": "tracing 0.1.38",
               "target": "tracing"
             }
           ],
@@ -4335,7 +4331,7 @@
               "target": "instant"
             },
             {
-              "id": "tracing 0.1.37",
+              "id": "tracing 0.1.38",
               "target": "tracing"
             },
             {
@@ -4411,7 +4407,7 @@
               "target": "memoffset"
             },
             {
-              "id": "tracing 0.1.37",
+              "id": "tracing 0.1.38",
               "target": "tracing"
             }
           ],
@@ -7341,7 +7337,13 @@
       "repository": {
         "Http": {
           "url": "https://crates.io/api/v1/crates/khronos_api/3.1.0/download",
-          "sha256": "e2db585e1d738fc771bf08a151420d3ed193d9d895a36df7f6f8a9456b911ddc"
+          "sha256": "e2db585e1d738fc771bf08a151420d3ed193d9d895a36df7f6f8a9456b911ddc",
+          "patch_args": [
+            "-p2"
+          ],
+          "patches": [
+            "@//patches:khronos_api.patch"
+          ]
         }
       },
       "targets": [
@@ -7380,62 +7382,6 @@
         },
         "edition": "2015",
         "version": "3.1.0"
-      },
-      "build_script_attrs": {
-        "data_glob": [
-          "**"
-        ]
-      },
-      "license": "Apache-2.0"
-    },
-    "khronos_api 3.2.0": {
-      "name": "khronos_api",
-      "version": "3.2.0",
-      "repository": {
-        "Git": {
-          "remote": "https://github.com/kshcherban/gl-rs/",
-          "commitish": {
-            "Rev": "40eb5116e72f52365a9f202be2c317f24cc73333"
-          },
-          "strip_prefix": "khronos_api"
-        }
-      },
-      "targets": [
-        {
-          "Library": {
-            "crate_name": "khronos_api",
-            "crate_root": "src/lib.rs",
-            "srcs": [
-              "**/*.rs"
-            ]
-          }
-        },
-        {
-          "BuildScript": {
-            "crate_name": "build_script_build",
-            "crate_root": "build.rs",
-            "srcs": [
-              "**/*.rs"
-            ]
-          }
-        }
-      ],
-      "library_target_name": "khronos_api",
-      "common_attrs": {
-        "compile_data_glob": [
-          "**"
-        ],
-        "deps": {
-          "common": [
-            {
-              "id": "khronos_api 3.2.0",
-              "target": "build_script_build"
-            }
-          ],
-          "selects": {}
-        },
-        "edition": "2018",
-        "version": "3.2.0"
       },
       "build_script_attrs": {
         "data_glob": [
@@ -12479,13 +12425,13 @@
       },
       "license": "MIT OR Apache-2.0"
     },
-    "tracing 0.1.37": {
+    "tracing 0.1.38": {
       "name": "tracing",
-      "version": "0.1.37",
+      "version": "0.1.38",
       "repository": {
         "Http": {
-          "url": "https://crates.io/api/v1/crates/tracing/0.1.37/download",
-          "sha256": "8ce8c33a8d48bd45d624a6e523445fd21ec13d3653cd51f681abf67418f54eb8"
+          "url": "https://crates.io/api/v1/crates/tracing/0.1.38/download",
+          "sha256": "cf9cf6a813d3f40c88b0b6b6f29a5c95c6cdbf97c1f9cc53fb820200f5ad814d"
         }
       },
       "targets": [
@@ -12513,10 +12459,6 @@
         "deps": {
           "common": [
             {
-              "id": "cfg-if 1.0.0",
-              "target": "cfg_if"
-            },
-            {
               "id": "pin-project-lite 0.2.9",
               "target": "pin_project_lite"
             },
@@ -12528,7 +12470,7 @@
           "selects": {}
         },
         "edition": "2018",
-        "version": "0.1.37"
+        "version": "0.1.38"
       },
       "license": "MIT"
     },
