@@ -1,5 +1,5 @@
 {
-  "checksum": "f2db5ba7be33e16b95b66355bd503d93f97d3bdd936df877fe160b086d70024b",
+  "checksum": "9f8734ab7909777578e115683be503e47d7b67aeb829cc27d2e5da66f669fbf1",
   "crates": {
     "ab_glyph 0.2.21": {
       "name": "ab_glyph",
@@ -507,13 +507,13 @@
       },
       "license": "MIT/Apache-2.0"
     },
-    "anstream 0.3.0": {
+    "anstream 0.3.1": {
       "name": "anstream",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "repository": {
         "Http": {
-          "url": "https://crates.io/api/v1/crates/anstream/0.3.0/download",
-          "sha256": "9e579a7752471abc2a8268df8b20005e3eadd975f585398f17efcfd8d4927371"
+          "url": "https://crates.io/api/v1/crates/anstream/0.3.1/download",
+          "sha256": "6342bd4f5a1205d7f41e94a41a901f5647c938cdfa96036338e8533c9d6c2450"
         }
       },
       "targets": [
@@ -570,14 +570,14 @@
           "selects": {
             "cfg(windows)": [
               {
-                "id": "anstyle-wincon 1.0.0",
+                "id": "anstyle-wincon 1.0.1",
                 "target": "anstyle_wincon"
               }
             ]
           }
         },
         "edition": "2021",
-        "version": "0.3.0"
+        "version": "0.3.1"
       },
       "license": "MIT OR Apache-2.0"
     },
@@ -705,13 +705,13 @@
       },
       "license": "MIT OR Apache-2.0"
     },
-    "anstyle-wincon 1.0.0": {
+    "anstyle-wincon 1.0.1": {
       "name": "anstyle-wincon",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "repository": {
         "Http": {
-          "url": "https://crates.io/api/v1/crates/anstyle-wincon/1.0.0/download",
-          "sha256": "4bcd8291a340dd8ac70e18878bc4501dd7b4ff970cfa21c207d36ece51ea88fd"
+          "url": "https://crates.io/api/v1/crates/anstyle-wincon/1.0.1/download",
+          "sha256": "180abfa45703aebe0093f79badacc01b8fd4ea2e35118747e5811127f926e188"
         }
       },
       "targets": [
@@ -747,7 +747,7 @@
           }
         },
         "edition": "2021",
-        "version": "1.0.0"
+        "version": "1.0.1"
       },
       "license": "MIT OR Apache-2.0"
     },
@@ -1015,13 +1015,13 @@
       },
       "license": "MIT OR Apache-2.0"
     },
-    "atomic_refcell 0.1.9": {
+    "atomic_refcell 0.1.10": {
       "name": "atomic_refcell",
-      "version": "0.1.9",
+      "version": "0.1.10",
       "repository": {
         "Http": {
-          "url": "https://crates.io/api/v1/crates/atomic_refcell/0.1.9/download",
-          "sha256": "857253367827bd9d0fd973f0ef15506a96e79e41b0ad7aa691203a4e3214f6c8"
+          "url": "https://crates.io/api/v1/crates/atomic_refcell/0.1.10/download",
+          "sha256": "79d6dc922a2792b006573f60b2648076355daeae5ce9cb59507e5908c9625d31"
         }
       },
       "targets": [
@@ -1041,7 +1041,7 @@
           "**"
         ],
         "edition": "2015",
-        "version": "0.1.9"
+        "version": "0.1.10"
       },
       "license": "Apache-2.0/MIT"
     },
@@ -1875,7 +1875,7 @@
         "deps": {
           "common": [
             {
-              "id": "anstream 0.3.0",
+              "id": "anstream 0.3.1",
               "target": "anstream"
             },
             {
@@ -4669,7 +4669,7 @@
             ],
             "cfg(target_arch = \"wasm32\")": [
               {
-                "id": "atomic_refcell 0.1.9",
+                "id": "atomic_refcell 0.1.10",
                 "target": "atomic_refcell"
               }
             ]
