@@ -66,6 +66,10 @@ crates_repository(
         "log": crate.spec(
             version = "0.4.17",
         ),
+        "khronos_api": crate.spec(
+            git = "https://github.com/kshcherban/gl-rs/",
+            rev = "40eb5116e72f52365a9f202be2c317f24cc73333",
+        ),
     },
     render_config = render_config(
         default_package_name = ""

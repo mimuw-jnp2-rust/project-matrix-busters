@@ -1,5 +1,5 @@
 {
-  "checksum": "9f8734ab7909777578e115683be503e47d7b67aeb829cc27d2e5da66f669fbf1",
+  "checksum": "6e67a8476e72fff296cf76462315cbc40137e262dd14ab9523ca047952f01a86",
   "crates": {
     "ab_glyph 0.2.21": {
       "name": "ab_glyph",
@@ -3731,6 +3731,10 @@
               "target": "itertools"
             },
             {
+              "id": "khronos_api 3.2.0",
+              "target": "khronos_api"
+            },
+            {
               "id": "lazy_static 1.4.0",
               "target": "lazy_static"
             },
@@ -7376,6 +7380,62 @@
         },
         "edition": "2015",
         "version": "3.1.0"
+      },
+      "build_script_attrs": {
+        "data_glob": [
+          "**"
+        ]
+      },
+      "license": "Apache-2.0"
+    },
+    "khronos_api 3.2.0": {
+      "name": "khronos_api",
+      "version": "3.2.0",
+      "repository": {
+        "Git": {
+          "remote": "https://github.com/kshcherban/gl-rs/",
+          "commitish": {
+            "Rev": "40eb5116e72f52365a9f202be2c317f24cc73333"
+          },
+          "strip_prefix": "khronos_api"
+        }
+      },
+      "targets": [
+        {
+          "Library": {
+            "crate_name": "khronos_api",
+            "crate_root": "src/lib.rs",
+            "srcs": [
+              "**/*.rs"
+            ]
+          }
+        },
+        {
+          "BuildScript": {
+            "crate_name": "build_script_build",
+            "crate_root": "build.rs",
+            "srcs": [
+              "**/*.rs"
+            ]
+          }
+        }
+      ],
+      "library_target_name": "khronos_api",
+      "common_attrs": {
+        "compile_data_glob": [
+          "**"
+        ],
+        "deps": {
+          "common": [
+            {
+              "id": "khronos_api 3.2.0",
+              "target": "build_script_build"
+            }
+          ],
+          "selects": {}
+        },
+        "edition": "2018",
+        "version": "3.2.0"
       },
       "build_script_attrs": {
         "data_glob": [
