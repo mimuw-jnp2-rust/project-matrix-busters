@@ -91,7 +91,7 @@ macro_rules! gui_displayable_for_primitive {
                 fn to_shape(&self, ctx: &egui::Context, font_id: FontId, color: Color32) -> Shape {
                     let text_shape = TextShape::new(
                         pos2(0., 0.),
-                        ctx.fonts().layout_no_wrap(self.to_string(), font_id, color),
+                        ctx.fonts(|f| f.layout_no_wrap(self.to_string(), font_id, color)),
                     );
                     Shape::Text(text_shape)
                 }

@@ -2,10 +2,10 @@ mod constants;
 mod editor_gui;
 mod env_gui;
 mod environment;
+#[cfg(feature = "fft")]
+mod fourier;
 #[cfg(feature = "clock")]
 mod fractal_clock;
-#[cfg(feature = "fft")]
-mod furier;
 mod locale;
 mod matrices;
 mod matrix_algorithms;
@@ -39,10 +39,10 @@ use std::default::Default;
 use std::time::Duration;
 use traits::BoxedShape;
 
+#[cfg(feature = "fft")]
+use crate::fourier::Fourier;
 #[cfg(feature = "clock")]
 use crate::fractal_clock::FractalClock;
-#[cfg(feature = "fft")]
-use crate::furier::Fourier;
 use clap::builder::TypedValueParser;
 use clap::Parser;
 use egui_toast::Toasts;
@@ -50,7 +50,7 @@ use egui_toast::Toasts;
 /// Field for matrices.
 type F = Rational64;
 
-fn main() {
+fn main() -> Result<(), eframe::Error> {
     let options = eframe::NativeOptions {
         initial_window_size: Some(vec2(DEFAULT_WIDTH, DEFAULT_HEIGHT)),
         icon_data: load_icon(ICON_PATH),
@@ -111,7 +111,7 @@ pub struct State<K: MatrixNumber> {
     #[cfg(feature = "clock")]
     clock: FractalClock,
     #[cfg(feature = "fft")]
-    furier: Option<Fourier>,
+    fourier: Option<Fourier>,
 }
 
 impl<K: MatrixNumber> Default for State<K> {
@@ -126,7 +126,7 @@ impl<K: MatrixNumber> Default for State<K> {
             clock: Default::default(),
             clipboard: Clipboard::new().expect("Failed to create Clipboard context!"),
             #[cfg(feature = "fft")]
-            furier: Fourier::from_json_file(DFT_PATH.to_string()).ok(),
+            fourier: Fourier::from_json_file(DFT_PATH.to_string()).ok(),
         }
     }
 }
@@ -216,9 +216,9 @@ impl<K: MatrixNumber> eframe::App for MatrixApp<K> {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading(self.gt(APP_NAME));
             #[cfg(feature = "fft")]
-            match &mut self.state.furier {
-                Some(furier) => {
-                    furier.ui(ui, _left_panel.rect.width(), _top_menu.rect.height());
+            match &mut self.state.fourier {
+                Some(fourier) => {
+                    fourier.ui(ui, _left_panel.rect.width(), _top_menu.rect.height());
                 }
                 None => {
                     #[cfg(feature = "clock")]
@@ -388,6 +388,12 @@ fn display_env_element_window<K: MatrixNumber>(
                     };
                     set_clipboard(inverse, clipboard, toasts, locale);
                 }
+                if let Type::Matrix(m) = value {
+                    if ui.button(locale.get_translated("Transpose")).clicked() {
+                        let transpose = m.transpose();
+                        window_result = Some(Type::Matrix(transpose));
+                    }
+                }
             });
             let mut value_shape = value.to_shape(ctx, FONT_ID, TEXT_COLOR);
             let value_rect = value_shape.get_rect();
@@ -507,7 +513,7 @@ fn display_shell<K: MatrixNumber>(
                             .desired_width(ui.available_width())
                             .code_editor(),
                     );
-                    if response.lost_focus() && ui.input().key_pressed(egui::Key::Enter) {
+                    if response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
                         run_shell_command(&mut shell.text);
                         response.request_focus();
                     }
