@@ -2,8 +2,6 @@ mod constants;
 mod editor_gui;
 mod env_gui;
 mod environment;
-#[cfg(feature = "clock")]
-mod fractal_clock;
 mod matrices;
 mod matrix_algorithms;
 mod parser;
@@ -36,13 +34,13 @@ use std::default::Default;
 use std::time::Duration;
 use traits::BoxedShape;
 
-#[cfg(feature = "clock")]
-use crate::fractal_clock::FractalClock;
 use clap::builder::TypedValueParser;
 use clap::Parser;
 use egui_toast::Toasts;
 #[cfg(feature = "fft")]
 use fourier_display::Fourier;
+#[cfg(feature = "clock")]
+use fractal_clock::FractalClock;
 
 /// Field for matrices.
 type F = Rational64;
