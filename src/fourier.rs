@@ -6,6 +6,8 @@ use std::f32::consts::PI;
 use std::fs::File;
 use std::io::BufReader;
 
+const EPICYCLE_SIZE: f32 = 0.1;
+
 pub struct Fourier {
     data: FourierData,
     time: f32,
@@ -115,12 +117,12 @@ impl Fourier {
             y += radius * (rotation + freq * time + phase).sin();
             shapes.push(Shape::line_segment(
                 [Pos2::new(prevx, prevy), Pos2::new(x, y)],
-                Stroke::new(0.01, Color32::WHITE),
+                Stroke::new(EPICYCLE_SIZE, Color32::WHITE),
             ));
             shapes.push(Shape::circle_stroke(
                 Pos2::new(prevx, prevy),
                 radius,
-                Stroke::new(0.01, Color32::WHITE),
+                Stroke::new(EPICYCLE_SIZE, Color32::WHITE),
             ));
             prevx = x;
             prevy = y;
