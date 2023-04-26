@@ -61,7 +61,7 @@ intended to be developed during the JNP3 project -
 maybe in the future if time allows.
 
 ## GUI Preview
-![gui.png](gui.png)
+![gui.png](docs/gui.png)
 
 ## Libraries
 - [egui](https://crates.io/crates/egui) - (https://github.com/emilk/egui)

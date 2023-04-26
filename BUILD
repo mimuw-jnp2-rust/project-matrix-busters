@@ -4,7 +4,7 @@ load("@crate_index//:defs.bzl", "all_crate_deps")
 package(default_visibility = ["//visibility:public"])
 
 all_rs_sources = glob(["src/*.rs"])
-fft_rs_sources = ["src/furier.rs"]
+fft_rs_sources = ["src/fourier.rs"]
 clock_rs_sources = ["src/fractal_clock.rs"]
 common_rs_sources = [s for s in all_rs_sources if s not in fft_rs_sources + clock_rs_sources]
 

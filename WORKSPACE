@@ -23,10 +23,10 @@ crates_repository(
             version = "0.10.5",
         ),
         "egui": crate.spec(
-            version = "0.20.1",
+            version = "0.21.0",
         ),
         "eframe": crate.spec(
-            version = "0.20.1",
+            version = "0.21.3",
         ),
         "num-rational": crate.spec(
             version = "0.4.1",
@@ -53,6 +53,9 @@ crates_repository(
         "chrono": crate.spec(
             version = "0.4",
         ),
+        "time": crate.spec(
+            version = "0.3",
+        ),
         "serde": crate.spec(
             version = "1.0",
             features = ["derive"],
@@ -61,7 +64,7 @@ crates_repository(
             version = "1.0",
         ),
         "egui-toast": crate.spec(
-            version = "0.5.0",
+            version = "0.6.0",
         ),
         "log": crate.spec(
             version = "0.4.17",
