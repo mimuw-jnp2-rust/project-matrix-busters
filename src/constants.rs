@@ -16,4 +16,4 @@ pub const VALUE_PADDING: f32 = 15.;
 
 pub const ICON_PATH: &str = "assets/icon.png";
 #[cfg(feature = "fft")]
-pub const DFT_PATH: &str = "assets/dft_result.json";
+pub const DFT_PATH: &str = "fourier/dft_result.json";

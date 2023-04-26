@@ -16,11 +16,6 @@ rust_binary(
     ],
 )
 
-filegroup(
-    name = "dft_source",
-    srcs = ["dft_source.json"],
-)
-
 run_binary(
     name = "dft_result",
     env = {
