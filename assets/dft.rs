@@ -1,5 +1,5 @@
+use log::info;
 use serde::{Deserialize, Serialize};
-use log::{info};
 
 #[derive(Serialize, Deserialize)]
 struct DftMetadata {
@@ -80,7 +80,7 @@ fn calculate_n(expected_points: usize, actual_points: usize) -> usize {
     if actual_points < expected_points {
         return actual_points;
     }
-    return actual_points / expected_points;
+    actual_points / expected_points
 }
 
 fn take_every_nth<T>(source: Vec<T>, n: usize) -> Vec<T> {

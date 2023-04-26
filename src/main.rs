@@ -6,7 +6,6 @@ mod environment;
 mod fourier;
 #[cfg(feature = "clock")]
 mod fractal_clock;
-mod locale;
 mod matrices;
 mod matrix_algorithms;
 mod parser;
@@ -23,13 +22,13 @@ use crate::editor_gui::{
     set_editor_to_matrix, set_editor_to_scalar, EditorState,
 };
 use crate::environment::{Environment, Identifier, Type};
-use crate::locale::{Language, Locale};
 use crate::matrix_algorithms::Aftermath;
 use crate::parser::parse_instruction;
 use crate::traits::{GuiDisplayable, LaTeXable, MatrixNumber};
 use arboard::Clipboard;
 use constants::{FONT_ID, TEXT_COLOR, VALUE_PADDING};
 use eframe::{egui, IconData};
+use locale::{Language, Locale};
 
 use egui::{gui_zoom, vec2, Context, Response, Sense, Ui};
 use env_gui::insert_to_env;

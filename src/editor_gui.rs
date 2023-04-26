@@ -1,12 +1,12 @@
 use crate::env_gui::insert_to_env;
 use crate::environment::{Environment, Identifier, Type};
-use crate::locale::Locale;
 use crate::matrices::Matrix;
 use crate::parser::parse_expression;
 use crate::traits::MatrixNumber;
 use crate::{State, WindowState};
 use anyhow::bail;
 use egui::{Sense, Ui};
+use locale::Locale;
 use std::collections::HashMap;
 
 pub enum EditorType {

@@ -1,9 +1,9 @@
 use crate::constants::{MATRIX_HPADDING, MATRIX_VPADDING};
-use crate::locale::Locale;
 use crate::traits::{BoxedShape, LaTeXable};
 use crate::traits::{GuiDisplayable, MatrixNumber};
 use anyhow::{bail, Context};
 use egui::{pos2, Color32, FontId, Rect};
+use locale::Locale;
 use std::ops::{Add, Mul, Neg, Sub};
 
 /// A matrix of type `T`.

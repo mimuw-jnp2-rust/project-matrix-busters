@@ -172,3 +172,28 @@ fn gen_map(vec: &[(&'static str, &'static str)]) -> HashMap<String, String> {
         .map(|(k, v)| (k.to_string(), v.to_string()))
         .collect()
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_three_languages() {
+        assert_eq!(Language::of(Some(String::from("en"))), Language::English);
+        assert_eq!(Language::of(Some(String::from("pl"))), Language::Polish);
+        assert_eq!(Language::of(Some(String::from("es"))), Language::Spanish);
+    }
+
+    #[test]
+    fn test_three_long_languages() {
+        assert_eq!(
+            Language::of(Some(String::from("english"))),
+            Language::English
+        );
+        assert_eq!(Language::of(Some(String::from("polish"))), Language::Polish);
+        assert_eq!(
+            Language::of(Some(String::from("spanish"))),
+            Language::Spanish
+        );
+    }
+}

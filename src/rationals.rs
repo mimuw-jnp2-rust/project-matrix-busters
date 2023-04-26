@@ -31,7 +31,7 @@ impl LaTeXable for Rational64 {
 }
 
 impl GuiDisplayable for Rational64 {
-    fn display_string(&self, _locale: &crate::locale::Locale) -> String {
+    fn display_string(&self, _locale: &locale::Locale) -> String {
         self.to_string()
     }
 

@@ -3,9 +3,9 @@ use std::collections::BTreeMap;
 
 use anyhow::bail;
 
-use crate::locale::Locale;
 use crate::traits::{GuiDisplayable, LaTeXable};
 use crate::{matrices::Matrix, traits::MatrixNumber};
+use locale::Locale;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Ord, PartialOrd)]
 pub struct Identifier {

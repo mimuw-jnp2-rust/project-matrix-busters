@@ -5,7 +5,7 @@ use num_traits::{
 };
 use std::str::FromStr;
 
-use crate::locale::Locale;
+use locale::Locale;
 use num_traits::Num;
 
 pub trait LaTeXable {

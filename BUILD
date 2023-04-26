@@ -15,7 +15,9 @@ common_rustc_flags = ["-O"]
 
 common_deps = all_crate_deps(
     normal = True,
-)
+) + [
+    "//locale"
+]
 
 rust_binary(
     name = "jp2gmd",
