@@ -74,9 +74,10 @@ impl<'a> Tokenizer<'a> {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 enum WorkingToken<T: MatrixNumber> {
     Type(Type<T>),
+    Function(Identifier),
     UnaryOp(char),
     BinaryOp(char),
     LeftBracket,
@@ -87,6 +88,7 @@ impl<T: MatrixNumber> Display for WorkingToken<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             WorkingToken::Type(_) => write!(f, "value token"),
+            WorkingToken::Function(_) => write!(f, "function token"),
             WorkingToken::UnaryOp(op) => write!(f, "unary operator \"{op}\""),
             WorkingToken::BinaryOp(op) => write!(f, "binary operator \"{op}\""),
             WorkingToken::LeftBracket => write!(f, "( bracket"),
@@ -155,7 +157,7 @@ fn unary_op<T: MatrixNumber>(arg: Type<T>, op: char) -> anyhow::Result<Type<T>> 
 <unary_op>   ::= "+" | "-"
 <binary_op>  ::= "+" | "-" | "*" | "/"
 <expr>       ::= <integer> | <identifier> | <expr> <binary_op> <expr>
-               | "(" <expr> ")" | <unary_op> <expr>
+               | "(" <expr> ")" | <unary_op> <expr> | <identifier> "(" <expr> ")"
  */
 pub fn parse_expression<T: MatrixNumber>(
     raw: &str,
@@ -185,6 +187,7 @@ pub fn parse_expression<T: MatrixNumber>(
                 None | Some(WorkingToken::LeftBracket)
                     | Some(WorkingToken::BinaryOp(_))
                     | Some(WorkingToken::UnaryOp(_))
+                    | Some(WorkingToken::Function(_))
             ),
             Token::Operator(_) => matches!(
                 previous,
@@ -221,15 +224,18 @@ pub fn parse_expression<T: MatrixNumber>(
                 outputs.back()
             }
             Token::Identifier(id) => {
-                outputs.push_back(WorkingToken::Type(
-                    env.get(id)
-                        .context(format!(
-                            "Undefined identifier! Object \"{}\" is unknown.",
-                            id.to_string()
-                        ))?
-                        .clone(),
-                ));
-                outputs.back()
+                if let Some(value) = env.get_value(id) {
+                    outputs.push_back(WorkingToken::Type(value.clone()));
+                    outputs.back()
+                } else if let Some(_) = env.get_function(id) {
+                    operators.push_front(WorkingToken::Function(id.clone()));
+                    operators.front()
+                } else {
+                    bail!(
+                        "Undefined identifier! Object \"{}\" is unknown.",
+                        id.to_string()
+                    )
+                }
             }
             Token::LeftBracket => {
                 operators.push_front(WorkingToken::LeftBracket);
@@ -248,10 +254,11 @@ pub fn parse_expression<T: MatrixNumber>(
                     bail!("Mismatched brackets!");
                 }
                 if let Some(op) = operators.pop_front() {
-                    if matches!(op, WorkingToken::UnaryOp(_)) {
-                        outputs.push_back(op);
-                    } else {
-                        operators.push_front(op);
+                    match op {
+                        WorkingToken::UnaryOp(_) | WorkingToken::Function(_) => {
+                            outputs.push_back(op)
+                        }
+                        _ => operators.push_front(op),
                     }
                 }
                 Some(&WorkingToken::RightBracket)
@@ -311,6 +318,10 @@ pub fn parse_expression<T: MatrixNumber>(
             WorkingToken::UnaryOp(op) => {
                 let arg = val_stack.pop_front().context("Invalid expression!")?;
                 val_stack.push_front(unary_op(arg, op)?);
+            }
+            WorkingToken::Function(id) => {
+                let arg = val_stack.pop_front().context("Invalid expression!")?;
+                val_stack.push_front(env.get_function(&id).unwrap()(arg)?);
             }
             _ => unreachable!(),
         }
@@ -546,7 +557,8 @@ mod tests {
         }
 
         assert_eq!(
-            *env.get(&Identifier::new("b".to_string()).unwrap()).unwrap(),
+            *env.get_value(&Identifier::new("b".to_string()).unwrap())
+                .unwrap(),
             Type::<i64>::Scalar(89)
         );
     }
@@ -561,8 +573,40 @@ mod tests {
         exec("a = $ ^ $");
 
         assert_eq!(
-            *env.get(&Identifier::new("a".to_string()).unwrap()).unwrap(),
+            *env.get_value(&Identifier::new("a".to_string()).unwrap())
+                .unwrap(),
             Type::<i64>::Scalar(256)
+        );
+    }
+
+    #[test]
+    fn test_expression_functions() {
+        let mut env = Environment::new();
+
+        let a = im![1, 2, 3; 4, 5, 6];
+        let at = im![1, 4; 2, 5; 3, 6];
+        let b = im![1, 2; 3, 4];
+
+        env.insert(
+            Identifier::new("A".to_string()).unwrap(),
+            Type::Matrix(a.clone()),
+        );
+        env.insert(
+            Identifier::new("B".to_string()).unwrap(),
+            Type::Matrix(b.clone()),
+        );
+
+        assert_eq!(
+            parse_expression("transpose(A)", &env).unwrap(),
+            Type::Matrix(at)
+        );
+        assert_eq!(
+            parse_expression("identity(4)", &env).unwrap(),
+            Type::Matrix(Matrix::identity(4))
+        );
+        assert_eq!(
+            parse_expression("inverse(B)", &env).unwrap(),
+            Type::Matrix(b.inverse().unwrap().result)
         );
     }
 }
