@@ -31,7 +31,7 @@ use arboard::Clipboard;
 use constants::{FONT_ID, TEXT_COLOR, VALUE_PADDING};
 use eframe::{egui, IconData};
 
-use egui::{gui_zoom, vec2, Context, Response, Sense, Ui};
+use egui::{gui_zoom, vec2, Align2, Context, Response, Sense, Ui};
 use env_gui::insert_to_env;
 use num_rational::Rational64;
 use std::collections::HashMap;
@@ -45,7 +45,7 @@ use crate::fourier::Fourier;
 use crate::fractal_clock::FractalClock;
 use clap::builder::TypedValueParser;
 use clap::Parser;
-use egui_toast::Toasts;
+use egui_toast::{Toast, ToastKind, ToastOptions, Toasts};
 
 /// Field for matrices.
 type F = Rational64;
@@ -156,11 +156,9 @@ impl<K: MatrixNumber> eframe::App for MatrixApp<K> {
             gui_zoom::zoom_with_keyboard_shortcuts(ctx, frame.info().native_pixels_per_point);
         }
 
-        let window_size = frame.info().window_info.size;
         self.state.toasts = Toasts::default()
-            .anchor((window_size.x - 10., window_size.y - 40.))
-            .direction(egui::Direction::BottomUp)
-            .align_to_end(true);
+            .anchor(Align2::RIGHT_BOTTOM, (-10.0, -40.0))
+            .direction(egui::Direction::BottomUp);
 
         let (_top_menu, new_locale) = display_menu_bar(ctx, &mut self.state, &self.locale);
         display_editor::<K>(ctx, &mut self.state, &self.locale);
@@ -443,13 +441,15 @@ fn set_clipboard(
     match message {
         Ok(latex) => match clipboard.set_text(latex) {
             Ok(_) => {
-                toasts.info(
+                toasts_info(
+                    toasts,
                     locale.get_translated("LaTeX copied to clipboard"),
                     CLIPBOARD_TOAST_DURATION,
                 );
             }
             Err(e) => {
-                toasts.error(
+                toasts_error(
+                    toasts,
                     locale.get_translated("Failed to copy LaTeX to clipboard")
                         + "\n"
                         + e.to_string().as_str(),
@@ -458,7 +458,8 @@ fn set_clipboard(
             }
         },
         Err(e) => {
-            toasts.error(
+            toasts_error(
+                toasts,
                 locale.get_translated("Failed to generate LaTeX") + "\n" + e.to_string().as_str(),
                 CLIPBOARD_TOAST_DURATION,
             );
@@ -484,7 +485,7 @@ fn display_shell<K: MatrixNumber>(
         }
         Err(error) => {
             println!("{error}");
-            toasts.error(error.to_string(), Duration::from_secs(5));
+            toasts_error(toasts, error.to_string(), Duration::from_secs(5));
         }
     };
 
@@ -520,4 +521,22 @@ fn display_shell<K: MatrixNumber>(
                 });
             });
         });
+}
+
+fn toasts_add_kind(toasts: &mut Toasts, text: String, duration: Duration, kind: ToastKind) {
+    toasts.add(Toast {
+        text: text.into(),
+        kind,
+        options: ToastOptions::default()
+            .duration(duration)
+            .show_progress(true),
+    });
+}
+
+fn toasts_info(toasts: &mut Toasts, text: String, duration: Duration) {
+    toasts_add_kind(toasts, text, duration, ToastKind::Info);
+}
+
+fn toasts_error(toasts: &mut Toasts, text: String, duration: Duration) {
+    toasts_add_kind(toasts, text, duration, ToastKind::Error);
 }
