@@ -13,6 +13,11 @@ authors = ["Mieszko Grodzicki", "Aleksander Tudruj"]
 name = "jp2gmd"
 path = "src/main.rs"
 
+[lib]
+name = "jp2gmd_lib"
+path = "src/lib.rs"
+doctest = true
+
 [features]
 fft = []
 clock = []
