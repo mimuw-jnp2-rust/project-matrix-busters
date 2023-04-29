@@ -69,14 +69,14 @@ impl<T: MatrixNumber> Type<T> {
         Ok(Self::Matrix(opt?))
     }
 
-    pub fn as_scalar(self) -> anyhow::Result<T> {
+    pub fn into_scalar(self) -> anyhow::Result<T> {
         match self {
             Type::Scalar(s) => Ok(s),
             Type::Matrix(_) => bail!("Expected scalar, got matrix."),
         }
     }
 
-    pub fn as_matrix(self) -> anyhow::Result<Matrix<T>> {
+    pub fn into_matrix(self) -> anyhow::Result<Matrix<T>> {
         match self {
             Type::Matrix(m) => Ok(m),
             Type::Scalar(_) => bail!("Expected matrix, got scalar."),
@@ -130,13 +130,14 @@ fn builtin_functions<T: MatrixNumber>() -> BTreeMap<Identifier, Box<Callable<T>>
     BTreeMap::from([
         (
             Identifier::new_unsafe("transpose".to_string()),
-            Box::new(|t: Type<T>| Ok(Type::Matrix(t.as_matrix()?.transpose()))) as Box<Callable<T>>,
+            Box::new(|t: Type<T>| Ok(Type::Matrix(t.into_matrix()?.transpose())))
+                as Box<Callable<T>>,
         ),
         (
             Identifier::new_unsafe("identity".to_string()),
             Box::new(|t: Type<T>| {
                 Ok(Type::Matrix(Matrix::identity(
-                    t.as_scalar()?
+                    t.into_scalar()?
                         .to_usize()
                         .context("Invalid identity argument")?,
                 )))
@@ -144,7 +145,7 @@ fn builtin_functions<T: MatrixNumber>() -> BTreeMap<Identifier, Box<Callable<T>>
         ),
         (
             Identifier::new_unsafe("inverse".to_string()),
-            Box::new(|t: Type<T>| Ok(Type::Matrix(t.as_matrix()?.inverse()?.result)))
+            Box::new(|t: Type<T>| Ok(Type::Matrix(t.into_matrix()?.inverse()?.result)))
                 as Box<Callable<T>>,
         ),
     ])
@@ -171,8 +172,8 @@ impl<T: MatrixNumber> Environment<T> {
         self.env.get(id)
     }
 
-    pub fn get_function(&self, id: &Identifier) -> Option<&Box<Callable<T>>> {
-        self.fun.get(id)
+    pub fn get_function(&self, id: &Identifier) -> Option<&Callable<T>> {
+        self.fun.get(id).map(|f| f.as_ref())
     }
 
     pub fn iter_mut(&mut self) -> IterMut<'_, Identifier, Type<T>> {

@@ -227,7 +227,7 @@ pub fn parse_expression<T: MatrixNumber>(
                 if let Some(value) = env.get_value(id) {
                     outputs.push_back(WorkingToken::Type(value.clone()));
                     outputs.back()
-                } else if let Some(_) = env.get_function(id) {
+                } else if env.get_function(id).is_some() {
                     operators.push_front(WorkingToken::Function(id.clone()));
                     operators.front()
                 } else {
@@ -587,10 +587,7 @@ mod tests {
         let at = im![1, 4; 2, 5; 3, 6];
         let b = im![1, 2; 3, 4];
 
-        env.insert(
-            Identifier::new("A".to_string()).unwrap(),
-            Type::Matrix(a.clone()),
-        );
+        env.insert(Identifier::new("A".to_string()).unwrap(), Type::Matrix(a));
         env.insert(
             Identifier::new("B".to_string()).unwrap(),
             Type::Matrix(b.clone()),
