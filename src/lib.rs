@@ -79,10 +79,10 @@ fn load_icon(path: &str) -> Option<IconData> {
 
 #[derive(Parser, Debug)]
 #[command(
-author,
-version,
-about,
-long_about = "**Just Pure 2D Graphics Matrix Display** is a powerful matrix calculator written in Rust using egui."
+    author,
+    version,
+    about,
+    long_about = "**Just Pure 2D Graphics Matrix Display** is a powerful matrix calculator written in Rust using egui."
 )]
 struct MatrixAppArgs {
     #[arg(
@@ -409,9 +409,9 @@ fn display_env_element_window<K: MatrixNumber>(
             value_shape.translate(
                 ui.clip_rect().min.to_vec2()
                     + vec2(
-                    (ui.min_size().x - value_rect.width()) / 2.,
-                    bar_height + VALUE_PADDING,
-                ),
+                        (ui.min_size().x - value_rect.width()) / 2.,
+                        bar_height + VALUE_PADDING,
+                    ),
             );
             ui.painter().add(value_shape);
 
