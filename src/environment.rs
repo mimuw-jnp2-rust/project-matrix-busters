@@ -1,7 +1,7 @@
 use std::collections::btree_map::IterMut;
 use std::collections::BTreeMap;
 
-use anyhow::bail;
+use anyhow::{bail, Context};
 
 use crate::locale::Locale;
 use crate::traits::{GuiDisplayable, LaTeXable};
@@ -21,6 +21,10 @@ impl Identifier {
         } else {
             bail!("Invalid identifier.")
         }
+    }
+
+    fn new_unsafe(id: String) -> Self {
+        Self { id }
     }
 
     pub fn result() -> Self {
@@ -64,6 +68,20 @@ impl<T: MatrixNumber> Type<T> {
     pub fn from_matrix_result(opt: anyhow::Result<Matrix<T>>) -> anyhow::Result<Self> {
         Ok(Self::Matrix(opt?))
     }
+
+    pub fn into_scalar(self) -> anyhow::Result<T> {
+        match self {
+            Type::Scalar(s) => Ok(s),
+            Type::Matrix(_) => bail!("Expected scalar, got matrix."),
+        }
+    }
+
+    pub fn into_matrix(self) -> anyhow::Result<Matrix<T>> {
+        match self {
+            Type::Matrix(m) => Ok(m),
+            Type::Scalar(_) => bail!("Expected matrix, got scalar."),
+        }
+    }
 }
 
 impl<T: MatrixNumber> ToString for Type<T> {
@@ -106,14 +124,43 @@ impl<T: MatrixNumber> LaTeXable for Type<T> {
     }
 }
 
+pub type Callable<T> = dyn Fn(Type<T>) -> anyhow::Result<Type<T>>;
+
+fn builtin_functions<T: MatrixNumber>() -> BTreeMap<Identifier, Box<Callable<T>>> {
+    BTreeMap::from([
+        (
+            Identifier::new_unsafe("transpose".to_string()),
+            Box::new(|t: Type<T>| Ok(Type::Matrix(t.into_matrix()?.transpose())))
+                as Box<Callable<T>>,
+        ),
+        (
+            Identifier::new_unsafe("identity".to_string()),
+            Box::new(|t: Type<T>| {
+                Ok(Type::Matrix(Matrix::identity(
+                    t.into_scalar()?
+                        .to_usize()
+                        .context("Invalid identity argument")?,
+                )))
+            }) as Box<Callable<T>>,
+        ),
+        (
+            Identifier::new_unsafe("inverse".to_string()),
+            Box::new(|t: Type<T>| Ok(Type::Matrix(t.into_matrix()?.inverse()?.result)))
+                as Box<Callable<T>>,
+        ),
+    ])
+}
+
 pub struct Environment<T: MatrixNumber> {
     env: BTreeMap<Identifier, Type<T>>,
+    fun: BTreeMap<Identifier, Box<Callable<T>>>,
 }
 
 impl<T: MatrixNumber> Environment<T> {
     pub fn new() -> Self {
         Self {
             env: BTreeMap::new(),
+            fun: builtin_functions(),
         }
     }
 
@@ -121,8 +168,12 @@ impl<T: MatrixNumber> Environment<T> {
         self.env.insert(id, value);
     }
 
-    pub fn get(&self, id: &Identifier) -> Option<&Type<T>> {
+    pub fn get_value(&self, id: &Identifier) -> Option<&Type<T>> {
         self.env.get(id)
+    }
+
+    pub fn get_function(&self, id: &Identifier) -> Option<&Callable<T>> {
+        self.fun.get(id).map(|f| f.as_ref())
     }
 
     pub fn iter_mut(&mut self) -> IterMut<'_, Identifier, Type<T>> {
@@ -154,5 +205,20 @@ mod tests {
         assert!(matches!(Identifier::new("pociąg".to_string()), Ok(_)));
         assert!(matches!(Identifier::new("32".to_string()), Err(_)));
         assert!(matches!(Identifier::new("".to_string()), Err(_)));
+    }
+
+    #[test]
+    fn test_env_contains_std_fun() {
+        let env = Environment::<i64>::new();
+
+        assert!(env
+            .get_function(&Identifier::new_unsafe("transpose".to_string()))
+            .is_some());
+        assert!(env
+            .get_function(&Identifier::new_unsafe("identity".to_string()))
+            .is_some());
+        assert!(env
+            .get_function(&Identifier::new_unsafe("inverse".to_string()))
+            .is_some());
     }
 }

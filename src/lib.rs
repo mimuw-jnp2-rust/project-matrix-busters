@@ -187,7 +187,7 @@ impl<K: MatrixNumber> eframe::App for MatrixApp<K> {
         let mut windows_result = None;
         for (id, window) in self.state.windows.iter_mut() {
             if window.is_open {
-                let element = self.state.env.get(id).unwrap();
+                let element = self.state.env.get_value(id).unwrap();
                 let local_result = display_env_element_window(
                     ctx,
                     (id, element),
