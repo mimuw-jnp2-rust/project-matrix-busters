@@ -29,6 +29,7 @@ impl<T: MatrixNumber> Matrix<T> {
     /// A new matrix.
     /// # Examples
     /// ```
+    /// # use jp2gmd_lib::Matrix;
     /// let m = Matrix::new_unsafe(vec![vec![1, 2, 3], vec![4, 5, 6]]);
     /// // m corresponds to the matrix
     /// // | 1 2 3 |
@@ -50,6 +51,7 @@ impl<T: MatrixNumber> Matrix<T> {
     /// A new matrix.
     /// # Examples
     /// ```
+    /// # use jp2gmd_lib::Matrix;
     /// let m = Matrix::new(vec![vec![1, 2, 3], vec![4, 5, 6]]);
     /// // m corresponds to the matrix
     /// // | 1 2 3 |
@@ -58,6 +60,7 @@ impl<T: MatrixNumber> Matrix<T> {
     /// # Errors
     /// If the data is not a valid matrix.
     /// ```
+    /// # use jp2gmd_lib::Matrix;
     /// let m = Matrix::new(vec![vec![1, 2, 3], vec![4, 5]]);
     /// // m is an error
     /// ```
@@ -86,6 +89,7 @@ impl<T: MatrixNumber> Matrix<T> {
     /// A new matrix.
     /// # Examples
     /// ```
+    /// # use jp2gmd_lib::Matrix;
     /// let m = Matrix::from_vec(vec![1, 2, 3, 4, 5, 6], (2, 3));
     /// // m corresponds to the matrix
     /// // | 1 2 3 |
@@ -116,7 +120,8 @@ impl<T: MatrixNumber> Matrix<T> {
     /// * `separator` - The index of the separator (or None if there is no separator).
     /// # Examples
     /// ```
-    /// let mut m = Matrix::new(vec![vec![1, 2, 3], vec![4, 5, 6]]);
+    /// # use jp2gmd_lib::Matrix;
+    /// let mut m = Matrix::new(vec![vec![1, 2, 3], vec![4, 5, 6]]).unwrap();
     /// // m corresponds to the matrix
     /// // | 1 2 3 |
     /// // | 4 5 6 |
@@ -149,11 +154,13 @@ impl<T: MatrixNumber> Matrix<T> {
     /// A new matrix.
     /// # Examples
     /// ```
-    /// let m = Matrix::new(vec![vec![1, 2, 3], vec![4, 5, 6]]);
+    /// # use anyhow::Context;
+    /// # use jp2gmd_lib::Matrix;
+    /// let m = Matrix::new(vec![vec![1, 2, 3], vec![4, 5, 6]]).expect("Invalid matrix.");
     /// // m corresponds to the matrix
     /// // | 1 2 3 |
     /// // | 4 5 6 |
-    /// let m = Matrix::reshape(m, (3, 2));
+    /// let m = Matrix::reshape(&m, (3, 2)).expect("Invalid size.");
     /// // m corresponds to the matrix
     /// // | 1 2 |
     /// // | 3 4 |
@@ -176,11 +183,12 @@ impl<T: MatrixNumber> Matrix<T> {
     /// A new matrix of shape (h, w) with given supplier.
     /// # Examples
     /// ```
-    /// let m = Matrix::new_with(2, 3, |i, j| i + j);
+    /// # use jp2gmd_lib::Matrix;
+    /// let m = Matrix::filled((2, 3), |i, j| (i + j) as i64);
     /// // m corresponds to the matrix
     /// // | 0 1 2 |
     /// // | 1 2 3 |
-    /// let m = Matrix::new_with(2, 3, |i, j| i * j);
+    /// let m = Matrix::filled((2, 3), |i, j| (i * j) as i64);
     /// // m corresponds to the matrix
     /// // | 0 0 0 |
     /// // | 0 1 2 |
@@ -211,7 +219,8 @@ impl<T: MatrixNumber> Matrix<T> {
     /// A zero matrix of shape (h, w).
     /// # Examples
     /// ```
-    /// let m = Matrix::zero(2, 3);
+    /// # use jp2gmd_lib::Matrix;
+    /// let m = Matrix::<i64>::zeros((2, 3));
     /// // m corresponds to the matrix
     /// // | 0 0 0 |
     /// // | 0 0 0 |
@@ -227,7 +236,8 @@ impl<T: MatrixNumber> Matrix<T> {
     /// A ones matrix of shape (h, w).
     /// # Examples
     /// ```
-    /// let m = Matrix::ones(2, 3);
+    /// # use jp2gmd_lib::Matrix;
+    /// let m = Matrix::<i64>::ones((2, 3));
     /// // m corresponds to the matrix
     /// // | 1 1 1 |
     /// // | 1 1 1 |
@@ -243,7 +253,9 @@ impl<T: MatrixNumber> Matrix<T> {
     /// An identity matrix of shape (n, n).
     /// # Examples
     /// ```
-    /// let m = Matrix::identity(3);
+    /// # use num_rational::Rational64;
+    /// # use jp2gmd_lib::Matrix;
+    /// let m = Matrix::<Rational64>::identity(3);
     /// // m corresponds to the matrix
     /// // | 1 0 0 |
     /// // | 0 1 0 |
@@ -267,6 +279,7 @@ impl<T: MatrixNumber> Matrix<T> {
     /// A tuple of the form `(height, width)`.
     /// # Examples
     /// ```
+    /// # use jp2gmd_lib::Matrix;
     /// let m = Matrix::new(vec![vec![1, 2, 3], vec![4, 5, 6]]).unwrap();
     /// assert_eq!(m.get_shape(), (2, 3));
     /// ```
@@ -283,12 +296,12 @@ impl<T: MatrixNumber> Matrix<T> {
     /// Matrix has to be valid. Otherwise, the behavior is undefined.
     /// # Examples
     /// ```rust
-    /// use matrix::Matrix;
+    /// # use jp2gmd_lib::Matrix;
     /// let m = Matrix::new(vec![vec![1, 2], vec![3, 4]]).unwrap();
     /// assert!(!m.is_empty());
-    /// let m = Matrix::new(vec![vec![], vec![], vec![]]).unwrap();
+    /// let m = Matrix::<i64>::new(vec![vec![], vec![], vec![]]).unwrap();
     /// assert!(m.is_empty());
-    /// let m = Matrix::new(vec![]).unwrap();
+    /// let m = Matrix::<i64>::new(vec![]).unwrap();
     /// assert!(m.is_empty());
     /// ```
     pub fn is_empty(&self) -> bool {
@@ -299,6 +312,7 @@ impl<T: MatrixNumber> Matrix<T> {
     /// Matrix is valid if all rows have the same length.
     /// # Examples
     /// ```rust
+    /// # use jp2gmd_lib::Matrix;
     /// let m = Matrix::new_unsafe(vec![vec![1, 2], vec![3, 4]]);
     /// assert!(m.is_valid());
     /// let m = Matrix::new_unsafe(vec![vec![1, 2], vec![3, 4, 5]]);
@@ -322,7 +336,7 @@ impl<T: MatrixNumber> Matrix<T> {
     /// Returns the raw data of the matrix.
     /// # Examples
     /// ```rust
-    /// use matrix::Matrix;
+    /// # use jp2gmd_lib::Matrix;
     /// let m = Matrix::new(vec![vec![1, 2], vec![3, 4]]).unwrap();
     /// assert_eq!(m.get_data(), &vec![vec![1, 2], vec![3, 4]]);
     /// ```
@@ -333,9 +347,9 @@ impl<T: MatrixNumber> Matrix<T> {
     /// Returns the raw data of the matrix and consumes the matrix.
     /// # Examples
     /// ```rust
-    /// use matrix::Matrix;
+    /// # use jp2gmd_lib::Matrix;
     /// let m = Matrix::new(vec![vec![1, 2], vec![3, 4]]).unwrap();
-    /// assert_eq!(m.into_data(), vec![vec![1, 2], vec![3, 4]]);
+    /// assert_eq!(m.consume(), vec![vec![1, 2], vec![3, 4]]);
     /// ```
     pub fn consume(self) -> Vec<Vec<T>> {
         self.data
@@ -349,13 +363,13 @@ impl<T: MatrixNumber> Matrix<T> {
     /// `true` if the matrices have the same shape, `false` otherwise.
     /// # Examples
     /// ```rust
-    /// use matrix::Matrix;
+    /// # use jp2gmd_lib::Matrix;
     /// let m1 = Matrix::new(vec![vec![1, 2], vec![3, 4]]).unwrap();
     /// let m2 = Matrix::new(vec![vec![1, 2], vec![3, 4]]).unwrap();
-    /// assert!(m1.has_same_shape(&m2));
+    /// assert!(m1.same_shapes(&m2));
     /// let m1 = Matrix::new(vec![vec![1, 2], vec![3, 4]]).unwrap();
     /// let m2 = Matrix::new(vec![vec![1, 2, 3], vec![4, 5, 6]]).unwrap();
-    /// assert!(!m1.has_same_shape(&m2));
+    /// assert!(!m1.same_shapes(&m2));
     /// ```
     pub fn same_shapes(&self, other: &Self) -> bool {
         let self_shape = self.get_shape();
@@ -372,15 +386,15 @@ impl<T: MatrixNumber> Matrix<T> {
     /// Returns `Err` if the matrices cannot be multiplied - e.g. if they have incompatible shapes.
     /// # Examples
     /// ```rust
-    /// use matrix::Matrix;
+    /// # use jp2gmd_lib::Matrix;
     /// let m1 = Matrix::new(vec![vec![1, 2, 3], vec![4, 5, 6]]).unwrap();
     /// let m2 = Matrix::new(vec![vec![1, 2], vec![3, 4], vec![5, 6]]).unwrap();
-    /// assert_eq!(m1.get_shape_after_mul(&m2), Ok((2, 2)));
+    /// assert_eq!(m1.result_shape_for_mul(&m2).unwrap(), (2, 2));
     /// let m1 = Matrix::new(vec![vec![1, 2, 3], vec![4, 5, 6]]).unwrap();
     /// let m2 = Matrix::new(vec![vec![1, 2], vec![3, 4]]).unwrap();
-    /// assert!(m1.get_shape_after_mul(&m2).is_err());
+    /// assert!(m1.result_shape_for_mul(&m2).is_err());
     /// ```
-    fn result_shape_for_mul(&self, other: &Self) -> anyhow::Result<(usize, usize)> {
+    pub fn result_shape_for_mul(&self, other: &Self) -> anyhow::Result<(usize, usize)> {
         let (h, self_w) = self.get_shape();
         let (other_h, w) = other.get_shape();
         if self_w == other_h {
@@ -400,10 +414,10 @@ impl<T: MatrixNumber> Matrix<T> {
     /// A new matrix with the result of the operation.
     /// # Examples
     /// ```rust
-    /// use matrix::Matrix;
+    /// # use jp2gmd_lib::Matrix;
     /// let m1 = Matrix::new(vec![vec![1, 2], vec![3, 4]]).unwrap();
     /// let m2 = Matrix::new(vec![vec![1, 2], vec![3, 4]]).unwrap();
-    /// let m3 = m1.checked_operation_on_two(&m2, |a, b| a + b).unwrap();
+    /// let m3 = m1.checked_operation_on_two(&m2, |a, b| Some(a + b)).unwrap();
     /// assert_eq!(m3, Matrix::new(vec![vec![2, 4], vec![6, 8]]).unwrap());
     /// ```
     pub fn checked_operation_on_two<F>(&self, other: &Self, operation: F) -> anyhow::Result<Self>
@@ -436,8 +450,9 @@ impl<T: MatrixNumber> Matrix<T> {
     /// A new matrix with the result of the operation.
     /// # Examples
     /// ```rust
+    /// # use jp2gmd_lib::Matrix;
     /// let m = Matrix::new(vec![vec![1, 2], vec![3, 4]]).unwrap();
-    /// let m2 = m.checked_operation(|a| a + 1).unwrap();
+    /// let m2 = m.checked_operation(|a| Some(a + 1)).unwrap();
     /// assert_eq!(m2, Matrix::new(vec![vec![2, 3], vec![4, 5]]).unwrap());
     /// ```
     pub fn checked_operation<F>(&self, operation: F) -> anyhow::Result<Self>
@@ -459,8 +474,8 @@ impl<T: MatrixNumber> Matrix<T> {
     /// # Errors
     /// Returns `Err` if the matrices have different shapes.
     /// # Examples
-    /// ```rust
-    /// use matrix::Matrix;
+    /// ```
+    /// # use jp2gmd_lib::Matrix;
     /// let m1 = Matrix::new(vec![vec![1, 2], vec![3, 4]]).unwrap();
     /// let m2 = Matrix::new(vec![vec![1, 2], vec![3, 4]]).unwrap();
     /// let m3 = m1.checked_add(&m2).unwrap();
@@ -479,7 +494,7 @@ impl<T: MatrixNumber> Matrix<T> {
     /// Returns `Err` if the matrices have different shapes.
     /// # Examples
     /// ```rust
-    /// use matrix::Matrix;
+    /// # use jp2gmd_lib::Matrix;
     /// let m1 = Matrix::new(vec![vec![1, 2], vec![3, 4]]).unwrap();
     /// let m2 = Matrix::new(vec![vec![1, 2], vec![3, 4]]).unwrap();
     /// let m3 = m1.checked_sub(&m2).unwrap();
@@ -494,7 +509,7 @@ impl<T: MatrixNumber> Matrix<T> {
     /// A new matrix with the result of the negation.
     /// # Examples
     /// ```rust
-    /// use matrix::Matrix;
+    /// # use jp2gmd_lib::Matrix;
     /// let m1 = Matrix::new(vec![vec![1, 2], vec![3, 4]]).unwrap();
     /// let m2 = m1.checked_neg().unwrap();
     /// assert_eq!(m2, Matrix::new(vec![vec![-1, -2], vec![-3, -4]]).unwrap());
@@ -512,7 +527,7 @@ impl<T: MatrixNumber> Matrix<T> {
     /// Returns `Err` if height of the first matrix is not equal to the width of the second matrix.
     /// # Examples
     /// ```rust
-    /// use matrix::Matrix;
+    /// # use jp2gmd_lib::Matrix;
     /// let m1 = Matrix::new(vec![vec![1, 2], vec![3, 4]]).unwrap();
     /// let m2 = Matrix::new(vec![vec![1, 2], vec![3, 4]]).unwrap();
     /// let m3 = m1.checked_mul(&m2).unwrap();
@@ -544,7 +559,7 @@ impl<T: MatrixNumber> Matrix<T> {
     /// Returns `Err` if the multiplication overflows.
     /// # Examples
     /// ```rust
-    /// use matrix::Matrix;
+    /// # use jp2gmd_lib::Matrix;
     /// let m1 = Matrix::new(vec![vec![1, 2], vec![3, 4]]).unwrap();
     /// let m2 = m1.checked_mul_scl(&2).unwrap();
     /// assert_eq!(m2, Matrix::new(vec![vec![2, 4], vec![6, 8]]).unwrap());
@@ -587,7 +602,7 @@ impl<T: MatrixNumber> Matrix<T> {
     /// A new matrix with the result of the operation.
     /// # Examples
     /// ```rust
-    /// use matrix::Matrix;
+    /// # use jp2gmd_lib::Matrix;
     /// let m1 = Matrix::new(vec![vec![1, 2], vec![3, 4]]).unwrap();
     /// let m2 = Matrix::new(vec![vec![5, 6], vec![7, 8]]).unwrap();
     /// let m3 = m1.concat(m2).unwrap();
@@ -611,7 +626,7 @@ impl<T: MatrixNumber> Matrix<T> {
     /// A tuple of two matrices.
     /// # Examples
     /// ```rust
-    /// use matrix::Matrix;
+    /// # use jp2gmd_lib::Matrix;
     /// let m1 = Matrix::new(vec![vec![1, 2, 3, 4], vec![5, 6, 7, 8]]).unwrap();
     /// let (m2, m3) = m1.split(2).unwrap();
     /// assert_eq!(m2, Matrix::new(vec![vec![1, 2], vec![5, 6]]).unwrap());
@@ -803,11 +818,13 @@ impl<T: MatrixNumber> From<Matrix<T>> for Vec<T> {
 }
 
 /// Create a matrix row (vector) of Rational64 numbers passed as integers.
-/// Uses ri! macro.
-/// Used as helper macro for rm! macro.
+/// # uses ri! macro.
+/// # used as helper macro for rm! macro.
 /// rv stands for Rational Vector.
 /// Example:
 /// ```
+/// # use jp2gmd_lib::{rv, ri};
+/// # use num_rational::Rational64;
 /// rv!(1, 2, 3); // Creates a row vector [ri!(1), ri!(2), ri!(3)]
 /// ```
 #[macro_export]
@@ -820,10 +837,12 @@ macro_rules! rv {
 }
 
 /// Create a matrix of Rational64 numbers passed as integers.
-/// Uses ri! and rv! macros.
+/// # uses ri! and rv! macros.
 /// rm stands for Rational Matrix.
 /// Example:
 /// ```
+/// # use jp2gmd_lib::*;
+/// # use num_rational::Rational64;
 /// // Creates a matrix
 /// // | 1 2 3 |
 /// // | 4 5 6 |
@@ -843,6 +862,7 @@ macro_rules! rm {
 /// im stands for Integer Matrix.
 /// Example:
 /// ```
+/// # use jp2gmd_lib::{im, Matrix};
 /// // Creates a matrix
 /// // | 1 2 3 |
 /// // | 4 5 6 |

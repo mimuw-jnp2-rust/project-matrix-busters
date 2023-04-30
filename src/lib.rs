@@ -47,6 +47,8 @@ use clap::builder::TypedValueParser;
 use clap::Parser;
 use egui_toast::Toasts;
 
+pub use crate::matrices::*;
+
 /// Field for matrices.
 type F = Rational64;
 
