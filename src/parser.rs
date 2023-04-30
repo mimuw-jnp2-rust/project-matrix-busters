@@ -606,4 +606,55 @@ mod tests {
             Type::Matrix(b.inverse().unwrap().result)
         );
     }
+
+    #[test]
+    fn test_nested_functions() {
+        let mut env = Environment::new();
+
+        let a = im![1, 2, 3; 4, 5, 6];
+        let att = im![1, 2, 3; 4, 5, 6];
+
+        env.insert(Identifier::new("A".to_string()).unwrap(), Type::Matrix(a));
+
+        assert_eq!(
+            parse_expression("transpose(transpose(A))", &env).unwrap(),
+            Type::Matrix(att)
+        )
+    }
+
+    #[test]
+    fn test_expr_with_function() {
+        let mut env = Environment::new();
+
+        let a = im![1, 2, 3; 4, 5, 6];
+        let b = im![1, 2; 3, 4];
+
+        env.insert(Identifier::new("A".to_string()).unwrap(), Type::Matrix(a));
+        env.insert(
+            Identifier::new("B".to_string()).unwrap(),
+            Type::Matrix(b.clone()),
+        );
+
+        assert_eq!(
+            parse_expression("transpose(A) * B", &env).unwrap(),
+            Type::Matrix(im![13, 18; 17, 24; 21, 30])
+        );
+    }
+
+    #[test]
+    fn test_expr_in_function() {
+        let mut env = Environment::new();
+
+        let a = im![1, 2, 3; 4, 5, 6];
+        let i = Matrix::identity(2);
+        let at = im![1, 4; 2, 5; 3, 6];
+
+        env.insert(Identifier::new("A".to_string()).unwrap(), Type::Matrix(a));
+        env.insert(Identifier::new("I".to_string()).unwrap(), Type::Matrix(i));
+
+        assert_eq!(
+            parse_expression("transpose(I * A)", &env).unwrap(),
+            Type::Matrix(at)
+        );
+    }
 }
