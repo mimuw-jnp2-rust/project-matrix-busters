@@ -669,4 +669,21 @@ mod tests {
             Type::Matrix(at)
         );
     }
+
+    #[test]
+    fn test_complex_nested_function_with_expr() {
+        let mut env = Environment::new();
+
+        let a = im![1, 2, 3; 4, 5, 6];
+
+        env.insert(Identifier::new("A".to_string()).unwrap(), Type::Matrix(a));
+
+        assert_eq!(
+            parse_expression(
+                "transpose(transpose(identity(2137 - 2135 + 1 - 1 + (42 - 420) * 0) * A) + transpose(identity(2) * A))",
+                &env
+            ).unwrap(),
+            Type::Matrix(im![2, 4, 6; 8, 10, 12])
+        );
+    }
 }
