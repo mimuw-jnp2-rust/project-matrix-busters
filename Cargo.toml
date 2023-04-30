@@ -13,6 +13,11 @@ authors = ["Mieszko Grodzicki", "Aleksander Tudruj"]
 name = "jp2gmd"
 path = "src/main.rs"
 
+[lib]
+name = "jp2gmd_lib"
+path = "src/lib.rs"
+doctest = true
+
 [features]
 fft = []
 clock = []
@@ -33,4 +38,4 @@ time = "0.3"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 itertools = "0.10.5"
-egui-toast = "0.6.0"
+egui-toast = "0.7.0"

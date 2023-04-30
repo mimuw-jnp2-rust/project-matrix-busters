@@ -16,25 +16,26 @@ jobs:
           packages: xorg-dev libxcb-shape0-dev libxcb-xfixes0-dev
           version: 1.0
       - uses: actions/checkout@v3
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: 'kolezanka'
       - name: Build
         run: cargo build --verbose
-      - uses: actions/upload-artifact@v3
-        with:
-          name: build
-          path: target/
 
   checks:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/download-artifact@v3
-        with:
-          name: build
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
           packages: xorg-dev libxcb-shape0-dev libxcb-xfixes0-dev
           version: 1.0
+      - uses: actions/checkout@v3
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: 'kolezanka'
       - name: Tests
         run: cargo test --verbose
       - name: Code Format
