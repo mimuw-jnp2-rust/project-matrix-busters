@@ -206,4 +206,13 @@ mod tests {
         assert!(matches!(Identifier::new("32".to_string()), Err(_)));
         assert!(matches!(Identifier::new("".to_string()), Err(_)));
     }
+
+    #[test]
+    fn test_env_contains_std_fun() {
+        let env = Environment::<i64>::new();
+
+        assert!(env.get_function(&Identifier::new_unsafe("transpose".to_string())).is_some());
+        assert!(env.get_function(&Identifier::new_unsafe("identity".to_string())).is_some());
+        assert!(env.get_function(&Identifier::new_unsafe("inverse".to_string())).is_some());
+    }
 }
