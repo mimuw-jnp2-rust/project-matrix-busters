@@ -116,23 +116,35 @@ fn binary_op<T: MatrixNumber>(left: Type<T>, right: Type<T>, op: char) -> anyhow
             (Type::Scalar(l), Type::Matrix(r)) => Type::from_matrix_result(r.checked_mul_scl(&l)),
         },
         '/' => match (left, right) {
-            (Type::Scalar(l), Type::Scalar(r)) => if !r.is_zero() {
-                Type::from_scalar_option(l.checked_div(&r))
-            } else {
-                bail!("Division by zero!")
-            },
-            (Type::Matrix(_), Type::Matrix(_)) => bail!("WTF dividing by matrix? You should use the `inv` function (not implemented yet, wait for it...)"),
-            (Type::Matrix(_), Type::Scalar(_)) => bail!("Diving matrix by scalar is not supported yet..."),
-            (Type::Scalar(_), Type::Matrix(_)) => bail!("Diving scalar by matrix does not make sense!"),
-        },
-        '^' => if let Type::Scalar(exp) = right {
-            let exp = exp.to_usize().context("Exponent should be a nonnegative integer.")?;
-            match left {
-                Type::Scalar(base) => Type::from_scalar_option(checked_pow(base, exp)),
-                Type::Matrix(base) => Type::from_matrix_result(base.checked_pow(exp)),
+            (Type::Scalar(l), Type::Scalar(r)) => {
+                if !r.is_zero() {
+                    Type::from_scalar_option(l.checked_div(&r))
+                } else {
+                    bail!("Division by zero!")
+                }
             }
-        } else {
-            bail!("Exponent cannot be a matrix!");
+            (Type::Matrix(_), Type::Matrix(_)) => {
+                bail!("WTF dividing by matrix? You should use the `inverse` function instead!")
+            }
+            (Type::Matrix(_), Type::Scalar(_)) => {
+                bail!("Diving matrix by scalar is not supported yet...")
+            }
+            (Type::Scalar(_), Type::Matrix(_)) => {
+                bail!("Diving scalar by matrix does not make sense!")
+            }
+        },
+        '^' => {
+            if let Type::Scalar(exp) = right {
+                let exp = exp
+                    .to_usize()
+                    .context("Exponent should be a nonnegative integer.")?;
+                match left {
+                    Type::Scalar(base) => Type::from_scalar_option(checked_pow(base, exp)),
+                    Type::Matrix(base) => Type::from_matrix_result(base.checked_pow(exp)),
+                }
+            } else {
+                bail!("Exponent cannot be a matrix!");
+            }
         }
         _ => unimplemented!(),
     }
