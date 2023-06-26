@@ -2,6 +2,7 @@ mod constants;
 mod editor_gui;
 mod env_gui;
 mod environment;
+mod float;
 #[cfg(feature = "fft")]
 mod fourier;
 #[cfg(feature = "clock")]
@@ -33,7 +34,6 @@ use eframe::{egui, IconData};
 
 use egui::{gui_zoom, vec2, Align2, Context, Response, Sense, Ui};
 use env_gui::insert_to_env;
-use num_rational::Rational64;
 use std::collections::HashMap;
 use std::default::Default;
 use std::time::Duration;
@@ -49,8 +49,10 @@ use egui_toast::{Toast, ToastKind, ToastOptions, Toasts};
 
 pub use matrices::*;
 
+use crate::float::Float64;
+
 /// Field for matrices.
-type F = Rational64;
+type F = Float64;
 
 pub fn run_application() -> Result<(), eframe::Error> {
     let options = eframe::NativeOptions {
