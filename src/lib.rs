@@ -48,6 +48,7 @@ use clap::{arg, Parser};
 use egui_toast::{Toast, ToastKind, ToastOptions, Toasts};
 use num_rational::Rational64;
 
+pub use float::trim_trailing_zeros_float_str;
 pub use matrices::*;
 
 use crate::float::Float64;
@@ -73,7 +74,10 @@ pub fn run_application() -> Result<(), eframe::Error> {
     }
 }
 
-fn exec_app<T: MatrixNumber + 'static>(locale: Locale, options: eframe::NativeOptions) -> Result<(), eframe::Error> {
+fn exec_app<T: MatrixNumber + 'static>(
+    locale: Locale,
+    options: eframe::NativeOptions,
+) -> Result<(), eframe::Error> {
     eframe::run_native(
         &locale.get_translated(APP_NAME),
         options,
@@ -93,10 +97,10 @@ fn load_icon(path: &str) -> Option<IconData> {
 
 #[derive(Parser, Debug)]
 #[command(
-author,
-version,
-about,
-long_about = "**Just Pure 2D Graphics Matrix Display** is a powerful matrix calculator written in Rust using egui."
+    author,
+    version,
+    about,
+    long_about = "**Just Pure 2D Graphics Matrix Display** is a powerful matrix calculator written in Rust using egui."
 )]
 struct MatrixAppArgs {
     #[arg(
@@ -372,14 +376,12 @@ fn display_env_element_window<K: MatrixNumber>(
                     let latex = value.to_latex();
                     set_clipboard(Ok(latex), clipboard, toasts, locale);
                 }
-                let mut update_by_result = |matrix_op_res| {
-                    match matrix_op_res {
-                        Ok(Aftermath { result, steps }) => {
-                            window_result = Some(Type::Matrix(result));
-                            Ok(steps.join("\n"))
-                        }
-                        Err(err) => Err(err),
+                let mut update_by_result = |matrix_op_res| match matrix_op_res {
+                    Ok(Aftermath { result, steps }) => {
+                        window_result = Some(Type::Matrix(result));
+                        Ok(steps.join("\n"))
                     }
+                    Err(err) => Err(err),
                 };
                 if let Type::Matrix(m) = value {
                     if ui.button(locale.get_translated("Echelon")).clicked() {
@@ -423,9 +425,9 @@ fn display_env_element_window<K: MatrixNumber>(
             value_shape.translate(
                 ui.clip_rect().min.to_vec2()
                     + vec2(
-                    (ui.min_size().x - value_rect.width()) / 2.,
-                    bar_height + VALUE_PADDING,
-                ),
+                        (ui.min_size().x - value_rect.width()) / 2.,
+                        bar_height + VALUE_PADDING,
+                    ),
             );
             ui.painter().add(value_shape);
 

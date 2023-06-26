@@ -29,9 +29,9 @@ impl PartialEq for Float64 {
     }
 }
 
-impl Into<f64> for Float64 {
-    fn into(self) -> f64 {
-        self.value
+impl From<Float64> for f64 {
+    fn from(value: Float64) -> Self {
+        value.value
     }
 }
 
@@ -211,8 +211,18 @@ impl LaTeXable for f64 {
 }
 
 /// Trims trailing zeros from a float string.
-/// Example: "1.000" -> "1", "1.010" -> "1.01"
-fn trim_trailing_zeros_float_str(s: &str) -> String {
+/// # Arguments
+/// * `s` - String to trim zeros from
+/// # Returns
+/// A string representing the same floating point number, but without trailing zeros
+/// # Examples
+/// ```rust
+/// # use crate::jp2gmd_lib::trim_trailing_zeros_float_str;
+/// assert_eq!(trim_trailing_zeros_float_str("10.0"), "10");
+/// assert_eq!(trim_trailing_zeros_float_str("123.450"), "123.45");
+/// assert_eq!(trim_trailing_zeros_float_str("1.0"), "1");
+/// ```
+pub fn trim_trailing_zeros_float_str(s: &str) -> String {
     let mut s = s.to_string();
     if s.contains('.') {
         s = s.trim_end_matches('0').to_string();
