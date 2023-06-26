@@ -44,15 +44,19 @@ use crate::fourier::Fourier;
 #[cfg(feature = "clock")]
 use crate::fractal_clock::FractalClock;
 use clap::builder::TypedValueParser;
-use clap::Parser;
+use clap::{arg, Parser};
 use egui_toast::{Toast, ToastKind, ToastOptions, Toasts};
+use num_rational::Rational64;
 
 pub use matrices::*;
 
 use crate::float::Float64;
 
 /// Field for matrices.
-type F = Float64;
+type F = Rational64;
+
+/// Approximate field for matrices.
+type R = Float64;
 
 pub fn run_application() -> Result<(), eframe::Error> {
     let options = eframe::NativeOptions {
@@ -62,10 +66,18 @@ pub fn run_application() -> Result<(), eframe::Error> {
     };
     let args = MatrixAppArgs::parse();
     let locale = Locale::new(args.language);
+
+    match args.approx {
+        true => exec_app::<R>(locale, options),
+        false => exec_app::<F>(locale, options),
+    }
+}
+
+fn exec_app<T: MatrixNumber + 'static>(locale: Locale, options: eframe::NativeOptions) -> Result<(), eframe::Error> {
     eframe::run_native(
         &locale.get_translated(APP_NAME),
         options,
-        Box::new(|_cc| Box::<MatrixApp<F>>::new(MatrixApp::new(locale))),
+        Box::new(|_cc| Box::<MatrixApp<T>>::new(MatrixApp::new(locale))),
     )
 }
 
@@ -81,19 +93,22 @@ fn load_icon(path: &str) -> Option<IconData> {
 
 #[derive(Parser, Debug)]
 #[command(
-    author,
-    version,
-    about,
-    long_about = "**Just Pure 2D Graphics Matrix Display** is a powerful matrix calculator written in Rust using egui."
+author,
+version,
+about,
+long_about = "**Just Pure 2D Graphics Matrix Display** is a powerful matrix calculator written in Rust using egui."
 )]
 struct MatrixAppArgs {
     #[arg(
     long,
     default_value_t = Language::English,
     value_parser = clap::builder::PossibleValuesParser::new(["English", "Polish", "Spanish"])
-    .map(|s| Language::of(Some(s))),
+    .map(| s | Language::of(Some(s))),
     )]
     language: Language,
+
+    #[arg(long, default_value = "false")]
+    approx: bool,
 }
 
 pub struct WindowState {
@@ -411,9 +426,9 @@ fn display_env_element_window<K: MatrixNumber>(
             value_shape.translate(
                 ui.clip_rect().min.to_vec2()
                     + vec2(
-                        (ui.min_size().x - value_rect.width()) / 2.,
-                        bar_height + VALUE_PADDING,
-                    ),
+                    (ui.min_size().x - value_rect.width()) / 2.,
+                    bar_height + VALUE_PADDING,
+                ),
             );
             ui.painter().add(value_shape);
 
