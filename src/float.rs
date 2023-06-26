@@ -246,3 +246,65 @@ impl GuiDisplayable for f64 {
         Shape::Text(text_shape)
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::locale::Language;
+
+    #[test]
+    fn test_zeros() {
+        assert_eq!(Float64::from_str("0").unwrap(), 0.0.into());
+        assert_eq!(Float64::from_str("0.0").unwrap(), 0.0.into());
+        assert_eq!(Float64::from_str("0.00").unwrap(), 0.0.into());
+        assert_eq!(Float64::from_str("0.000").unwrap(), 0.0.into());
+    }
+
+    #[test]
+    fn test_zeros_to_string() {
+        assert_eq!(Float64::from_str("0").unwrap().to_string(), "0");
+        assert_eq!(Float64::from_str("0.0").unwrap().to_string(), "0");
+        assert_eq!(Float64::from_str("0.00").unwrap().to_string(), "0");
+        assert_eq!(Float64::from_str("0.000").unwrap().to_string(), "0");
+    }
+
+    #[test]
+    fn test_trim_trailing_zeros_float_str() {
+        assert_eq!(trim_trailing_zeros_float_str("10.0"), "10");
+        assert_eq!(trim_trailing_zeros_float_str("123.450"), "123.45");
+        assert_eq!(trim_trailing_zeros_float_str("1.0"), "1");
+    }
+
+    #[test]
+    fn test_float64_from_str() {
+        assert_eq!(Float64::from_str("10.0").unwrap(), 10.0.into());
+        assert_eq!(Float64::from_str("123.450").unwrap(), 123.45.into());
+        assert_eq!(Float64::from_str("1.0").unwrap(), 1.0.into());
+    }
+
+    #[test]
+    fn test_float64_to_latex() {
+        assert_eq!(Float64::from_str("10.0").unwrap().to_latex(), "10");
+        assert_eq!(Float64::from_str("123.450").unwrap().to_latex(), "123.45");
+        assert_eq!(Float64::from_str("1.0").unwrap().to_latex(), "1");
+    }
+
+    #[test]
+    fn test_float64_display_string() {
+        let locale = Locale::new(Language::English);
+        assert_eq!(
+            Float64::from_str("10.0").unwrap().display_string(&locale),
+            "10"
+        );
+        assert_eq!(
+            Float64::from_str("123.450")
+                .unwrap()
+                .display_string(&locale),
+            "123.45"
+        );
+        assert_eq!(
+            Float64::from_str("1.0").unwrap().display_string(&locale),
+            "1"
+        );
+    }
+}
