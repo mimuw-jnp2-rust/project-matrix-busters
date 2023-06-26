@@ -372,15 +372,18 @@ fn display_env_element_window<K: MatrixNumber>(
                     let latex = value.to_latex();
                     set_clipboard(Ok(latex), clipboard, toasts, locale);
                 }
+                let mut update_by_result = |matrix_op_res| {
+                    match matrix_op_res {
+                        Ok(Aftermath { result, steps }) => {
+                            window_result = Some(Type::Matrix(result));
+                            Ok(steps.join("\n"))
+                        }
+                        Err(err) => Err(err),
+                    }
+                };
                 if let Type::Matrix(m) = value {
                     if ui.button(locale.get_translated("Echelon")).clicked() {
-                        let echelon = match m.echelon() {
-                            Ok(Aftermath { result, steps }) => {
-                                window_result = Some(Type::Matrix(result));
-                                Ok(steps.join("\n"))
-                            }
-                            Err(err) => Err(err),
-                        };
+                        let echelon = update_by_result(m.echelon());
                         set_clipboard(echelon, clipboard, toasts, locale);
                     }
                 }
@@ -395,13 +398,7 @@ fn display_env_element_window<K: MatrixNumber>(
                                 locale.get_translated("Failed to calculate inverse"),
                             )),
                         },
-                        Type::Matrix(m) => match m.inverse() {
-                            Ok(Aftermath { result, steps }) => {
-                                window_result = Some(Type::Matrix(result));
-                                Ok(steps.join("\n"))
-                            }
-                            Err(err) => Err(err),
-                        },
+                        Type::Matrix(m) => update_by_result(m.inverse()),
                     };
                     set_clipboard(inverse, clipboard, toasts, locale);
                 }
