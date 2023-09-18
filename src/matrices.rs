@@ -614,8 +614,7 @@ impl<T: MatrixNumber> Matrix<T> {
             bail!("Cannot concatenate matrices with different number of rows!");
         }
 
-        std::iter::zip(self.data.iter_mut(), other.data.into_iter())
-            .for_each(|(a, b)| a.extend(b.into_iter()));
+        std::iter::zip(self.data.iter_mut(), other.data).for_each(|(a, b)| a.extend(b));
         Ok(self.with_separator(Some(columns)))
     }
 
