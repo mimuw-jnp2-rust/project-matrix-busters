@@ -96,7 +96,7 @@ impl<T: MatrixNumber> ToString for Type<T> {
 impl<T: MatrixNumber> GuiDisplayable for Type<T> {
     fn display_string(&self, locale: &Locale) -> String {
         match self {
-            Type::Scalar(s) => s.to_string(),
+            Type::Scalar(s) => s.display_string(locale),
             Type::Matrix(m) => m.display_string(locale),
         }
     }

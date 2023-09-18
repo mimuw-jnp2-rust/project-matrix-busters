@@ -2,6 +2,7 @@ mod constants;
 mod editor_gui;
 mod env_gui;
 mod environment;
+mod float;
 #[cfg(feature = "fft")]
 mod fourier;
 #[cfg(feature = "clock")]
@@ -33,7 +34,6 @@ use eframe::{egui, IconData};
 
 use egui::{gui_zoom, vec2, Align2, Context, Response, Sense, Ui};
 use env_gui::insert_to_env;
-use num_rational::Rational64;
 use std::collections::HashMap;
 use std::default::Default;
 use std::time::Duration;
@@ -44,13 +44,20 @@ use crate::fourier::Fourier;
 #[cfg(feature = "clock")]
 use crate::fractal_clock::FractalClock;
 use clap::builder::TypedValueParser;
-use clap::Parser;
+use clap::{arg, Parser};
 use egui_toast::{Toast, ToastKind, ToastOptions, Toasts};
+use num_rational::Rational64;
 
+pub use float::trim_trailing_zeros_float_str;
 pub use matrices::*;
+
+use crate::float::Float64;
 
 /// Field for matrices.
 type F = Rational64;
+
+/// Approximate field for matrices.
+type R = Float64;
 
 pub fn run_application() -> Result<(), eframe::Error> {
     let options = eframe::NativeOptions {
@@ -60,10 +67,21 @@ pub fn run_application() -> Result<(), eframe::Error> {
     };
     let args = MatrixAppArgs::parse();
     let locale = Locale::new(args.language);
+
+    match args.approx {
+        true => exec_app::<R>(locale, options),
+        false => exec_app::<F>(locale, options),
+    }
+}
+
+fn exec_app<T: MatrixNumber + 'static>(
+    locale: Locale,
+    options: eframe::NativeOptions,
+) -> Result<(), eframe::Error> {
     eframe::run_native(
         &locale.get_translated(APP_NAME),
         options,
-        Box::new(|_cc| Box::<MatrixApp<F>>::new(MatrixApp::new(locale))),
+        Box::new(|_cc| Box::<MatrixApp<T>>::new(MatrixApp::new(locale))),
     )
 }
 
@@ -89,9 +107,12 @@ struct MatrixAppArgs {
     long,
     default_value_t = Language::English,
     value_parser = clap::builder::PossibleValuesParser::new(["English", "Polish", "Spanish"])
-    .map(|s| Language::of(Some(s))),
+    .map(| s | Language::of(Some(s))),
     )]
     language: Language,
+
+    #[arg(long, default_value = "false")]
+    approx: bool,
 }
 
 pub struct WindowState {
@@ -355,15 +376,16 @@ fn display_env_element_window<K: MatrixNumber>(
                     let latex = value.to_latex();
                     set_clipboard(Ok(latex), clipboard, toasts, locale);
                 }
+                let mut update_by_result = |matrix_op_res| match matrix_op_res {
+                    Ok(Aftermath { result, steps }) => {
+                        window_result = Some(Type::Matrix(result));
+                        Ok(steps.join("\n"))
+                    }
+                    Err(err) => Err(err),
+                };
                 if let Type::Matrix(m) = value {
                     if ui.button(locale.get_translated("Echelon")).clicked() {
-                        let echelon = match m.echelon() {
-                            Ok(Aftermath { result, steps }) => {
-                                window_result = Some(Type::Matrix(result));
-                                Ok(steps.join("\n"))
-                            }
-                            Err(err) => Err(err),
-                        };
+                        let echelon = update_by_result(m.echelon());
                         set_clipboard(echelon, clipboard, toasts, locale);
                     }
                 }
@@ -378,13 +400,7 @@ fn display_env_element_window<K: MatrixNumber>(
                                 locale.get_translated("Failed to calculate inverse"),
                             )),
                         },
-                        Type::Matrix(m) => match m.inverse() {
-                            Ok(Aftermath { result, steps }) => {
-                                window_result = Some(Type::Matrix(result));
-                                Ok(steps.join("\n"))
-                            }
-                            Err(err) => Err(err),
-                        },
+                        Type::Matrix(m) => update_by_result(m.inverse()),
                     };
                     set_clipboard(inverse, clipboard, toasts, locale);
                 }
