@@ -1,0 +1,58 @@
+name: Release
+
+on:
+  release:
+    types: [ published ]
+
+env:
+  RUST_BACKTRACE: 1
+  CARGO_TERM_COLOR: always
+
+jobs:
+  upload-binary:
+    permissions: write-all
+    name: ${{ matrix.target }}
+    strategy:
+      matrix:
+        include:
+          - target: aarch64-apple-darwin
+            os: macos-latest
+          - target: x86_64-unknown-linux-gnu
+          - target: x86_64-apple-darwin
+            os: macos-latest
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+    runs-on: ${{ matrix.os || 'ubuntu-latest' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+
+      - name: Install rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+
+      - if: ${{ !matrix.os }}
+        name: Install system dependencies
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: xorg-dev libxcb-shape0-dev libxcb-xfixes0-dev fontconfig libfontconfig-dev libfreetype6-dev libfontconfig1-dev pkgconf
+          version: 1.0
+
+      - name: Upload binary
+        uses: taiki-e/upload-rust-binary-action@v1
+        with:
+          bin: jp2gmd
+          target: ${{ matrix.target }}
+          ref: refs/tags/${{ github.ref_name }}
+          tar: all
+          zip: windows
+          include: assets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CARGO_PROFILE_RELEASE_CODEGEN_UNITS: 1
+          CARGO_PROFILE_RELEASE_LTO: true
