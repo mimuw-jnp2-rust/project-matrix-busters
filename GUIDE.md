@@ -23,7 +23,22 @@ Scalars can be both added in *shell* or via *GUI editor*.
 Matrices are 2D arrays of Scalars. More precisely matrix $A \in \hat{Q}^{N\times M}$
 is a matrix over field $\hat{Q}$ with width $N$ and height $M$.
 
-Currently, the only way to create a matrix is to use *GUI editor*.
+Matrices can be created in shell using the bracket syntax or via *GUI editor*.
+
+### Matrix Syntax in Shell
+
+Matrices can be created using MATLAB-like syntax with square brackets:
+
+```matlab
+% Matrix with two rows. Each row has two elements. First row [1, 4], second [3, 2]
+[1 4; 3 2]
+% Matrix with two rows. Each row has three elements. First row [-1/2, 5/4, 5/2], second [1/2, 13/17, -9/2]
+[-1/2 5/4 5/2; 1/2 13/17 -9/2]
+% Matrix with one row. This row has three elements. It contains of [a, -3/2, x]
+[a -3/2 x]
+```
+
+**Note:** This syntax only allows scalars and variables as matrix elements. Arithmetic expressions are not supported to avoid ambiguity. For example, `[3/4 -2/1]` could be interpreted as either `[3/4, -2/1]` or `[-5/4]`.
 
 ## Warning
 
@@ -105,7 +120,10 @@ These are the rules expressed in BNF:
 <identifier> ::= (<letter> | "_") (<letter> | <digit> | "_")* | "$"
 <unary_op>   ::= "+" | "-"
 <binary_op>  ::= "+" | "-" | "*" | "/"
-<expr>       ::= <integer> | <identifier> | <expr> <binary_op> <expr> | "(" <expr> ")" | <unary_op> <expr>
+<matrix_elem>::= <integer> | <identifier> | <unary_op> <matrix_elem>
+<matrix_row> ::= <matrix_elem> (" " <matrix_elem>)*
+<matrix>     ::= "[" <matrix_row> (";" <matrix_row>)* "]"
+<expr>       ::= <integer> | <identifier> | <matrix> | <expr> <binary_op> <expr> | "(" <expr> ")" | <unary_op> <expr>
 ```
 
 ### Examples
