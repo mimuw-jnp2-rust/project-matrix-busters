@@ -43,6 +43,7 @@ impl Identifier {
     }
 }
 
+#[allow(clippy::to_string_trait_impl)]
 impl ToString for Identifier {
     fn to_string(&self) -> String {
         self.id.clone()
@@ -84,6 +85,7 @@ impl<T: MatrixNumber> Type<T> {
     }
 }
 
+#[allow(clippy::to_string_trait_impl)]
 impl<T: MatrixNumber> ToString for Type<T> {
     fn to_string(&self) -> String {
         match self {
