@@ -319,7 +319,7 @@ impl<T: MatrixNumber> Matrix<T> {
     /// assert!(!m.is_valid());
     /// ```
     pub fn is_valid(&self) -> bool {
-        return if self.data.is_empty() {
+        if self.data.is_empty() {
             true
         } else {
             !self
@@ -330,7 +330,7 @@ impl<T: MatrixNumber> Matrix<T> {
                     (acc || row_len != next.len(), row_len)
                 })
                 .0 // does any row have different length?
-        };
+        }
     }
 
     /// Returns the raw data of the matrix.
@@ -795,6 +795,7 @@ impl<T: MatrixNumber> Mul<T> for Matrix<T> {
     }
 }
 
+#[allow(clippy::to_string_trait_impl)]
 impl<T: MatrixNumber> ToString for Matrix<T> {
     fn to_string(&self) -> String {
         self.data

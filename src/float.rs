@@ -182,6 +182,7 @@ impl FromStr for Float64 {
     }
 }
 
+#[allow(clippy::to_string_trait_impl)]
 impl ToString for Float64 {
     fn to_string(&self) -> String {
         self.value.to_string()

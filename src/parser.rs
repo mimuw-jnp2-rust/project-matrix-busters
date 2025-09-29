@@ -5,6 +5,7 @@ use anyhow::{bail, Context};
 use num_traits::checked_pow;
 
 use crate::environment::{Environment, Identifier, Type};
+use crate::matrices::Matrix;
 use crate::traits::MatrixNumber;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -14,6 +15,9 @@ enum Token {
     Operator(char),
     LeftBracket,
     RightBracket,
+    LeftMatrixBracket,
+    RightMatrixBracket,
+    Semicolon,
 }
 
 impl Display for Token {
@@ -24,6 +28,9 @@ impl Display for Token {
             Token::Operator(op) => write!(f, "operator \"{op}\""),
             Token::LeftBracket => write!(f, "( bracket"),
             Token::RightBracket => write!(f, ") bracket"),
+            Token::LeftMatrixBracket => write!(f, "[ bracket"),
+            Token::RightMatrixBracket => write!(f, "] bracket"),
+            Token::Semicolon => write!(f, "; semicolon"),
         }
     }
 }
@@ -47,6 +54,15 @@ impl<'a> Tokenizer<'a> {
         } else if self.raw.starts_with(')') {
             self.raw = &self.raw[1..];
             Ok(Some(Token::RightBracket))
+        } else if self.raw.starts_with('[') {
+            self.raw = &self.raw[1..];
+            Ok(Some(Token::LeftMatrixBracket))
+        } else if self.raw.starts_with(']') {
+            self.raw = &self.raw[1..];
+            Ok(Some(Token::RightMatrixBracket))
+        } else if self.raw.starts_with(';') {
+            self.raw = &self.raw[1..];
+            Ok(Some(Token::Semicolon))
         } else if self.raw.starts_with(|c| "+-*/^=".contains(c)) {
             let op = self.raw.chars().next().unwrap();
             self.raw = &self.raw[1..];
@@ -161,6 +177,97 @@ fn unary_op<T: MatrixNumber>(arg: Type<T>, op: char) -> anyhow::Result<Type<T>> 
     }
 }
 
+fn parse_matrix_element<T: MatrixNumber>(raw: &str, env: &Environment<T>) -> anyhow::Result<T> {
+    let raw = raw.trim();
+    if raw.is_empty() {
+        bail!("Empty matrix element");
+    }
+
+    // Handle unary operators
+    if let Some(rest) = raw.strip_prefix('+') {
+        return parse_matrix_element(rest.trim(), env);
+    }
+
+    if let Some(rest) = raw.strip_prefix('-') {
+        let val = parse_matrix_element(rest.trim(), env)?;
+        return T::zero()
+            .checked_sub(&val)
+            .context("Arithmetic operation resulted in overflow!");
+    }
+
+    // Try to parse as a number (including rational numbers if T supports it)
+    if let Ok(val) = T::from_str(raw) {
+        return Ok(val);
+    }
+
+    // Parse identifier
+    if raw == Identifier::RESULT {
+        let id = Identifier::result();
+        if let Some(value) = env.get_value(&id) {
+            return match value {
+                Type::Scalar(s) => Ok(s.clone()),
+                Type::Matrix(_) => bail!("Matrix elements cannot be matrices"),
+            };
+        } else {
+            bail!("Undefined identifier: {}", raw);
+        }
+    } else if let Ok(id) = Identifier::new(raw.to_string()) {
+        if let Some(value) = env.get_value(&id) {
+            return match value {
+                Type::Scalar(s) => Ok(s.clone()),
+                Type::Matrix(_) => bail!("Matrix elements cannot be matrices"),
+            };
+        } else {
+            bail!("Undefined identifier: {}", raw);
+        }
+    }
+
+    bail!("Invalid matrix element: {}", raw);
+}
+
+fn parse_matrix<T: MatrixNumber>(raw: &str, env: &Environment<T>) -> anyhow::Result<Matrix<T>> {
+    let raw = raw.trim();
+    if !raw.starts_with('[') || !raw.ends_with(']') {
+        bail!("Matrix must be enclosed in square brackets");
+    }
+
+    let content = &raw[1..raw.len() - 1].trim();
+    if content.is_empty() {
+        bail!("Empty matrix not allowed");
+    }
+
+    let rows: Vec<&str> = content.split(';').collect();
+    let mut matrix_data: Vec<Vec<T>> = Vec::new();
+
+    for (row_idx, row_str) in rows.iter().enumerate() {
+        let row_str = row_str.trim();
+        if row_str.is_empty() {
+            bail!("Empty row at position {}", row_idx);
+        }
+
+        let elements: Vec<&str> = row_str.split_whitespace().collect();
+        if elements.is_empty() {
+            bail!("Row {} has no elements", row_idx);
+        }
+
+        let mut row_data: Vec<T> = Vec::new();
+        for element_str in elements {
+            let element = parse_matrix_element(element_str, env)?;
+            row_data.push(element);
+        }
+
+        // Check that all rows have the same number of columns
+        if !matrix_data.is_empty() && matrix_data[0].len() != row_data.len() {
+            bail!("All rows must have the same number of elements. Row 0 has {} elements, row {} has {} elements",
+                  matrix_data[0].len(), row_idx, row_data.len());
+        }
+
+        matrix_data.push(row_data);
+    }
+
+    Matrix::new(matrix_data)
+}
+
 /*
 <digit>      ::= "0" | "1" | ... | "9"
 <integer>    ::= <digit>+
@@ -168,13 +275,45 @@ fn unary_op<T: MatrixNumber>(arg: Type<T>, op: char) -> anyhow::Result<Type<T>> 
 <identifier> ::= (<letter> | "_") (<letter> | <digit> | "_")* | "$"
 <unary_op>   ::= "+" | "-"
 <binary_op>  ::= "+" | "-" | "*" | "/"
-<expr>       ::= <integer> | <identifier> | <expr> <binary_op> <expr>
+<matrix_elem>::= <integer> | <identifier> | <unary_op> <matrix_elem>
+<matrix_row> ::= <matrix_elem> (" " <matrix_elem>)*
+<matrix>     ::= "[" <matrix_row> (";" <matrix_row>)* "]"
+<expr>       ::= <integer> | <identifier> | <matrix> | <expr> <binary_op> <expr>
                | "(" <expr> ")" | <unary_op> <expr> | <identifier> "(" <expr> ")"
  */
 pub fn parse_expression<T: MatrixNumber>(
     raw: &str,
     env: &Environment<T>,
 ) -> anyhow::Result<Type<T>> {
+    let raw = raw.trim();
+
+    // Check if the entire expression is just a matrix (starts with '[' and ends with ']' with balanced brackets)
+    if raw.starts_with('[') {
+        let mut bracket_count = 0;
+        let mut found_end = false;
+        for (i, ch) in raw.char_indices() {
+            match ch {
+                '[' => bracket_count += 1,
+                ']' => {
+                    bracket_count -= 1;
+                    if bracket_count == 0 {
+                        // If we've closed all brackets and we're at the end, it's a pure matrix
+                        if i == raw.len() - 1 {
+                            found_end = true;
+                        }
+                        break;
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        if found_end && bracket_count == 0 {
+            let matrix = parse_matrix(raw, env)?;
+            return Ok(Type::Matrix(matrix));
+        }
+    }
+
     let mut tokenizer = Tokenizer::new(raw);
     let mut operators: VecDeque<WorkingToken<T>> = VecDeque::new();
     let mut outputs: VecDeque<WorkingToken<T>> = VecDeque::new();
@@ -212,6 +351,8 @@ pub fn parse_expression<T: MatrixNumber>(
                 previous,
                 Some(WorkingToken::RightBracket) | Some(WorkingToken::Type(_))
             ),
+            // Matrix tokens should not appear in regular expressions since we handle them at a higher level
+            Token::LeftMatrixBracket | Token::RightMatrixBracket | Token::Semicolon => false,
         }
     }
 
@@ -308,6 +449,13 @@ pub fn parse_expression<T: MatrixNumber>(
                 operators.front()
             }
             Token::Operator(_) => bail!("Assignment is not allowed in expressions!"),
+            Token::LeftMatrixBracket => bail!(
+                "Matrix brackets should not appear in expressions! Use matrix syntax: [1 2; 3 4]"
+            ),
+            Token::RightMatrixBracket => bail!(
+                "Matrix brackets should not appear in expressions! Use matrix syntax: [1 2; 3 4]"
+            ),
+            Token::Semicolon => bail!("Semicolons should only appear in matrix syntax: [1 2; 3 4]"),
         };
     }
 
@@ -685,5 +833,159 @@ mod tests {
             ).unwrap(),
             Type::Matrix(im![2, 4, 6; 8, 10, 12])
         );
+    }
+
+    #[test]
+    fn test_matrix_syntax_simple() {
+        let env = Environment::<i64>::new();
+
+        // Test simple 2x2 matrix
+        assert_eq!(
+            parse_expression("[1 4; 3 2]", &env).unwrap(),
+            Type::Matrix(im![1, 4; 3, 2])
+        );
+
+        // Test 1x3 matrix (row vector)
+        assert_eq!(
+            parse_expression("[1 2 3]", &env).unwrap(),
+            Type::Matrix(im![1, 2, 3])
+        );
+
+        // Test 3x1 matrix (column vector)
+        assert_eq!(
+            parse_expression("[1; 2; 3]", &env).unwrap(),
+            Type::Matrix(im![1; 2; 3])
+        );
+    }
+
+    #[test]
+    fn test_matrix_syntax_rational() {
+        let env = Environment::<Rational64>::new();
+
+        // Test with rational numbers - create expected matrix manually
+        let expected_matrix = Matrix::new_unsafe(vec![
+            vec![Rational64::new(-1, 2), Rational64::new(5, 4)],
+            vec![Rational64::new(1, 2), Rational64::new(-9, 2)],
+        ]);
+
+        assert_eq!(
+            parse_expression("[-1/2 5/4; 1/2 -9/2]", &env).unwrap(),
+            Type::Matrix(expected_matrix)
+        );
+    }
+
+    #[test]
+    fn test_matrix_syntax_with_variables() {
+        let mut env = Environment::<Rational64>::new();
+        env.insert(
+            Identifier::new("a".to_string()).unwrap(),
+            Type::Scalar(Rational64::new(2, 1)),
+        );
+        env.insert(
+            Identifier::new("x".to_string()).unwrap(),
+            Type::Scalar(Rational64::new(-3, 1)),
+        );
+
+        // Test with variables - create expected matrices manually
+        let expected_matrix1 = Matrix::new_unsafe(vec![vec![
+            Rational64::new(2, 1),
+            Rational64::new(-3, 2),
+            Rational64::new(-3, 1),
+        ]]);
+
+        assert_eq!(
+            parse_expression("[a -3/2 x]", &env).unwrap(),
+            Type::Matrix(expected_matrix1)
+        );
+
+        // Test with unary operators
+        let expected_matrix2 = Matrix::new_unsafe(vec![
+            vec![Rational64::new(2, 1), Rational64::new(3, 1)],
+            vec![Rational64::new(-2, 1), Rational64::new(-3, 1)],
+        ]);
+
+        assert_eq!(
+            parse_expression("[+a -x; -a +x]", &env).unwrap(),
+            Type::Matrix(expected_matrix2)
+        );
+    }
+
+    #[test]
+    fn test_matrix_syntax_errors() {
+        let env = Environment::<i64>::new();
+
+        // Test empty matrix
+        assert!(parse_expression("[]", &env).is_err());
+
+        // Test mismatched row sizes
+        assert!(parse_expression("[1 2; 3 4 5]", &env).is_err());
+
+        // Test empty row
+        assert!(parse_expression("[1 2; ; 3 4]", &env).is_err());
+
+        // Test undefined variable
+        assert!(parse_expression("[a b]", &env).is_err());
+    }
+
+    #[test]
+    fn test_matrix_in_expressions() {
+        let mut env = Environment::<i64>::new();
+
+        // For now, test that individual matrices work
+        env.insert(
+            Identifier::new("A".to_string()).unwrap(),
+            Type::Matrix(im![1, 2; 3, 4]),
+        );
+        env.insert(
+            Identifier::new("B".to_string()).unwrap(),
+            Type::Matrix(im![5, 6; 7, 8]),
+        );
+
+        // Test matrix variables in expressions
+        assert_eq!(
+            parse_expression("A + B", &env).unwrap(),
+            Type::Matrix(im![6, 8; 10, 12])
+        );
+
+        assert_eq!(
+            parse_expression("A * B", &env).unwrap(),
+            Type::Matrix(im![19, 22; 43, 50])
+        );
+    }
+
+    #[test]
+    fn test_matrix_syntax_integration_examples() {
+        let mut env = Environment::<Rational64>::new();
+
+        // Test matrix examples from the issue description
+
+        // Test 1: [1 4; 3 2]
+        let result1 = parse_expression("[1 4; 3 2]", &env);
+        assert!(result1.is_ok());
+        println!("✅ [1 4; 3 2] = {}", result1.unwrap().to_string());
+
+        // Test 2: [-1/2 5/4 5/2; 1/2 13/17 -9/2]
+        let result2 = parse_expression("[-1/2 5/4 5/2; 1/2 13/17 -9/2]", &env);
+        assert!(result2.is_ok());
+        println!("✅ [-1/2 5/4 5/2; 1/2 13/17 -9/2] parsed successfully");
+
+        // Test 3: [a -3/2 x] with variables
+        env.insert(
+            Identifier::new("a".to_string()).unwrap(),
+            Type::Scalar(Rational64::new(1, 1)),
+        );
+        env.insert(
+            Identifier::new("x".to_string()).unwrap(),
+            Type::Scalar(Rational64::new(2, 1)),
+        );
+
+        let result3 = parse_expression("[a -3/2 x]", &env);
+        assert!(result3.is_ok());
+        println!("✅ [a -3/2 x] = {}", result3.unwrap().to_string());
+
+        // Test 4: Single column matrix
+        let result4 = parse_expression("[1; 2; 3]", &env);
+        assert!(result4.is_ok());
+        println!("✅ [1; 2; 3] = {}", result4.unwrap().to_string());
     }
 }
