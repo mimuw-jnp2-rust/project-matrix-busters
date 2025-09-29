@@ -98,9 +98,6 @@ enum WorkingToken<T: MatrixNumber> {
     BinaryOp(char),
     LeftBracket,
     RightBracket,
-    LeftMatrixBracket,
-    RightMatrixBracket,
-    Semicolon,
 }
 
 impl<T: MatrixNumber> Display for WorkingToken<T> {
@@ -112,9 +109,6 @@ impl<T: MatrixNumber> Display for WorkingToken<T> {
             WorkingToken::BinaryOp(op) => write!(f, "binary operator \"{op}\""),
             WorkingToken::LeftBracket => write!(f, "( bracket"),
             WorkingToken::RightBracket => write!(f, ") bracket"),
-            WorkingToken::LeftMatrixBracket => write!(f, "[ bracket"),
-            WorkingToken::RightMatrixBracket => write!(f, "] bracket"),
-            WorkingToken::Semicolon => write!(f, "; semicolon"),
         }
     }
 }
@@ -344,7 +338,7 @@ pub fn parse_expression<T: MatrixNumber>(
         current: &Token,
     ) -> bool {
         match current {
-            Token::Integer(_) | Token::Identifier(_) | Token::LeftBracket | Token::LeftMatrixBracket => matches!(
+            Token::Integer(_) | Token::Identifier(_) | Token::LeftBracket => matches!(
                 previous,
                 None | Some(WorkingToken::LeftBracket)
                     | Some(WorkingToken::BinaryOp(_))
@@ -357,20 +351,13 @@ pub fn parse_expression<T: MatrixNumber>(
                     | Some(WorkingToken::Type(_))
                     | Some(WorkingToken::BinaryOp(_))
                     | Some(WorkingToken::LeftBracket)
-                    | Some(WorkingToken::RightMatrixBracket)
             ),
             Token::RightBracket => matches!(
                 previous,
                 Some(WorkingToken::RightBracket) | Some(WorkingToken::Type(_))
             ),
-            Token::RightMatrixBracket => matches!(
-                previous,
-                Some(WorkingToken::Type(_)) | Some(WorkingToken::RightMatrixBracket)
-            ),
-            Token::Semicolon => matches!(
-                previous,
-                Some(WorkingToken::Type(_)) | Some(WorkingToken::RightMatrixBracket)
-            ),
+            // Matrix tokens should not appear in regular expressions since we handle them at a higher level
+            Token::LeftMatrixBracket | Token::RightMatrixBracket | Token::Semicolon => false,
         }
     }
 
@@ -951,5 +938,35 @@ mod tests {
             parse_expression("A * B", &env).unwrap(),
             Type::Matrix(im![19, 22; 43, 50])
         );
+    }
+
+    #[test] 
+    fn test_matrix_syntax_integration_examples() {
+        let mut env = Environment::<Rational64>::new();
+        
+        // Test matrix examples from the issue description
+        
+        // Test 1: [1 4; 3 2]
+        let result1 = parse_expression("[1 4; 3 2]", &env);
+        assert!(result1.is_ok());
+        println!("✅ [1 4; 3 2] = {}", result1.unwrap().to_string());
+        
+        // Test 2: [-1/2 5/4 5/2; 1/2 13/17 -9/2]
+        let result2 = parse_expression("[-1/2 5/4 5/2; 1/2 13/17 -9/2]", &env);
+        assert!(result2.is_ok());
+        println!("✅ [-1/2 5/4 5/2; 1/2 13/17 -9/2] parsed successfully");
+        
+        // Test 3: [a -3/2 x] with variables
+        env.insert(Identifier::new("a".to_string()).unwrap(), Type::Scalar(Rational64::new(1, 1)));
+        env.insert(Identifier::new("x".to_string()).unwrap(), Type::Scalar(Rational64::new(2, 1)));
+        
+        let result3 = parse_expression("[a -3/2 x]", &env);
+        assert!(result3.is_ok());
+        println!("✅ [a -3/2 x] = {}", result3.unwrap().to_string());
+        
+        // Test 4: Single column matrix
+        let result4 = parse_expression("[1; 2; 3]", &env);
+        assert!(result4.is_ok());
+        println!("✅ [1; 2; 3] = {}", result4.unwrap().to_string());
     }
 }
